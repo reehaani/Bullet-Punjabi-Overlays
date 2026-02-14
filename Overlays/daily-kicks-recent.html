@@ -12,6 +12,8 @@
             --border-accent: rgba(10, 255, 10, 0.6);
             --label-color: rgba(10, 255, 10, 0.7);
             --label-glow: rgba(10, 255, 10, 0.3);
+            --panel-edge-black: rgba(0, 0, 0, 0.82);
+            --rim-light-core: rgba(255, 255, 255, 0.85);
             --gloss-intensity: 1;
         }
 
@@ -56,13 +58,25 @@
             border-left: 3px solid var(--border-accent);
             border-top: 1px solid rgba(255, 255, 255, 0.06);
             border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+            overflow: hidden;
 
-            /* Starts hidden off-screen right */
-            transform: translateX(110%);
-            opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.4s ease;
+            /* Always visible */
+            transform: translateX(0);
+            opacity: 1;
+            transition: opacity 0.25s ease;
             z-index: 100;
+        }
+
+        .kicker-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px 0 0 12px;
+            box-shadow:
+                inset 0 0 0 1px var(--panel-edge-black),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            pointer-events: none;
+            z-index: 9;
         }
 
         .kicker-container.slide-in {
@@ -71,10 +85,9 @@
         }
 
         .kicker-container.slide-out {
-            transform: translateX(110%);
-            opacity: 0;
-            transition: transform 0.5s cubic-bezier(0.55, 0, 1, 0.45),
-                opacity 0.3s ease;
+            transform: translateX(0);
+            opacity: 1;
+            transition: opacity 0.25s ease;
         }
 
 
@@ -191,14 +204,16 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent !important;
-            -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.3);
-            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+            -webkit-text-stroke: 0.65px rgba(255, 255, 255, 0.35);
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.18));
         }
 
         .kicker-text-group {
             display: flex;
             flex-direction: column;
             gap: 2px;
+            position: relative;
+            z-index: 20;
         }
 
 
@@ -220,6 +235,22 @@
             opacity: 0.8;
         }
 
+        .rim-light-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px 0 0 12px;
+            pointer-events: none;
+            z-index: 16;
+            -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
+        }
+
+        .rim-light-layer svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
         /* === GOLD PLATED THEME (Recent Kicker) === */
         .gold-applied .kicker-name {
             background: linear-gradient(180deg,
@@ -236,10 +267,11 @@
         }
 
         .gold-applied.kicker-container {
-            border-left: 3.5px solid #d4af37;
+            border-left: 3px solid rgba(212, 175, 55, 0.55);
             box-shadow:
-                -4px 0 25px rgba(212, 175, 55, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+                -4px 0 18px rgba(212, 175, 55, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.8);
         }
     </style>
 </head>
@@ -269,6 +301,25 @@
             <div class="kicker-label">LATEST KICK</div>
             <div class="kicker-name" id="kicker-name"></div>
         </div>
+        <div class="rim-light-layer">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="rim-grad-recent" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="white" stop-opacity="0.9" />
+                        <stop offset="70%" stop-color="white" stop-opacity="0.5" />
+                        <stop offset="88%" stop-color="white" stop-opacity="0.2" />
+                        <stop offset="96%" stop-color="white" stop-opacity="0" />
+                        <stop offset="100%" stop-color="white" stop-opacity="0" />
+                    </linearGradient>
+                    <filter id="rim-blur-recent">
+                        <feGaussianBlur stdDeviation="0.35" />
+                    </filter>
+                </defs>
+                <path d="M 6 1.5 L 92 1.5" stroke="url(#rim-grad-recent)"
+                    stroke-width="1.6" vector-effect="non-scaling-stroke" fill="none" filter="url(#rim-blur-recent)"
+                    stroke-linecap="round" />
+            </svg>
+        </div>
         <div class="glass-overlay"></div>
     </div>
 
@@ -276,6 +327,8 @@
         const POLL_INTERVAL = 300;
         let lastKickerId = '';
         let isVisible = false;
+        let TARGET_GOAL = 10000;
+        let lastKickCount = 0;
 
         const container = document.getElementById('kicker-container');
         const nameEl = document.getElementById('kicker-name');
@@ -287,16 +340,14 @@
             if (id && id === lastKickerId) return;
             lastKickerId = id;
 
-            // Trigger "Spam-Friendly" Reset
-            container.classList.remove('slide-in');
+            // Keep panel permanently visible, only retrigger text flash
             nameEl.classList.remove('kicker-flash');
-            void container.offsetWidth; // Force Reflow
+            void nameEl.offsetWidth; // Force Reflow
 
             // Update content immediately
             nameEl.textContent = name;
 
-            // Re-apply animations
-            container.classList.add('slide-in');
+            // Re-apply text animation
             nameEl.classList.add('kicker-flash');
             isVisible = true;
         }
@@ -318,18 +369,21 @@
         };
 
         const origUpdateKicks = window.updateKicks;
-        const KICK_TARGET = 10000;
 
-        window.updateKicks = function (val, extra, id) {
-            const current = parseInt(val) || 0;
+        function applyGoalState(current) {
             const container = document.getElementById('kicker-container');
-
-            // GOLD THEME TOGGLE
-            if (current >= KICK_TARGET) {
+            if (!container) return;
+            if (current >= TARGET_GOAL) {
                 container.classList.add('gold-applied');
             } else {
                 container.classList.remove('gold-applied');
             }
+        }
+
+        window.updateKicks = function (val, extra, id) {
+            const current = parseInt(val) || 0;
+            lastKickCount = current;
+            applyGoalState(current);
 
             if (extra) {
                 const parts = extra.split(':');
@@ -339,7 +393,7 @@
                 }
             }
             if (typeof origUpdateKicks === 'function') {
-                origUpdateKicks(val, extra);
+                origUpdateKicks(val, extra, id);
             }
         };
 
@@ -433,6 +487,10 @@
                 s.src = '../Settings/settings.js?t=' + Date.now();
                 s.id = 'settings-script';
                 s.onload = function () {
+                    if (window.DAILY_KICKS_GOAL) {
+                        TARGET_GOAL = window.DAILY_KICKS_GOAL;
+                    }
+
                     const newTarget = window.GLOBAL_HUE_OFFSET || 0;
                     if (newTarget !== State.targetHue) {
                         State.targetHue = newTarget;
@@ -441,6 +499,7 @@
 
                     applyFilters();
                     updateColors();
+                    applyGoalState(lastKickCount);
                 };
                 document.head.appendChild(s);
             }
