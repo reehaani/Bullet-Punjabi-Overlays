@@ -1,0 +1,849 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kick OPS Daily Overlay</title>
+  <style>
+    /* === Modern Square Design === */
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;900&display=swap');
+
+    /* ... */
+
+    /* === Typography === */
+    .value {
+      font-family: 'Anton', sans-serif;
+      font-size: 130px;
+      /* Slightly adjusted to balance with Bold Title */
+      line-height: 0.9;
+      color: #fff;
+      margin-top: -15px;
+      /* Visibility Boost: Stroke + Glow */
+      -webkit-text-stroke: 3px rgba(0, 0, 0, 0.5);
+      text-shadow:
+        0 0 20px currentColor,
+        4px 4px 0px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Text Colors per panel */
+    /* We MUST keep color transparent for Metallic Gradient to Work */
+    #panel-chatters .value {
+      color: transparent;
+      /* Darker Glow for better visibility */
+      text-shadow: 0 0 20px #0099ff;
+    }
+
+    #panel-followers .value {
+      color: transparent;
+      text-shadow: 0 0 20px #00b300;
+    }
+
+    #panel-kicks .value {
+      color: transparent;
+      text-shadow: 0 0 30px var(--neon-red);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      margin-top: 25px;
+      /* Increased from 10px to 25px */
+    }
+
+    .label-daily {
+      font-family: 'Inter', sans-serif;
+      font-size: 25px;
+      /* Increased from 20px */
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #ffffff;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .label-type {
+      font-family: 'Inter', sans-serif;
+      font-size: 80px;
+      /* Increased from 80px */
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #fff;
+      text-transform: uppercase;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+      -webkit-text-stroke: 0;
+    }
+
+    :root {
+      /* Brighter Cyberpunk Gradients (Inner Backgrounds) */
+      /* Chatters: HIGH ENERGY Electric Blue to Cyber Purple */
+      --chatters-bg: linear-gradient(135deg, rgba(0, 85, 255, 0.9), rgba(138, 43, 226, 0.9));
+      /* Followers: Neon Green to Teal */
+      --followers-bg: linear-gradient(135deg, rgba(17, 153, 142, 0.9), rgba(56, 239, 125, 0.9));
+      /* Kicks: Hot Pink to Orange */
+      --kicks-bg: linear-gradient(135deg, rgba(255, 65, 108, 0.9), rgba(255, 75, 43, 0.9));
+
+      /* Neon Accent Colors for Border */
+      --neon-blue: #00f2ff;
+      --neon-green: #0aff0a;
+      --neon-red: #ff9900;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      padding: 50px;
+      /* Added Padding for "Breathing Room" */
+      box-sizing: border-box;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      /* Keeps it centered, adjust in OBS positioning */
+      align-items: center;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Container for the rotator */
+    .container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      /* Ensure glow doesn't get cut off */
+    }
+
+    /* === The Panel Structure === */
+    .panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 1s ease, transform 1s ease;
+      z-index: 0;
+
+      /* Base background for the glow to sit on */
+      background: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+      /* Drop shadow */
+      overflow: hidden;
+    }
+
+    .panel.active {
+      opacity: 1;
+      transform: scale(1);
+      z-index: 10;
+    }
+
+    /* === The "Star Border" Animation === */
+    /* We create a spinning gradient behind the content, then mask it */
+    .star-border {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(transparent, transparent, transparent, var(--border-color));
+      animation: spin 4s linear infinite;
+      z-index: 1;
+    }
+
+    /* Second tail for better glow */
+    .star-border::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: inherit;
+      filter: blur(20px);
+      opacity: 0.8;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* The Inner Content (Sits on top of the spinning border) */
+    .inner-content {
+      position: absolute;
+      inset: 6px;
+      /* Increased border thickness for visibility */
+      border-radius: 20px;
+      /* Slightly tighter radius than container */
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      /* Backgrounds applied here */
+      overflow: hidden;
+      /* Clips logo */
+    }
+
+    /* Panel Specific Styles */
+    #panel-chatters .star-border {
+      --border-color: var(--neon-blue);
+    }
+
+    #panel-chatters .inner-content {
+      background: var(--chatters-bg);
+    }
+
+    #panel-followers .star-border {
+      --border-color: var(--neon-green);
+    }
+
+    #panel-followers .inner-content {
+      background: var(--followers-bg);
+    }
+
+    #panel-kicks .star-border {
+      --border-color: var(--neon-red);
+    }
+
+    #panel-kicks .inner-content {
+      background: var(--kicks-bg);
+    }
+
+
+    /* === NOISE REMOVED === */
+    .noise-overlay {
+      display: none;
+    }
+
+    /* === Typography === */
+    .value {
+      /* Super Clear Rendering */
+      font-family: 'Anton', sans-serif;
+      font-size: 130px;
+      line-height: 0.9;
+      margin-top: -15px;
+
+      /* === SMOOTH POLISHED METAL (No Horizon Line) === */
+      background: linear-gradient(180deg,
+          #ffffff 10%,
+          #e0e0e0 40%,
+          #b0b0b0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+
+      /* Subtle Rim Light */
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+
+      /* Strong Black Barrier + Subtle Glow */
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+
+      /* Padding */
+      padding-top: 20px;
+      padding-bottom: 20px;
+
+      position: relative;
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      /* Removed Stroke */
+      -webkit-text-stroke: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      z-index: 10;
+      position: relative;
+    }
+
+    .watermark-logo {
+      position: absolute;
+      bottom: -40px;
+      right: -10px;
+      /* Moved left (was -30px) */
+      width: 240px;
+      /* Increased size (was 180px) */
+      height: auto;
+      opacity: 0.35;
+      z-index: 1;
+      pointer-events: none;
+
+      /* 3D Tilt & Rotation */
+      transform: rotate(15deg) perspective(800px) rotateY(-25deg) rotateX(10deg);
+      transform-origin: bottom right;
+
+      /* Gradient Opacity Mask */
+      -webkit-mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+      mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+    }
+
+    /* Ensure Text is ABOVE plasma */
+    /* === 2. CHROMATIC ABERRATION (Refined - Less Boxy, More Scanline) === */
+    @keyframes glitch-skew {
+      0% {
+        transform: skew(0deg);
+      }
+
+      10% {
+        transform: skew(-4deg);
+      }
+
+      20% {
+        transform: skew(3deg);
+      }
+
+      30% {
+        transform: skew(-2deg);
+      }
+
+      40% {
+        transform: skew(4deg);
+      }
+
+      50% {
+        transform: skew(-1deg);
+      }
+
+      100% {
+        transform: skew(0deg);
+      }
+    }
+
+    .value.glitch-active {
+      animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+      color: #fff;
+      position: relative;
+    }
+
+    .value.glitch-active::before,
+    .value.glitch-active::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+      background: transparent;
+      /* No background to avoid boxy look */
+    }
+
+    .value.glitch-active::before {
+      color: #0ff;
+      z-index: -1;
+      animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+      text-shadow: 2px 0 #0ff;
+    }
+
+    .value.glitch-active::after {
+      color: #f0f;
+      z-index: -2;
+      animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
+      text-shadow: -2px 0 #f0f;
+    }
+
+    /* Thinner slices (Scanlines) to fix "Boxy" look */
+    /* AMPLIFIED GLITCH: Bigger offsets (12px instead of 4px) */
+    @keyframes glitch-anim-1 {
+      0% {
+        clip-path: inset(20% 0 79% 0);
+        transform: translate(-12px, 0);
+      }
+
+      20% {
+        clip-path: inset(60% 0 38% 0);
+        transform: translate(12px, 0);
+      }
+
+      40% {
+        clip-path: inset(40% 0 58% 0);
+        transform: translate(-12px, 0);
+      }
+
+      60% {
+        clip-path: inset(80% 0 18% 0);
+        transform: translate(12px, 0);
+      }
+
+      80% {
+        clip-path: inset(10% 0 88% 0);
+        transform: translate(-12px, 0);
+      }
+
+      100% {
+        clip-path: inset(30% 0 68% 0);
+        transform: translate(12px, 0);
+      }
+    }
+
+    @keyframes glitch-anim-2 {
+      0% {
+        clip-path: inset(10% 0 88% 0);
+        transform: translate(12px, 0);
+      }
+
+      20% {
+        clip-path: inset(30% 0 68% 0);
+        transform: translate(-12px, 0);
+      }
+
+      40% {
+        clip-path: inset(15% 0 82% 0);
+        transform: translate(12px, 0);
+      }
+
+      60% {
+        clip-path: inset(55% 0 42% 0);
+        transform: translate(-12px, 0);
+      }
+
+      80% {
+        clip-path: inset(40% 0 58% 0);
+        transform: translate(12px, 0);
+      }
+
+      100% {
+        clip-path: inset(70% 0 28% 0);
+        transform: translate(-12px, 0);
+      }
+    }
+
+    /* === 3. SPARKS (Canvas) === */
+    #sparks-canvas {
+      position: fixed;
+      /* Fixed relative to window (OBS Source) */
+      top: -1000px;
+      left: -1000px;
+      width: 4000px;
+      height: 4000px;
+      pointer-events: none;
+      z-index: 5;
+      /* On top of border but below active panel if z-index is super high? No, sparks fly outwardly */
+    }
+
+    .subtitle {
+      display: none;
+    }
+
+    /* Hidden as requested "clean look" */
+
+    /* Debug */
+    .debug {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: #0f0;
+      background: #000;
+      padding: 5px;
+      opacity: 0;
+    }
+
+    .debug.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <canvas id="sparks-canvas"></canvas>
+
+    <!-- SVG Filter for Plasma Storm -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+      <defs>
+        <filter id="plasma-noise">
+          <feTurbulence id="turbulence-layer" type="fractalNoise" baseFrequency="0.65" numOctaves="3" seed="0" />
+          <feDisplacementMap in="SourceGraphic" scale="20" />
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- Chatters -->
+    <div id="panel-chatters" class="panel active">
+      <div class="star-border"></div>
+      <div class="inner-content">
+        <div class="noise-overlay"></div>
+        <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        <div id="chatters-value" class="value" data-text="0">0</div>
+        <div class="title">
+          <span class="label-daily">DAILY</span>
+          <span class="label-type">CHAT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Followers -->
+    <div id="panel-followers" class="panel">
+      <div class="star-border"></div>
+      <div class="inner-content">
+        <div class="noise-overlay"></div>
+        <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        <div id="followers-value" class="value" data-text="0">0</div>
+        <div class="title">
+          <span class="label-daily">DAILY</span>
+          <span class="label-type">SUBS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kicks -->
+    <div id="panel-kicks" class="panel">
+      <div class="star-border"></div>
+      <div class="inner-content">
+        <div class="noise-overlay"></div>
+        <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        <div id="kicks-value" class="value" data-text="0">0</div>
+        <div class="title">
+          <span class="label-daily">DAILY</span>
+          <span class="label-type">KICKS</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="debug" class="debug"></div>
+
+  <script>
+    // === CONFIG ===
+    const ROTATE_MS = 15000;
+    const POLL_INTERVAL = 1000;
+    // Default fallback
+    window.ENABLE_BULLETS = true;
+
+    // === ROTATION LOGIC (Defined First) ===
+    let currentIndex = 0;
+    const panels = [
+      document.getElementById("panel-chatters"),
+      document.getElementById("panel-followers"),
+      document.getElementById("panel-kicks")
+    ];
+
+    function nextPanel() {
+      // Fade out current
+      panels[currentIndex].classList.remove("active");
+
+      // Advance
+      currentIndex = (currentIndex + 1) % panels.length;
+
+      // Fade in next
+      panels[currentIndex].classList.add("active");
+    }
+
+    setInterval(nextPanel, ROTATE_MS);
+
+    // === BULLET CASING PARTICLES ===
+    const canvas = document.getElementById('sparks-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let bullets = [];
+
+    function resize() {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Casing {
+      constructor(isBurst = false) {
+        this.reset(isBurst);
+      }
+      reset(isBurst = false) {
+        // Find the container position to spawn relative to it
+        const container = document.querySelector('.container');
+        const cRect = container.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // Calculate center of container relative to canvas
+        // Canvas is offset (-1000, -1000), so we subtract canvasRect.left
+        const spawnX = (cRect.left + cRect.width / 2) - canvasRect.left;
+        const spawnY = cRect.top - canvasRect.top; // Top of container
+
+        // Eject slightly above center
+        this.x = spawnX + (Math.random() * 40 - 20);
+        this.y = spawnY + 20; // Slightly inside the top edge
+
+        // Physics: Eject outwards (random L or R)
+        const dir = Math.random() > 0.5 ? 1 : -1;
+
+        if (isBurst) {
+          // BURST MODE: Go Higher!
+          this.vx = (Math.random() * 8 + 4) * dir;
+          this.vy = -(Math.random() * 15 + 20); // SUPER HIGH
+          this.life = 200;
+        } else {
+          // Standard Stream
+          this.vx = (Math.random() * 6 + 4) * dir;
+          this.vy = -(Math.random() * 10 + 15); // MUCH HIGHER STREAM
+          this.life = 150;
+        }
+
+        this.gravity = 0.4;
+
+        this.angle = Math.random() * Math.PI;
+        this.vAngle = (Math.random() * 0.2 + 0.05) * dir;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity; // Gravity
+        this.angle += this.vAngle;
+
+        this.life--;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        // Draw Brass Casing (HUGE -> 36x96)
+        // Main Body
+        const gradient = ctx.createLinearGradient(-18, 0, 18, 0);
+        gradient.addColorStop(0, '#b8860b');
+        gradient.addColorStop(0.5, '#f0e68c');
+        gradient.addColorStop(1, '#daa520');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(-18, -48, 36, 96);
+
+        // Rim at bottom
+        ctx.fillStyle = '#8b4500';
+        ctx.fillRect(-22, 38, 44, 10);
+
+        ctx.restore();
+      }
+    }
+
+    // === RAPID FIRE LOGIC ===
+    let rapidFireUntil = 0; // Timestamp
+
+    // Spawn a new casing every few frames
+    function animateBullets() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Check global setting (SQUARE)
+      if (typeof window.ENABLE_BULLETS_SQUARE !== 'undefined' && window.ENABLE_BULLETS_SQUARE === false) {
+        requestAnimationFrame(animateBullets);
+        return;
+      }
+
+      const now = Date.now();
+      const isRapidFire = now < rapidFireUntil;
+
+      // Spawn "Stream" only if active event
+      const threshold = 0.98; // Very sparse (approx 1-2 per sec)
+
+      if (isRapidFire && Math.random() > threshold) {
+        bullets.push(new Casing(false)); // False = Standard stream bullet
+      }
+
+      // Cleanup dead bullets (Optimized: Backwards loop to avoid allocation)
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        if (b.y >= height + 50 || b.life <= -50) {
+          bullets.splice(i, 1); // Remove in-place
+        } else {
+          b.update();
+          b.draw();
+        }
+      }
+
+      requestAnimationFrame(animateBullets);
+    }
+    animateBullets();
+
+    // === EXPLOSION LOGIC ===
+    function explodeBullets(count) {
+      for (let i = 0; i < count; i++) {
+        bullets.push(new Casing(true)); // Pass true for 'burst' mode if needed, or just standard
+      }
+    }
+
+    // === HEARTBEAT GLITCH SYSTEM ===
+    function triggerHeartbeatGlitch() {
+      const activePanel = panels[currentIndex];
+      if (!activePanel) return;
+
+      const valueEl = activePanel.querySelector('.value');
+      if (!valueEl) return;
+
+      if (!valueEl.getAttribute('data-text')) {
+        valueEl.setAttribute('data-text', valueEl.textContent);
+      }
+
+      valueEl.classList.remove("glitch-active");
+      void valueEl.offsetWidth;
+      valueEl.classList.add("glitch-active");
+
+      setTimeout(() => valueEl.classList.remove("glitch-active"), 400);
+    }
+    setInterval(triggerHeartbeatGlitch, 1500);
+
+    // === COUNTER ANIMATION WITH GLITCH ===
+    function setAnimatedText(id, newValue) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const numVal = parseInt(newValue) || 0;
+
+      // Check against last known TARGET, not current displayed text
+      const lastTarget = parseInt(el.getAttribute("data-target"));
+
+      // If we are already aiming for this number, ignore.
+      if (lastTarget === numVal) return;
+
+      // Update Target
+      el.setAttribute("data-target", numVal);
+      el.setAttribute("data-text", newValue); // For glitch
+
+      const oldVal = parseInt(el.textContent.replace(/,/g, '')) || 0;
+
+      // Update Rapid Fire Timer (15 Seconds)
+      if (numVal > oldVal) {
+        // ONLY TRIGGER BULLETS FOR SUBS (Followers) AND KICKS
+        if (id !== 'chatters-value') {
+          rapidFireUntil = Date.now() + 5000; // 5 Seconds Stream
+          // No Burst.
+        }
+      }
+
+      // Update padding validation
+      if (isNaN(numVal)) {
+        el.textContent = newValue;
+        return;
+      }
+
+      const isChange = numVal !== oldVal;
+
+      if (isChange) {
+        // Trigger Glitch & BURST
+        el.classList.remove("glitch-active");
+        void el.offsetWidth;
+        el.classList.add("glitch-active");
+        setTimeout(() => el.classList.remove("glitch-active"), 400);
+
+        // REMOVED MASSIVE BURST
+        /*
+        if (numVal > oldVal && id !== 'chatters-value') {
+          explodeBullets(120);
+        }
+        */
+      }
+
+      animateValue(el, oldVal, numVal, 2000);
+    }
+
+    function updateFontSize(obj, text) {
+      const len = text.length;
+      let size = 130; // Default Base Size (0-4 digits)
+      obj.style.letterSpacing = "normal";
+
+      // Only shrink if huge (>4)
+      if (len >= 5) size = 100; // 10,000+
+
+      if (len >= 6) {
+        obj.style.letterSpacing = "-3px";
+      }
+
+      obj.style.fontSize = size + "px";
+    }
+
+    function animateValue(obj, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(progress * (end - start) + start).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
+
+        obj.textContent = current;
+        obj.setAttribute("data-text", current);
+        updateFontSize(obj, current); // Scale on every frame
+
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          const finalVal = end.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
+          obj.textContent = finalVal;
+          obj.setAttribute("data-text", finalVal);
+          updateFontSize(obj, finalVal);
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    function setText(id, value) {
+      if (id.includes("-value")) {
+        setAnimatedText(id, value);
+      } else {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+    }
+
+    // === DATA POLLING (Multi-File) ===
+    window.updateChatters = function (val, sub) { setText("chatters-value", val); };
+    window.updateFollowers = function (val, sub) { setText("followers-value", val); };
+    window.updateKicks = function (val, sub) { setText("kicks-value", val); };
+
+    function injectScript(filename, id) {
+      const old = document.getElementById(id);
+      if (old) old.remove();
+      const s = document.createElement("script");
+      s.src = filename + "?t=" + new Date().getTime();
+      s.id = id;
+      document.body.appendChild(s);
+    }
+
+    function pollAll() {
+      injectScript("../Data/data_chatters.js", "script-chatters");
+      injectScript("../Data/data_followers.js", "script-followers");
+      injectScript("../Data/data_kicks.js", "script-kicks");
+      injectScript("../Settings/settings.js", "script-settings");
+    }
+    // === BOOT SEQUENCE ===
+    setInterval(pollAll, POLL_INTERVAL);
+    pollAll();
+
+  </script>
+</body>
+
+</html>

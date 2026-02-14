@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tip Bar — Above Camera</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --gradient-start: rgba(0, 177, 137, 0.95);
+            --gradient-end: rgba(83, 252, 24, 0.95);
+            --accent-line: rgba(10, 255, 10, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease;
+        }
+
+        html,
+        body {
+            width: 1080px;
+            /* Lock total width */
+            height: 1080px;
+            /* Lock height */
+            margin: 0 auto;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;
+            /* Pin to bottom */
+        }
+
+        /* Fixed 1080 Wide Canvas */
+        .main-canvas {
+            width: 1080px;
+            height: 1080px;
+            position: relative;
+            background: transparent;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* =============================================
+           TIP BAR — fixed 1080px width
+           ============================================= */
+
+        .tip-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 1080px;
+            height: 100px;
+            border-radius: 0 40px 0 0;
+            overflow: hidden;
+            filter: drop-shadow(0 -4px 24px rgba(0, 0, 0, 0.6));
+        }
+
+        /* === Inner fill (glossy black) === */
+        .inner-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 0 40px 0 0;
+            background: linear-gradient(135deg,
+                    rgba(15, 15, 15, 0.98) 0%,
+                    rgba(25, 25, 25, 0.96) 50%,
+                    rgba(15, 15, 15, 0.98) 100%);
+            z-index: 2;
+            overflow: hidden;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+                inset 1px 0 0 rgba(255, 255, 255, 0.05),
+                inset 0 2px 10px rgba(255, 255, 255, 0.05),
+                inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Removed background beam */
+
+
+        @keyframes sweep {
+            0% {
+                left: -150%;
+            }
+
+            20% {
+                left: 150%;
+            }
+
+            100% {
+                left: 150%;
+            }
+        }
+
+        /* === Glass overlay === */
+        .glass-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0.10) 0%,
+                    rgba(255, 255, 255, 0.03) 35%,
+                    transparent 50%,
+                    rgba(0, 0, 0, 0.05) 100%),
+                linear-gradient(100deg,
+                    transparent 20%,
+                    rgba(255, 255, 255, 0.04) 45%,
+                    rgba(255, 255, 255, 0.08) 50%,
+                    rgba(255, 255, 255, 0.04) 55%,
+                    transparent 80%);
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        /* === Content layout === */
+        .content-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            justify-content: space-between;
+            padding: 0;
+        }
+
+        /* === Left side: name tab === */
+        .name-tab {
+            height: 100%;
+            /* BOOSTED saturation for a more vibrant "Neon Kick" green gradient */
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            background-image:
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.2) 100%),
+                linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 0 8px 0 12px;
+            gap: 4px;
+            display: flex;
+            align-items: center;
+            border-radius: 0 40px 0 0;
+            min-width: 0;
+            flex-grow: 1;
+            flex-shrink: 1;
+            z-index: 12;
+            position: relative;
+        }
+
+        /* Inverted rounded edge (concave) at bottom-right */
+        .name-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: -40px;
+            /* Radius of the curve */
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-end);
+            /* Matches the vibrant end color of the new gradient */
+            mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
+            -webkit-mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
+            pointer-events: none;
+        }
+
+        .tip-left {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            height: 100%;
+            flex: 1 1 auto;
+            overflow: hidden;
+        }
+
+        /* === Logo next to name — always visible, never shrinks === */
+        .tip-logo {
+            height: 70px;
+            width: auto;
+            flex-shrink: 0;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        /* === Tipper name — premium metallic with deep shadows === */
+        .tip-name {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 0.9;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 1) 45%,
+                    rgba(255, 255, 255, 1) 55%,
+                    transparent 70%) 150% 0 / 150% 100% no-repeat,
+                linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 15%,
+                    #e0e0e0 30%, #b0b0b0 50%,
+                    #d0d0d0 65%, #ffffff 80%,
+                    #e8e8e8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.6);
+            paint-order: stroke fill;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 900px;
+            position: relative;
+            animation: shine-name 6s infinite linear;
+        }
+
+        /* Name shines first: left-to-right sweep at 0–15% of cycle */
+        @keyframes shine-name {
+            0% {
+                background-position: 150% 0, 0 0;
+            }
+
+            15% {
+                background-position: -150% 0, 0 0;
+            }
+
+            100% {
+                background-position: -150% 0, 0 0;
+            }
+        }
+
+        /* Amount shines second: left-to-right sweep at 15–30% of cycle */
+        @keyframes shine-amount {
+            0% {
+                background-position: 150% 0, 0 0;
+            }
+
+            15% {
+                background-position: 150% 0, 0 0;
+            }
+
+            30% {
+                background-position: -150% 0, 0 0;
+            }
+
+            100% {
+                background-position: -150% 0, 0 0;
+            }
+        }
+
+        /* Entry animation for new tips */
+        .tip-entry {
+            animation: tipFadeSlide 1s cubic-bezier(0.19, 1, 0.22, 1) forwards !important;
+            backface-visibility: hidden;
+            will-change: transform, opacity;
+        }
+
+        @keyframes tipFadeSlide {
+            0% {
+                transform: translateY(40px) scale(0.98);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+
+
+        /* === Right side: amount — same shine-sweep, delayed to follow the name === */
+        .tip-amount {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 68px;
+            line-height: 0.9;
+            letter-spacing: -1px;
+            padding-right: 40px;
+            background: linear-gradient(90deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 1) 45%,
+                    rgba(255, 255, 255, 1) 55%,
+                    transparent 70%) 150% 0 / 150% 100% no-repeat,
+                linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 15%,
+                    #e8e8e8 30%, #b0b0b0 50%,
+                    #d0d0d0 65%, #ffffff 80%,
+                    #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.5);
+            paint-order: stroke fill;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.25));
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 20px;
+            /* Shines after the name — sequenced via keyframe timing */
+            animation: shine-amount 6s infinite linear;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+
+
+        /* === Subtle green accent line at bottom === */
+        .tip-bar::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.15) 0%,
+                    var(--accent-line) 50%,
+                    transparent 100%);
+            z-index: 20;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-canvas">
+        <div class="tip-bar" id="tip-bar">
+            <!-- Black fill -->
+            <div class="inner-fill">
+                <div class="glass-overlay"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="content-layer">
+                <div class="name-tab">
+                    <div class="tip-left">
+                        <div class="tip-name" id="tip-name">—</div>
+                    </div>
+                    <img class="tip-logo" src="../Logo/Logo 2.png" alt="Logo" />
+                </div>
+
+                <div class="tip-amount" id="tip-amount">$0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const POLL_INTERVAL = 1000;
+        let lastTipId = '';
+
+        const nameEl = document.getElementById('tip-name');
+        const amountEl = document.getElementById('tip-amount');
+
+        function showTip(name, amount, id) {
+            if (!name) return;
+
+            // Use unique ID to allow repeat tips from same person
+            if (id && id === lastTipId) return;
+            lastTipId = id;
+
+            // Trigger entry animation
+            const container = document.querySelector('.content-layer');
+            container.style.animation = 'none';
+            container.classList.remove('tip-entry');
+            void container.offsetWidth;
+            container.style.animation = '';
+            container.classList.add('tip-entry');
+
+            // Update name
+            nameEl.textContent = name;
+
+            // Auto-fit font size: start at max and shrink until it fits
+            const MAX_FONT = 80;
+            const MIN_FONT = 56;
+            const nameContainer = nameEl.parentElement;  // .tip-left
+            let fontSize = MAX_FONT;
+            nameEl.style.fontSize = fontSize + 'px';
+
+            // Shrink until text fits the available width (accounting for logo)
+            while (nameEl.scrollWidth > nameContainer.clientWidth && fontSize > MIN_FONT) {
+                fontSize -= 2;
+                nameEl.style.fontSize = fontSize + 'px';
+            }
+
+            // Scale stroke proportionally
+            const strokeWidth = Math.max(0.8, 1.5 * (fontSize / 80));
+            nameEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.6)';
+
+            // Update amount
+            if (amount) {
+                amountEl.textContent = '$' + parseFloat(amount).toFixed(2);
+            }
+        }
+
+        /* Hook for data file: window.updateTips("username", "amount", "uniqueId") */
+        window.updateTips = function (name, amount, id) {
+            if (name) showTip(name, amount || '0', id || name + amount);
+        };
+
+        // Poll data_tips.js
+        function injectScript(filename, id) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const s = document.createElement('script');
+            s.src = filename + '?t=' + Date.now();
+            s.id = id;
+            document.body.appendChild(s);
+        }
+
+        function pollAll() {
+            injectScript('../Data/data_tips.js', 'script-tips');
+        }
+
+        setInterval(pollAll, POLL_INTERVAL);
+        pollAll();
+    </script>
+
+    <!-- Color Settings Loader -->
+    <script>
+        (function () {
+            // ╔══════════════════════════════════════════════════════════════════╗
+            // ║              EMBEDDED SMOOTH HUE ENGINE                         ║
+            // ╚══════════════════════════════════════════════════════════════════╝
+
+            // Define Base Colors locally to avoid dependency issues
+            const BASE_COLORS = {
+                '--gradient-start': 'rgba(0, 177, 137, 0.95)',
+                '--gradient-end': 'rgba(83, 252, 24, 0.95)',
+                '--accent-line': 'rgba(10, 255, 10, 0.3)'
+            };
+
+            const State = {
+                currentHue: 0,
+                targetHue: 0,
+                animationFrame: null
+            };
+
+            // Easing function for smooth animation
+            function lerp(start, end, factor) {
+                return start + (end - start) * factor;
+            }
+
+            function animate() {
+                const diff = State.targetHue - State.currentHue;
+
+                // If diff is large (e.g. crossing 0/360 boundary), handle it?
+                // For now, simple lerp is sufficient for slider usage.
+
+                if (Math.abs(diff) > 0.05) {
+                    State.currentHue = lerp(State.currentHue, State.targetHue, 0.08); // 8% smoothing
+                    updateColors();
+                    State.animationFrame = requestAnimationFrame(animate);
+                } else if (Math.abs(diff) > 0) {
+                    State.currentHue = State.targetHue;
+                    updateColors();
+                    State.animationFrame = null;
+                } else {
+                    State.animationFrame = null; // Stop loop if settled
+                }
+            }
+
+            function updateColors() {
+                if (!window.adjustHue) return; // Wait for settings.js utilities
+
+                const style = document.documentElement.style;
+                for (const key in BASE_COLORS) {
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                }
+            }
+
+            function loadSettings() {
+                // Remove old script to prevent accumulation
+                const old = document.getElementById('settings-script');
+                if (old) old.remove();
+
+                const s = document.createElement('script');
+                s.src = '../Settings/settings.js?t=' + Date.now();
+                s.id = 'settings-script';
+                s.onload = function () {
+                    // When settings load, update the target
+                    const newTarget = window.GLOBAL_HUE_OFFSET || 0;
+                    if (newTarget !== State.targetHue) {
+                        State.targetHue = newTarget;
+                        // Start animation loop if not running
+                        if (!State.animationFrame) {
+                            animate();
+                        }
+                    }
+                };
+                document.head.appendChild(s);
+            }
+
+            // Start Polling
+            loadSettings();
+            setInterval(loadSettings, 1000); // Check every second for updates
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kick Sub Goal</title>
+    <style>
+        /* === Modern Design === */
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            /* === Color Group 3: Progress Bar Fill === */
+            --fill-goal-start: rgba(17, 153, 142, 0.9);
+            --fill-goal-end: rgba(56, 239, 125, 0.9);
+            --fill-glow-color: rgba(56, 239, 125, 0.4);
+            --bar-fill-bg: linear-gradient(135deg, var(--fill-goal-start), var(--fill-goal-end));
+
+            /* === Color Group 2: Neon Green === */
+            --neon-green: #0aff0a;
+
+            /* === Layout === */
+            --track-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* === Main Goal Container === */
+        .goal-container {
+            position: relative;
+            width: 500px;
+            height: 70px;
+            /* Slimmer for progress bar feel */
+            border-radius: 35px;
+            /* Fully rounded edges */
+            background: var(--track-bg);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            /* Clips the spinning border */
+        }
+
+        /* === Spinning Border === */
+        .star-border {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 1200px;
+            height: 1200px;
+            margin-left: -600px;
+            margin-top: -600px;
+            background: conic-gradient(transparent, transparent, transparent, var(--neon-green));
+            animation: spin 4s linear infinite;
+            z-index: 1;
+        }
+
+        .star-border::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            filter: blur(20px);
+            opacity: 0.8;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* === Inner Box (on top of spinning border) === */
+        .inner-bar-track {
+            position: absolute;
+            inset: 4px;
+            border-radius: 30px;
+            background: rgba(20, 20, 20, 0.95);
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* === Progress Fill === */
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            /* Dynamic */
+            background: var(--bar-fill-bg);
+            border-radius: 30px 0 0 30px;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 3;
+            overflow: hidden;
+            /* To mask the black numbers */
+        }
+
+        .fill-active {
+            box-shadow: 10px 0 20px var(--fill-glow-color);
+        }
+
+        /* === Labels & Text === */
+        .content-wrapper {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 10;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .content-wrapper.completed {
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .label-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label {
+            font-family: 'Anton', sans-serif;
+            font-size: 20px;
+            font-weight: 400;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            transition: all 0.5s ease;
+        }
+
+        .completed-tag {
+            font-family: 'Anton', sans-serif;
+            font-size: 20px;
+            color: #fff;
+            background: #000;
+            padding: 2px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            display: none;
+            animation: tag-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        @keyframes tag-pop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .numbers {
+            font-family: 'Anton', sans-serif;
+            font-size: 38px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -5px;
+            position: relative;
+            z-index: 4;
+            /* Behind the masked layer but above fill */
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        /* White Numbers (Default) */
+        .numbers.white {
+            color: #fff;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+        }
+
+        /* Black Numbers (Inside progress-fill) */
+        .black-numbers-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 500px;
+            /* Reference original width */
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            justify-content: space-between;
+            color: #000;
+            z-index: 5;
+            /* This will be child of .progress-fill which clips it */
+        }
+
+        .black-numbers-mask .numbers-clone {
+            font-family: 'Anton', sans-serif;
+            font-size: 38px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -5px;
+            margin-left: auto;
+            /* Push to right just like original */
+        }
+
+        .target-val {
+            opacity: 1;
+            font-size: 30px;
+        }
+
+        /* High Intensity Visual Pop — Spam Friendly */
+        .current-flash {
+            animation: current-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+        }
+
+        @keyframes current-pop {
+            0% {
+                filter: brightness(5) drop-shadow(0 0 40px #fff);
+                transform: scale(1.15);
+            }
+
+            100% {
+                filter: brightness(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="goal-container" id="goal-container">
+        <div class="star-border"></div>
+        <div class="inner-bar-track">
+            <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+
+            <div id="progress-fill" class="progress-fill">
+                <!-- This masked layer moves with the fill and uncovers black numbers -->
+                <div class="black-numbers-mask">
+                    <div class="numbers-clone">
+                        <span class="v-current">00</span>
+                        <span>/</span>
+                        <span class="v-target">50</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper" id="content-wrapper">
+            <div class="label-group">
+                <div class="label">SUB GOAL</div>
+                <div id="completed-tag" class="completed-tag">COMPLETED</div>
+            </div>
+            <div class="numbers white" id="number-group">
+                <span id="current-val" class="current-val">00</span>
+                <span class="divider">/</span>
+                <span id="target-val" class="target-val">50</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TARGET_GOAL = 50; // Manual configuration
+        const POLL_INTERVAL = 500; // Faster polling for better "gift" responsiveness
+
+        function updateProgressBar(current) {
+            const fill = document.getElementById('progress-fill');
+            const wrapper = document.getElementById('content-wrapper');
+            const numGroup = document.getElementById('number-group');
+            const tag = document.getElementById('completed-tag');
+
+            const percentage = Math.min((current / TARGET_GOAL) * 100, 100);
+            fill.style.width = percentage + '%';
+
+            if (percentage > 0) {
+                fill.classList.add('fill-active');
+            } else {
+                fill.classList.remove('fill-active');
+            }
+
+            // COMPLETION LOGIC
+            if (current >= TARGET_GOAL) {
+                wrapper.classList.add('completed');
+                tag.style.display = 'block';
+                numGroup.style.opacity = '0';
+            } else {
+                wrapper.classList.remove('completed');
+                tag.style.display = 'none';
+                numGroup.style.opacity = '1';
+            }
+        }
+
+        let lastCount = -1;
+        let lastEventId = '';
+
+        function triggerPop() {
+            const el = document.getElementById('current-val');
+            el.classList.remove("current-flash");
+            void el.offsetWidth; // Force Reflow
+            el.classList.add("current-flash");
+        }
+
+        window.updateFollowers = function (val, top, id) {
+            const current = parseInt(val) || 0;
+
+            // Allow animation trigger if ID is different (Spam detection)
+            const isNewEvent = id && id !== lastEventId;
+            const isNewCount = current !== lastCount;
+
+            if (isNewCount || isNewEvent) {
+                // Update text elements (Main and Hidden Mask)
+                document.getElementById('current-val').textContent = current.toLocaleString('en-US', { minimumIntegerDigits: 2 });
+                const clonedCurrent = document.querySelector('.v-current');
+                if (clonedCurrent) clonedCurrent.textContent = current.toLocaleString('en-US', { minimumIntegerDigits: 2 });
+
+                // Trigger pop for any update after initial load
+                if (lastCount !== -1) {
+                    triggerPop();
+                }
+
+                updateProgressBar(current);
+                lastCount = current;
+                if (id) lastEventId = id;
+            }
+        };
+
+        // Initial setup
+        document.getElementById('target-val').textContent = TARGET_GOAL;
+        const clonedTarget = document.querySelector('.v-target');
+        if (clonedTarget) clonedTarget.textContent = TARGET_GOAL;
+
+        function injectScript(filename, id) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const s = document.createElement("script");
+            // Cache busting for frequent updates
+            s.src = filename + "?t=" + Date.now();
+            s.id = id;
+            document.body.appendChild(s);
+        }
+
+        function poll() {
+            injectScript("../Data/data_followers.js", "script-followers");
+        }
+
+        setInterval(poll, POLL_INTERVAL);
+        poll();
+    </script>
+
+    <!-- Color Settings Loader -->
+    <script>
+        (function () {
+            // ╔══════════════════════════════════════════════════════════════════╗
+            // ║              EMBEDDED SMOOTH HUE ENGINE                         ║
+            // ╚══════════════════════════════════════════════════════════════════╝
+
+            const BASE_COLORS = {
+                '--fill-goal-start': 'rgba(17, 153, 142, 0.9)',
+                '--fill-goal-end': 'rgba(56, 239, 125, 0.9)',
+                '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
+                '--accent-line': 'rgba(10, 255, 10, 0.3)'
+            };
+
+            const State = {
+                currentHue: 0,
+                targetHue: 0,
+                animationFrame: null
+            };
+
+            function lerp(start, end, factor) {
+                return start + (end - start) * factor;
+            }
+
+            function animate() {
+                const diff = State.targetHue - State.currentHue;
+                if (Math.abs(diff) > 0.05) {
+                    State.currentHue = lerp(State.currentHue, State.targetHue, 0.08);
+                    updateColors();
+                    State.animationFrame = requestAnimationFrame(animate);
+                } else if (Math.abs(diff) > 0) {
+                    State.currentHue = State.targetHue;
+                    updateColors();
+                    State.animationFrame = null;
+                } else {
+                    State.animationFrame = null;
+                }
+            }
+
+            function updateColors() {
+                if (!window.adjustHue) return;
+                const style = document.documentElement.style;
+                for (const key in BASE_COLORS) {
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                }
+            }
+
+            function loadSettings() {
+                const old = document.getElementById('settings-script');
+                if (old) old.remove();
+
+                const s = document.createElement('script');
+                s.src = '../Settings/settings.js?t=' + Date.now();
+                s.id = 'settings-script';
+                s.onload = function () {
+                    const newTarget = window.GLOBAL_HUE_OFFSET || 0;
+                    if (newTarget !== State.targetHue) {
+                        State.targetHue = newTarget;
+                        if (!State.animationFrame) animate();
+                    }
+                };
+                document.head.appendChild(s);
+            }
+
+            loadSettings();
+            setInterval(loadSettings, 1000);
+        })();
+    </script>
+    </script>
+</body>
+
+</html>

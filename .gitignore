@@ -1,0 +1,31 @@
+# System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary & Backup Files
+*.tmp
+*.bak
+*.log
+*.old
+_old/
+_backup/
+Backup/
+Old/
+Drafts/
+
+# User Specific
+.vscode/
+.idea/
+
+# Streamer.bot specific (if any generated inside)
+# Keep Data/ but ignore content if you want fresh starts, 
+# BUT user might want to keep history. We will keep Data files for now as they are small.
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Ignore the virtual environment if created inside
+venv/
+env/

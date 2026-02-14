@@ -1,0 +1,1 @@
+window.updateChatters("0", "Top: -");

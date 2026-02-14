@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kick Daily - Dock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --gradient-start: rgba(0, 177, 137, 0.95);
+            --gradient-end: rgba(83, 252, 24, 0.95);
+            --neon-green: #0aff0a;
+            --neon-green-soft: rgba(10, 255, 10, 0.1);
+            --fill-goal-start: rgba(17, 153, 142, 0.9);
+            --fill-goal-end: rgba(56, 239, 125, 0.9);
+            --wave-1: rgb(17, 153, 142);
+            --wave-2: rgb(37, 196, 134);
+            --wave-3: rgb(56, 239, 125);
+            --inner-bg: rgb(20, 20, 20);
+            --spin-speed: 10s;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease, fill 1s ease, stroke 1s ease;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        svg {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        /*  DOCK SHAPE — 320 x 320 coordinate system
+            TL: Rounded | TR: Inverted upward
+            BL: Inverted leftward | BR: Square */
+
+        .dock-anchor {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 320px;
+            height: 320px;
+            filter: drop-shadow(-4px -4px 15px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Star Border Wrapper — stays fixed, clips to dock shape */
+        .star-border-wrapper {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-outer);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Spinning gradient — matches sub goal dock exactly */
+        .star-border {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 1200px;
+            height: 1200px;
+            margin-left: -600px;
+            margin-top: -600px;
+            background: conic-gradient(from 0deg,
+                    transparent 0%,
+                    var(--neon-green-soft) 2%,
+                    var(--neon-green) 12%,
+                    var(--neon-green-soft) 22%,
+                    transparent 25%,
+                    transparent 100%);
+            animation: spin var(--spin-speed) linear infinite;
+            /* Precise masking: Hide only the center 'wick' origin */
+            -webkit-mask-image: radial-gradient(circle, transparent 20px, black 25px);
+            mask-image: radial-gradient(circle, transparent 20px, black 25px);
+        }
+
+        .star-border::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            filter: blur(20px);
+            opacity: 0.8;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Inner Shape */
+        .inner-shape {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-inner);
+            background: var(--inner-bg);
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* Progress fill wrapper — holds clip-path in place */
+        .progress-fill-wrapper {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-inner);
+            z-index: 3;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--fill-goal-start), var(--fill-goal-end));
+            transform: translateY(100%);
+            transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* === Ocean wave at top of fill === */
+        .wave-container {
+            position: absolute;
+            top: -60px;
+            left: 0;
+            right: 0;
+            height: 250px;
+            overflow: hidden;
+            filter: drop-shadow(0 -5px 8px rgba(56, 239, 125, 0.6));
+            mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 100%);
+        }
+
+        .wave {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            left: 50%;
+            top: 30px;
+            margin-left: -350px;
+            border-radius: 43%;
+            background: var(--wave-1);
+            animation: wave-rotate 8s linear infinite;
+        }
+
+        .wave:nth-child(2) {
+            border-radius: 45%;
+            background: var(--wave-2);
+            animation: wave-rotate 10s linear infinite reverse;
+        }
+
+        .wave:nth-child(3) {
+            border-radius: 47%;
+            background: var(--wave-3);
+            animation: wave-rotate 9s linear infinite;
+        }
+
+        @keyframes wave-rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .content-layer {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-inner);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-left: 65px;
+        }
+
+        /* Glass overlay */
+        .glass-overlay {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-inner);
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 40%,
+                    transparent 55%, rgba(0, 0, 0, 0.1) 100%);
+            z-index: 15;
+            pointer-events: none;
+        }
+
+
+        /* === Typography — edge-to-edge, tight fit === */
+        .value {
+            font-family: 'Anton', sans-serif;
+            font-size: 130px;
+            line-height: 0.9;
+            margin-top: -15px;
+            background: linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 20%, #e0e0e0 40%,
+                    #a0a0a0 55%, #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+            padding-top: 20px;
+            padding-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .value::before {
+            content: attr(data-text);
+            position: absolute;
+            inset: 0;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
+            color: transparent;
+            z-index: -1;
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+            margin-top: 8px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .label-daily {
+            font-family: 'Inter', sans-serif;
+            font-size: 25px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            background: linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 20%, #e0e0e0 40%,
+                    #a0a0a0 55%, #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+            margin-bottom: 5px;
+        }
+
+        .label-type {
+            font-family: 'Inter', sans-serif;
+            font-size: 80px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 20%, #e0e0e0 40%,
+                    #a0a0a0 55%, #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+            position: relative;
+        }
+
+        .label-type::before {
+            content: 'KICKS';
+            position: absolute;
+            inset: 0;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+            color: transparent;
+            z-index: -1;
+        }
+
+        /* === GOLD PLATED THEME (Daily Dock) === */
+        .gold-applied .value,
+        .gold-applied .label-daily,
+        .gold-applied .label-type {
+            background: linear-gradient(180deg,
+                    #ffed8a 0%,
+                    #fcd04d 25%,
+                    #d4af37 50%,
+                    #8a6d3b 75%,
+                    #d4af37 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.4);
+            filter:
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
+        }
+
+        .gold-applied .value::before,
+        .gold-applied .label-type::before {
+            -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.2);
+        }
+
+        /* Logo */
+        .logo-layer {
+            position: absolute;
+            inset: 0;
+            clip-path: url(#dock-inner);
+            z-index: 12;
+            /* Increased to stay above fill and text glow */
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .watermark-logo {
+            position: absolute;
+            bottom: -50px;
+            right: -20px;
+            width: 350px;
+            height: auto;
+            opacity: 0.25;
+            pointer-events: none;
+            transform: rotate(15deg) perspective(800px) rotateY(-25deg) rotateX(10deg);
+            transform-origin: bottom right;
+            filter: brightness(1.3) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+            -webkit-mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+            mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+            transition: all 0.5s ease;
+        }
+
+        .gold-applied .watermark-logo {
+            opacity: 0.45;
+            filter: brightness(1.5) drop-shadow(0 0 15px rgba(212, 175, 55, 0.5));
+        }
+
+        /* Glitch */
+        @keyframes glitch-skew {
+            0% {
+                transform: skew(0deg);
+            }
+
+            10% {
+                transform: skew(-4deg);
+            }
+
+            20% {
+                transform: skew(3deg);
+            }
+
+            30% {
+                transform: skew(-2deg);
+            }
+
+            40% {
+                transform: skew(4deg);
+            }
+
+            50% {
+                transform: skew(-1deg);
+            }
+
+            100% {
+                transform: skew(0deg);
+            }
+        }
+
+        .value.glitch-active {
+            animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+            position: relative;
+        }
+
+        .value.glitch-active::before,
+        .value.glitch-active::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .value.glitch-active::before {
+            color: #0ff;
+            z-index: -1;
+            animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+            text-shadow: 2px 0 #0ff;
+        }
+
+        .value.glitch-active::after {
+            color: #f0f;
+            z-index: -2;
+            animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
+            text-shadow: -2px 0 #f0f;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% {
+                clip-path: inset(20% 0 79% 0);
+                transform: translate(-8px, 0);
+            }
+
+            20% {
+                clip-path: inset(60% 0 38% 0);
+                transform: translate(8px, 0);
+            }
+
+            40% {
+                clip-path: inset(40% 0 58% 0);
+                transform: translate(-8px, 0);
+            }
+
+            60% {
+                clip-path: inset(80% 0 18% 0);
+                transform: translate(8px, 0);
+            }
+
+            80% {
+                clip-path: inset(10% 0 88% 0);
+                transform: translate(-8px, 0);
+            }
+
+            100% {
+                clip-path: inset(30% 0 68% 0);
+                transform: translate(8px, 0);
+            }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% {
+                clip-path: inset(10% 0 88% 0);
+                transform: translate(8px, 0);
+            }
+
+            20% {
+                clip-path: inset(30% 0 68% 0);
+                transform: translate(-8px, 0);
+            }
+
+            40% {
+                clip-path: inset(15% 0 82% 0);
+                transform: translate(8px, 0);
+            }
+
+            60% {
+                clip-path: inset(55% 0 42% 0);
+                transform: translate(-8px, 0);
+            }
+
+            80% {
+                clip-path: inset(40% 0 58% 0);
+                transform: translate(8px, 0);
+            }
+
+            100% {
+                clip-path: inset(70% 0 28% 0);
+                transform: translate(-8px, 0);
+            }
+        }
+
+        /* Bullet casing canvas */
+        #sparks-canvas {
+            position: fixed;
+            top: -1000px;
+            left: -1000px;
+            width: 4000px;
+            height: 4000px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Number Pop Flash — Premium High-Intensity Animation */
+        .number-flash {
+            animation: number-pop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+            z-index: 1000 !important;
+        }
+
+        @keyframes number-pop {
+            0% {
+                filter: brightness(5) drop-shadow(0 0 40px #fff);
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            40% {
+                filter: brightness(2) drop-shadow(0 0 20px #fff);
+                transform: scale(1.05);
+            }
+
+            100% {
+                filter: brightness(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!--
+        DOCK SHAPE: 350 x 260
+        Top-Left: Rounded | Top-Right: Inverted upward
+        Bottom-Left: Inverted leftward | Bottom-Right: Square
+
+        The right edge and bottom edge are flush with screen edges.
+        Inverse curves create smooth transitions from the panel body
+        to the screen edges (like the sub goal dock's bottom curves).
+    -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <!-- OUTER shape (320x320)
+                 TL: rounded 60px radius | TR: inverse 50px span
+                 BL: inverse 50px span  | BR: square -->
+            <clipPath id="dock-outer" clipPathUnits="userSpaceOnUse">
+                <path d="
+                    M 320 0
+                    L 320 320
+                    L 0 320
+                    C 25 320, 50 295, 50 270
+                    L 50 60
+                    C 50 27, 77 0, 110 0
+                    L 270 0
+                    C 270 0, 320 0, 320 0
+                    Z" />
+            </clipPath>
+
+            <!-- INNER shape: 4px inset (right + bottom edges stay flush) -->
+            <clipPath id="dock-inner" clipPathUnits="userSpaceOnUse">
+                <path d="
+                    M 320 4
+                    L 320 320
+                    L 4 320
+                    C 29 320, 54 299, 54 274
+                    L 54 64
+                    C 54 31, 81 4, 114 4
+                    L 266 4
+                    C 266 4, 320 4, 320 4
+                    Z" />
+            </clipPath>
+        </defs>
+    </svg>
+
+    <div class="dock-anchor">
+        <canvas id="sparks-canvas"></canvas>
+
+        <div class="star-border-wrapper">
+            <div class="star-border"></div>
+        </div>
+
+        <div class="inner-shape"></div>
+        <div class="progress-fill-wrapper">
+            <div id="progress-fill" class="progress-fill">
+                <div class="wave-container">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logo-layer">
+            <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        </div>
+
+        <div class="glass-overlay"></div>
+
+        <div class="content-layer">
+            <div id="kicks-value" class="value" data-text="00">00</div>
+            <div class="title">
+                <span class="label-daily">DAILY</span>
+                <span class="label-type">KICKS</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const POLL_INTERVAL = 1000;
+
+        // === BULLET CASING PARTICLES ===
+        const canvas = document.getElementById('sparks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let bullets = [];
+
+        function resize() {
+            width = canvas.width = canvas.offsetWidth;
+            height = canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Casing {
+            constructor(isBurst = false) {
+                this.reset(isBurst);
+            }
+            reset(isBurst = false) {
+                const container = document.querySelector('.dock-anchor');
+                const cRect = container.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+
+                const spawnX = (cRect.left + cRect.width / 2) - canvasRect.left;
+                const spawnY = cRect.top - canvasRect.top;
+
+                this.x = spawnX + (Math.random() * 40 - 20);
+                this.y = spawnY + 20;
+
+                const dir = Math.random() > 0.5 ? 1 : -1;
+
+                if (isBurst) {
+                    this.vx = (Math.random() * 8 + 4) * dir;
+                    this.vy = -(Math.random() * 15 + 20);
+                    this.life = 200;
+                } else {
+                    this.vx = (Math.random() * 6 + 4) * dir;
+                    this.vy = -(Math.random() * 10 + 15);
+                    this.life = 150;
+                }
+
+                this.gravity = 0.4;
+                this.angle = Math.random() * Math.PI;
+                this.vAngle = (Math.random() * 0.2 + 0.05) * dir;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.angle += this.vAngle;
+                this.life--;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                const gradient = ctx.createLinearGradient(-18, 0, 18, 0);
+                gradient.addColorStop(0, '#b8860b');
+                gradient.addColorStop(0.5, '#f0e68c');
+                gradient.addColorStop(1, '#daa520');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-18, -48, 36, 96);
+
+                ctx.fillStyle = '#8b4500';
+                ctx.fillRect(-22, 38, 44, 10);
+
+                ctx.restore();
+            }
+        }
+
+        let rapidFireUntil = 0;
+
+        function animateBullets() {
+            ctx.clearRect(0, 0, width, height);
+
+            const now = Date.now();
+            const isRapidFire = now < rapidFireUntil;
+            const threshold = 0.98;
+
+            if (isRapidFire && Math.random() > threshold) {
+                bullets.push(new Casing(false));
+            }
+
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                if (b.y >= height + 50 || b.life <= -50) {
+                    bullets.splice(i, 1);
+                } else {
+                    b.update();
+                    b.draw();
+                }
+            }
+
+            requestAnimationFrame(animateBullets);
+        }
+        animateBullets();
+
+        // === HEARTBEAT GLITCH ===
+        let glitchTimer;
+        let isSpamming = false;
+
+        function triggerHeartbeatGlitch() {
+            if (isSpamming) return;
+            const valueEl = document.getElementById('kicks-value');
+            if (!valueEl || valueEl.classList.contains('number-flash')) return;
+
+            valueEl.classList.remove("glitch-active");
+            void valueEl.offsetWidth;
+            valueEl.classList.add("glitch-active");
+            setTimeout(() => valueEl.classList.remove("glitch-active"), 400);
+        }
+
+        function startHeartbeat() {
+            if (glitchTimer) clearInterval(glitchTimer);
+            glitchTimer = setInterval(triggerHeartbeatGlitch, 1500);
+        }
+        startHeartbeat();
+
+        // === COUNTER ANIMATION WITH GLITCH ===
+        let lastKickId = '';
+
+        function setAnimatedText(id, newValue, uniqueId) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const numVal = parseInt(newValue) || 0;
+            const lastTarget = parseInt(el.getAttribute("data-target"));
+
+            // If IDs are used (Streamer.bot spam support)
+            if (uniqueId && uniqueId === lastKickId) return;
+            lastKickId = uniqueId;
+
+            // If no ID but value is same, skip (prevents polling artifacts)
+            if (!uniqueId && lastTarget === numVal) return;
+
+            el.setAttribute("data-target", numVal);
+            el.setAttribute("data-text", newValue);
+            const oldVal = parseInt(el.textContent.replace(/,/g, '')) || 0;
+
+            // TRIGGER SPAM RESPONSIVENESS
+            if (numVal > oldVal || uniqueId) {
+                isSpamming = true;
+                rapidFireUntil = Date.now() + 5000;
+
+                // Clear any existing heartbeat lock
+                if (glitchTimer) clearInterval(glitchTimer);
+
+                // FORCE RESTART ANIMATION
+                el.classList.remove("glitch-active", "number-flash");
+                void el.offsetWidth; // Force Reflow
+                el.classList.add("number-flash"); // Only Flash for the pop
+
+                // Cooldown: Return to heartbeat after 2s of silence
+                setTimeout(() => {
+                    el.classList.remove("number-flash");
+                    isSpamming = false;
+                    startHeartbeat();
+                }, 2000);
+            }
+
+            if (isNaN(numVal)) {
+                el.textContent = newValue;
+                return;
+            }
+
+            animateValue(el, oldVal, numVal, 1000); // Shorter roll for better response
+        }
+
+        function updateFontSize(obj, text) {
+            const len = text.length;
+            let size = 130;
+            obj.style.letterSpacing = "normal";
+            if (len >= 5) size = 100;
+            if (len >= 6) obj.style.letterSpacing = "-3px";
+            obj.style.fontSize = size + "px";
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentNum = Math.floor(progress * (end - start) + start);
+                const current = currentNum.toLocaleString('en-US', {
+                    minimumIntegerDigits: 2, useGrouping: true
+                });
+                obj.textContent = current;
+                obj.setAttribute("data-text", current);
+                updateFontSize(obj, current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    const finalVal = end.toLocaleString('en-US', {
+                        minimumIntegerDigits: 2, useGrouping: true
+                    });
+                    obj.textContent = finalVal;
+                    obj.setAttribute("data-text", finalVal);
+                    updateFontSize(obj, finalVal);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function setText(id, value) {
+            if (id.includes("-value")) setAnimatedText(id, value);
+            else {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            }
+        }
+
+        // === BACKGROUND FILL PROGRESS ===
+        const KICK_TARGET = 10000;
+
+        function updateProgressFill(current) {
+            const fill = document.getElementById('progress-fill');
+            const anchor = document.querySelector('.dock-anchor');
+            const percentage = Math.min((current / KICK_TARGET) * 100, 100);
+            fill.style.transform = 'translateY(' + (100 - percentage) + '%)';
+
+
+            if (percentage > 0) {
+                fill.classList.add('fill-active');
+            } else {
+                fill.classList.remove('fill-active');
+            }
+
+            // GOLD THEME TOGGLE
+            if (current >= KICK_TARGET) {
+                anchor.classList.add('gold-applied');
+            } else {
+                anchor.classList.remove('gold-applied');
+            }
+        }
+
+        window.updateKicks = function (val, sub, id) {
+            setAnimatedText("kicks-value", val, id);
+            const numVal = parseInt(val) || 0;
+            updateProgressFill(numVal);
+        };
+
+        function injectScript(filename, id) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const s = document.createElement("script");
+            // High-precision cache busting
+            s.src = filename + "?t=" + Date.now();
+            s.id = id;
+            document.body.appendChild(s);
+        }
+
+        function pollAll() {
+            // Priority 1: Data
+            injectScript("../Data/data_kicks.js", "script-kicks");
+
+        }
+
+        setInterval(pollAll, 500); // 2x faster polling than Recent Kicker
+        pollAll();
+    </script>
+
+    <!-- Color Settings Loader -->
+    <script>
+        (function () {
+            // ╔══════════════════════════════════════════════════════════════════╗
+            // ║              EMBEDDED SMOOTH HUE ENGINE                         ║
+            // ╚══════════════════════════════════════════════════════════════════╝
+
+            const BASE_COLORS = {
+                '--neon-green': '#0aff0a',
+                '--border-glow-color': 'rgba(10, 255, 10, 0.4)',
+                '--label-glow': 'rgba(10, 255, 10, 0.3)',
+                '--neon-green-soft': 'rgba(10, 255, 10, 0.1)',
+                '--neon-green-accent': 'rgba(10, 255, 10, 0.3)',
+                '--fill-start': 'rgba(5, 60, 50, 0.95)',
+                '--fill-mid': 'rgba(10, 100, 80, 0.95)',
+                '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
+                '--fill-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
+                '--fill-goal-start': 'rgba(17, 153, 142, 0.9)',
+                '--fill-goal-end': 'rgba(56, 239, 125, 0.9)',
+                '--wave-1': 'rgb(17, 153, 142)',
+                '--wave-2': 'rgb(37, 196, 134)',
+                '--wave-3': 'rgb(56, 239, 125)'
+            };
+
+            const State = {
+                currentHue: 0,
+                targetHue: 0,
+                animationFrame: null
+            };
+
+            function lerp(start, end, factor) {
+                return start + (end - start) * factor;
+            }
+
+            function animate() {
+                const diff = State.targetHue - State.currentHue;
+                if (Math.abs(diff) > 0.05) {
+                    State.currentHue = lerp(State.currentHue, State.targetHue, 0.08);
+                    updateColors();
+                    State.animationFrame = requestAnimationFrame(animate);
+                } else if (Math.abs(diff) > 0) {
+                    State.currentHue = State.targetHue;
+                    updateColors();
+                    State.animationFrame = null;
+                } else {
+                    State.animationFrame = null;
+                }
+            }
+
+            function updateColors() {
+                if (!window.adjustHue) return;
+                const style = document.documentElement.style;
+                for (const key in BASE_COLORS) {
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                }
+            }
+
+            function loadSettings() {
+                const old = document.getElementById('settings-script');
+                if (old) old.remove();
+
+                const s = document.createElement('script');
+                s.src = '../Settings/settings.js?t=' + Date.now();
+                s.id = 'settings-script';
+                s.onload = function () {
+                    const newTarget = window.GLOBAL_HUE_OFFSET || 0;
+                    if (newTarget !== State.targetHue) {
+                        State.targetHue = newTarget;
+                        if (!State.animationFrame) animate();
+                    }
+                };
+                document.head.appendChild(s);
+            }
+
+            loadSettings();
+            setInterval(loadSettings, 1000);
+        })();
+    </script>
+</body>
+
+</html>
