@@ -11,10 +11,17 @@ window.ENABLE_BULLETS_RECT = true;
 // ║  240 = Red/Orange                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-window.GLOBAL_HUE_OFFSET = 28; // Degrees (0-360)
-window.GLOBAL_HUE_DEFAULT = 28; // Baseline for resets
-window.GLOBAL_BRIGHTNESS = 1.04; // Brightness Multiplier (0.0 - 2.0)
-window.GLOBAL_COLOR_BRIGHTNESS = 2.0; // Color Shade Multiplier (0.2 - 2.0)
+window.GLOBAL_HUE_OFFSET = 360; // Degrees (0-360)
+window.GLOBAL_HUE_DEFAULT = 360; // Baseline for resets
+window.GLOBAL_BRIGHTNESS = 1.0; // Brightness Multiplier (0.0 - 2.0)
+window.GLOBAL_COLOR_BRIGHTNESS = 1.66; // Color Shade Multiplier (0.2 - 2.0)
+
+// === STAR BORDER SETTINGS ===
+window.STAR_HUE_OFFSET = 190;
+window.STAR_COLOR_BRIGHTNESS = 2.0;
+
+// === EFFECTS ===
+window.GLOSSY_INTENSITY = 4.0; // 0.0 to 2.0
 
 // --------------------------------------------------------------------
 // Utility: Adjust Hue while preserving Saturation, Lightness & Alpha

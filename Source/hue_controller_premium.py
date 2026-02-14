@@ -29,7 +29,7 @@ class HueControllerApp(ctk.CTk):
 
         # Window Setup
         self.title("Color Controller")
-        self.geometry("420x680")
+        self.geometry("600x880")
         self.configure(fg_color=COLOR_BG)
         # Frameless Mode: This guarantees no OS title bar
         self.overrideredirect(True) 
@@ -77,14 +77,20 @@ class HueControllerApp(ctk.CTk):
 
         # State
         self.current_hue = 0
-        self.current_color_brightness = 1.0 # New
+        self.current_brightness = 1.0
+        self.current_color_brightness = 1.0
+        self.star_hue = 190
+        self.star_shade = 1.0
+        self.gloss_intensity = 1.0
+        
         self.last_write_time = 0
         self.write_delay = 0.05
         self.load_initial_hue()
 
         # Layout Grid
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(1, weight=1) # Give all space to scroll area
+        self.grid_rowconfigure(2, weight=1)
 
         # === 1. Custom Title Bar ===
         self.title_bar = ctk.CTkFrame(self, height=40, fg_color=COLOR_BG, corner_radius=0)
@@ -112,114 +118,85 @@ class HueControllerApp(ctk.CTk):
 
         # Title Label
         self.lbl_title = ctk.CTkLabel(
-            self.title_bar, text="COLOR CONTROLLER", 
+            self.title_bar, text="BULLET PUNJABI CONTROLLER", 
             font=("Anton", 14), text_color="#666666"
         )
         self.lbl_title.pack(side="left", padx=15)
         self.lbl_title.bind("<Button-1>", self.start_move)
 
-        # === 2. Logo Area === (Moved to setup_icon)
+        # Main Scrollable Frame
+        self.scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
+        self.scroll_frame.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
+        self.scroll_frame.grid_columnconfigure(0, weight=1)
 
-        # === 3. Hue Slider & Value ===
-        self.interaction_frame = ctk.CTkFrame(self, fg_color=COLOR_SURFACE, corner_radius=20)
-        self.interaction_frame.grid(row=2, column=0, padx=25, pady=20, sticky="ew")
+        # === 2. Logo Area ===
+        self.logo_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+        self.logo_frame.grid(row=0, column=0, pady=(10, 20))
+        # Label will be packed here by setup_icon later
 
-        self.lbl_value = ctk.CTkLabel(
-            self.interaction_frame, 
-            text=f"{self.current_hue}°", 
-            font=("Inter", 42, "bold"),
-            text_color="white"
-        )
-        self.lbl_value.pack(pady=(20, 5))
+        # === 3. Theme Controls Card ===
+        self.theme_frame = ctk.CTkFrame(self.scroll_frame, fg_color=COLOR_SURFACE, corner_radius=20)
+        self.theme_frame.grid(row=1, column=0, padx=15, pady=10, sticky="ew")
 
-        self.lbl_sub = ctk.CTkLabel(
-            self.interaction_frame, 
-            text="GLOBAL HUE SHIFT", 
-            font=("Inter", 10, "bold"),
-            text_color="#444444"
-        )
-        self.lbl_sub.pack(pady=(0, 20))
+        ctk.CTkLabel(self.theme_frame, text="CORE THEME", font=("Inter", 12, "bold"), text_color="#555555").pack(pady=(15, 0))
 
-        # Slider
-        self.slider = ctk.CTkSlider(
-            self.interaction_frame, 
-            from_=0, to=360, 
-            number_of_steps=360,
-            width=280, height=24,
-            progress_color=COLOR_SLIDER,
-            button_color="white",
-            button_hover_color="#eeeeee",
-            command=self.on_slider_change
-        )
-        self.slider.set(self.current_hue)
-        self.slider.pack(pady=(0, 30))
+        # Hue
+        self.lbl_value = ctk.CTkLabel(self.theme_frame, text=f"{self.current_hue}°", font=("Inter", 38, "bold"), text_color="white")
+        self.lbl_value.pack(pady=(10, 0))
+        self.slider = ctk.CTkSlider(self.theme_frame, from_=0, to=360, number_of_steps=360, width=400, command=self.on_slider_change)
+        self.slider.pack(pady=(5, 10))
 
-        # === 4. Brightness Slider ===
-        self.lbl_bright_val = ctk.CTkLabel(
-            self.interaction_frame, 
-            text=f"{int(getattr(self, 'current_brightness', 1.0)*100)}%", 
-            font=("Inter", 24, "bold"),
-            text_color="white"
-        )
-        self.lbl_bright_val.pack(pady=(10, 5))
+        # Brightness
+        self.lbl_bright_val = ctk.CTkLabel(self.theme_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_bright_val.pack(pady=(10, 0))
+        ctk.CTkLabel(self.theme_frame, text="GLOBAL BRIGHTNESS (FILTER)", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_bright = ctk.CTkSlider(self.theme_frame, from_=0.2, to=2.0, width=400, command=self.on_brightness_change)
+        self.slider_bright.pack(pady=(5, 10))
 
-        self.lbl_bright_sub = ctk.CTkLabel(
-            self.interaction_frame, 
-            text="GLOBAL BRIGHTNESS", 
-            font=("Inter", 10, "bold"),
-            text_color="#444444"
-        )
-        self.lbl_bright_sub.pack(pady=(0, 10))
+        # Color Shade
+        self.lbl_shade_val = ctk.CTkLabel(self.theme_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_shade_val.pack(pady=(10, 0))
+        ctk.CTkLabel(self.theme_frame, text="COLOR SHADE (HSL LIGHTNESS)", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_shade = ctk.CTkSlider(self.theme_frame, from_=0.2, to=2.0, width=400, command=self.on_shade_change)
+        self.slider_shade.pack(pady=(5, 20))
 
-        self.slider_bright = ctk.CTkSlider(
-            self.interaction_frame, 
-            from_=0.2, to=2.0, 
-            number_of_steps=180,
-            width=280, height=24,
-            progress_color="#ffffff",
-            button_color="white",
-            button_hover_color="#eeeeee",
-            command=self.on_brightness_change
-        )
-        self.slider_bright.set(getattr(self, 'current_brightness', 1.0))
-        self.slider_bright.pack(pady=(0, 20))
+        # === 4. Accent Controls Card ===
+        self.accent_frame = ctk.CTkFrame(self.scroll_frame, fg_color=COLOR_SURFACE, corner_radius=20)
+        self.accent_frame.grid(row=2, column=0, padx=15, pady=10, sticky="ew")
 
-        # === 5. Color Shade Slider ===
-        self.lbl_shade_val = ctk.CTkLabel(
-            self.interaction_frame, 
-            text=f"{int(getattr(self, 'current_color_brightness', 1.0)*100)}%", 
-            font=("Inter", 24, "bold"),
-            text_color="white"
-        )
-        self.lbl_shade_val.pack(pady=(10, 5))
+        ctk.CTkLabel(self.accent_frame, text="STAR BORDER & ACCENTS", font=("Inter", 12, "bold"), text_color="#555555").pack(pady=(15, 0))
 
-        self.lbl_shade_sub = ctk.CTkLabel(
-            self.interaction_frame, 
-            text="COLOR SHADE (RICHER/DARKER)", 
-            font=("Inter", 10, "bold"),
-            text_color="#444444"
-        )
-        self.lbl_shade_sub.pack(pady=(0, 10))
+        # Star Hue
+        self.lbl_star_hue = ctk.CTkLabel(self.accent_frame, text=f"{self.star_hue}°", font=("Inter", 24, "bold"), text_color="white")
+        self.lbl_star_hue.pack(pady=(10, 0))
+        self.slider_star_hue = ctk.CTkSlider(self.accent_frame, from_=0, to=360, number_of_steps=360, width=400, command=self.on_star_hue_change)
+        self.slider_star_hue.pack(pady=(5, 10))
 
-        self.slider_shade = ctk.CTkSlider(
-            self.interaction_frame, 
-            from_=0.2, to=2.0, 
-            number_of_steps=180,
-            width=280, height=24,
-            progress_color="#666666",
-            button_color="white",
-            button_hover_color="#eeeeee",
-            command=self.on_shade_change
-        )
-        self.slider_shade.set(getattr(self, 'current_color_brightness', 1.0))
-        self.slider_shade.pack(pady=(0, 30))
+        # Star Shade
+        self.lbl_star_shade = ctk.CTkLabel(self.accent_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_star_shade.pack(pady=(10, 0))
+        ctk.CTkLabel(self.accent_frame, text="STAR BORDER SHADE", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_star_shade = ctk.CTkSlider(self.accent_frame, from_=0.2, to=2.0, width=400, command=self.on_star_shade_change)
+        self.slider_star_shade.pack(pady=(5, 20))
 
-        # === 4. Status Bar ===
+        # === 5. Effects Card ===
+        self.effect_frame = ctk.CTkFrame(self.scroll_frame, fg_color=COLOR_SURFACE, corner_radius=20)
+        self.effect_frame.grid(row=3, column=0, padx=15, pady=10, sticky="ew")
+
+        ctk.CTkLabel(self.effect_frame, text="VISUAL EFFECTS", font=("Inter", 12, "bold"), text_color="#555555").pack(pady=(15, 0))
+
+        # Gloss
+        self.lbl_gloss = ctk.CTkLabel(self.effect_frame, text="100%", font=("Inter", 24, "bold"), text_color="white")
+        self.lbl_gloss.pack(pady=(10, 0))
+        ctk.CTkLabel(self.effect_frame, text="GLOSSY INTENSITY", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_gloss = ctk.CTkSlider(self.effect_frame, from_=0.0, to=4.0, width=400, command=self.on_gloss_change)
+        self.slider_gloss.pack(pady=(5, 25))
+        # Status Bar stays outside scroll
         self.lbl_status = ctk.CTkLabel(
             self, text="READY", 
             font=("Inter", 10), text_color="#333333"
         )
-        self.lbl_status.grid(row=3, column=0, pady=10, sticky="s")
+        self.lbl_status.grid(row=3, column=0, pady=5, sticky="s")
 
 
     def setup_icon(self):
@@ -315,10 +292,46 @@ class HueControllerApp(ctk.CTk):
                     self.current_color_brightness = float(match_cb.group(1))
                 else:
                     self.current_color_brightness = 1.0
-        except:
+
+                match_sh = re.search(r'window\.STAR_HUE_OFFSET\s*=\s*(\d+);', content)
+                if match_sh:
+                    self.star_hue = int(match_sh.group(1))
+                else:
+                    self.star_hue = 190
+
+                match_ss = re.search(r'window\.STAR_COLOR_BRIGHTNESS\s*=\s*([\d\.]+);', content)
+                if match_ss:
+                    self.star_shade = float(match_ss.group(1))
+                else:
+                    self.star_shade = 1.0
+
+                match_gl = re.search(r'window\.GLOSSY_INTENSITY\s*=\s*([\d\.]+);', content)
+                if match_gl:
+                    self.gloss_intensity = float(match_gl.group(1))
+                else:
+                    self.gloss_intensity = 1.0
+
+                # Set slider positions
+                self.slider.set(self.current_hue)
+                self.slider_bright.set(self.current_brightness)
+                self.slider_shade.set(self.current_color_brightness)
+                self.slider_star_hue.set(self.star_hue)
+                self.slider_star_shade.set(self.star_shade)
+                self.slider_gloss.set(self.gloss_intensity)
+
+                self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
+                self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
+                self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
+                self.lbl_gloss.configure(text=f"{int(self.gloss_intensity*100)}%")
+
+        except Exception as e:
+            print(f"Load Settings error: {e}")
             self.current_hue = 0
             self.current_brightness = 1.0
             self.current_color_brightness = 1.0
+            self.star_hue = 190
+            self.star_shade = 1.0
+            self.gloss_intensity = 1.0
 
     def on_slider_change(self, value):
         val = int(value)
@@ -337,6 +350,24 @@ class HueControllerApp(ctk.CTk):
         val = round(float(value), 2)
         self.lbl_shade_val.configure(text=f"{int(val*100)}%")
         self.current_color_brightness = val
+        self.debounce_write()
+
+    def on_star_hue_change(self, value):
+        val = int(value)
+        self.lbl_star_hue.configure(text=f"{val}°")
+        self.star_hue = val
+        self.debounce_write()
+
+    def on_star_shade_change(self, value):
+        val = round(float(value), 2)
+        self.lbl_star_shade.configure(text=f"{int(val*100)}%")
+        self.star_shade = val
+        self.debounce_write()
+
+    def on_gloss_change(self, value):
+        val = round(float(value), 2)
+        self.lbl_gloss.configure(text=f"{int(val*100)}%")
+        self.gloss_intensity = val
         self.debounce_write()
 
     def debounce_write(self):
@@ -381,6 +412,36 @@ class HueControllerApp(ctk.CTk):
                 )
             else:
                 content += f"\nwindow.GLOBAL_COLOR_BRIGHTNESS = {self.current_color_brightness};"
+
+            # Update Star Hue
+            if "window.STAR_HUE_OFFSET" in content:
+                content = re.sub(
+                    r'(window\.STAR_HUE_OFFSET\s*=\s*)(\d+)(;)',
+                    f'\\g<1>{self.star_hue}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.STAR_HUE_OFFSET = {self.star_hue};"
+
+            # Update Star Shade
+            if "window.STAR_COLOR_BRIGHTNESS" in content:
+                content = re.sub(
+                    r'(window\.STAR_COLOR_BRIGHTNESS\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.star_shade}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.STAR_COLOR_BRIGHTNESS = {self.star_shade};"
+
+            # Update Gloss
+            if "window.GLOSSY_INTENSITY" in content:
+                content = re.sub(
+                    r'(window\.GLOSSY_INTENSITY\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.gloss_intensity}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.GLOSSY_INTENSITY = {self.gloss_intensity};"
 
             with open(SETTINGS_PATH, 'w', encoding='utf-8') as f:
                 f.write(content)

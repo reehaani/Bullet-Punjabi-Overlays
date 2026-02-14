@@ -16,8 +16,8 @@
             --fill-glow-color: rgba(56, 239, 125, 0.4);
             --bar-fill-bg: linear-gradient(135deg, var(--fill-goal-start), var(--fill-goal-end));
 
-            /* === Color Group 2: Neon Green === */
-            --neon-green: #0aff0a;
+            /* === Color Group 2: Accent / Star Border === */
+            --star-color: #0aff0a;
 
             /* === Layout === */
             --track-bg: rgba(0, 0, 0, 0.8);
@@ -64,7 +64,7 @@
             height: 1200px;
             margin-left: -600px;
             margin-top: -600px;
-            background: conic-gradient(transparent, transparent, transparent, var(--neon-green));
+            background: conic-gradient(transparent, transparent, transparent, var(--star-color));
             animation: spin 4s linear infinite;
             z-index: 1;
         }
@@ -96,6 +96,24 @@
             background: rgba(20, 20, 20, 0.95);
             z-index: 2;
             overflow: hidden;
+            /* Rim Light: Sharp top catch + soft bottom shadow */
+            box-shadow:
+                inset 0 1px 1px rgba(255, 255, 255, calc(0.6 * var(--gloss-opacity, 1))),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .glass-overlay {
+            position: absolute;
+            inset: 0;
+            /* Intensified Gloss Gradient */
+            background: linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0.25) 0%,
+                    rgba(255, 255, 255, 0.1) 40%,
+                    transparent 55%,
+                    rgba(0, 0, 0, 0.15) 100%);
+            z-index: 15;
+            pointer-events: none;
+            opacity: var(--gloss-opacity, 1);
         }
 
         /* === Progress Fill === */
@@ -257,6 +275,7 @@
         <div class="star-border"></div>
         <div class="inner-bar-track">
             <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+            <div class="glass-overlay"></div>
 
             <div id="progress-fill" class="progress-fill">
                 <!-- This masked layer moves with the fill and uncovers black numbers -->
@@ -413,9 +432,27 @@
             function updateColors() {
                 if (!window.adjustHue) return;
                 const style = document.documentElement.style;
+
+                // 1. Core Theme Colors
+                const themeHue = State.currentHue;
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+
                 for (const key in BASE_COLORS) {
-                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                    // Temporarily swap shade so adjustHue can use it
+                    const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                    window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
                 }
+
+                // 2. Star Border Individualism
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
+
+                const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                window.GLOBAL_COLOR_BRIGHTNESS = starShade;
+                style.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', starHue));
+                window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
             }
 
             function loadSettings() {
@@ -432,15 +469,21 @@
                         if (!State.animationFrame) animate();
                     }
 
-                    // Apply Brightness
+                    // Apply Global Filters
                     const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                    const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+
                     document.documentElement.style.filter = `brightness(${bright})`;
+                    document.documentElement.style.setProperty('--gloss-opacity', gloss);
+
+                    // Update Colors if needed (for instant response on Shade/Star change)
+                    updateColors();
                 };
                 document.head.appendChild(s);
             }
 
             loadSettings();
-            setInterval(loadSettings, 1000);
+            setInterval(loadSettings, 300);
         })();
     </script>
     </script>
