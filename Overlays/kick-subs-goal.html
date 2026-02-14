@@ -436,23 +436,31 @@
                 // 1. Core Theme Colors
                 const themeHue = State.currentHue;
                 const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
 
                 for (const key in BASE_COLORS) {
                     // Temporarily swap shade so adjustHue can use it
                     const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    const oldSat = window.GLOBAL_COLOR_SATURATION;
                     window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    window.GLOBAL_COLOR_SATURATION = themeSat;
                     style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
                     window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                    window.GLOBAL_COLOR_SATURATION = oldSat;
                 }
 
                 // 2. Star Border Individualism
                 const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
+                const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
 
                 const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                const oldSat = window.GLOBAL_COLOR_SATURATION;
                 window.GLOBAL_COLOR_BRIGHTNESS = starShade;
+                window.GLOBAL_COLOR_SATURATION = starSat;
                 style.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', starHue));
                 window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                window.GLOBAL_COLOR_SATURATION = oldSat;
             }
 
             function loadSettings() {

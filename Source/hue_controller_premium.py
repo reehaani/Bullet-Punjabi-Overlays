@@ -79,8 +79,10 @@ class HueControllerApp(ctk.CTk):
         self.current_hue = 0
         self.current_brightness = 1.0
         self.current_color_brightness = 1.0
+        self.current_saturation = 1.0
         self.star_hue = 190
         self.star_shade = 1.0
+        self.star_saturation = 1.0
         self.gloss_intensity = 1.0
         
         self.last_write_time = 0
@@ -92,8 +94,13 @@ class HueControllerApp(ctk.CTk):
         self.grid_rowconfigure(1, weight=1) # Give all space to scroll area
         self.grid_rowconfigure(2, weight=1)
 
+        # === 0. Gradient Background ===
+        self.canvas_bg = ctk.CTkCanvas(self, highlightthickness=0)
+        self.canvas_bg.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.bind("<Configure>", self.draw_gradient)
+
         # === 1. Custom Title Bar ===
-        self.title_bar = ctk.CTkFrame(self, height=40, fg_color=COLOR_BG, corner_radius=0)
+        self.title_bar = ctk.CTkFrame(self, height=40, fg_color="transparent", corner_radius=0)
         self.title_bar.grid(row=0, column=0, sticky="ew")
         self.title_bar.bind("<Button-1>", self.start_move)
         self.title_bar.bind("<B1-Motion>", self.do_move)
@@ -158,7 +165,14 @@ class HueControllerApp(ctk.CTk):
         self.lbl_shade_val.pack(pady=(10, 0))
         ctk.CTkLabel(self.theme_frame, text="COLOR SHADE (HSL LIGHTNESS)", font=("Inter", 10), text_color="#444444").pack()
         self.slider_shade = ctk.CTkSlider(self.theme_frame, from_=0.2, to=2.0, width=400, command=self.on_shade_change)
-        self.slider_shade.pack(pady=(5, 20))
+        self.slider_shade.pack(pady=(5, 10))
+
+        # Color Saturation
+        self.lbl_sat_val = ctk.CTkLabel(self.theme_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_sat_val.pack(pady=(10, 0))
+        ctk.CTkLabel(self.theme_frame, text="COLOR SATURATION", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_sat = ctk.CTkSlider(self.theme_frame, from_=0.0, to=2.0, width=400, command=self.on_saturation_change)
+        self.slider_sat.pack(pady=(5, 20))
 
         # === 4. Accent Controls Card ===
         self.accent_frame = ctk.CTkFrame(self.scroll_frame, fg_color=COLOR_SURFACE, corner_radius=20)
@@ -177,7 +191,14 @@ class HueControllerApp(ctk.CTk):
         self.lbl_star_shade.pack(pady=(10, 0))
         ctk.CTkLabel(self.accent_frame, text="STAR BORDER SHADE", font=("Inter", 10), text_color="#444444").pack()
         self.slider_star_shade = ctk.CTkSlider(self.accent_frame, from_=0.2, to=2.0, width=400, command=self.on_star_shade_change)
-        self.slider_star_shade.pack(pady=(5, 20))
+        self.slider_star_shade.pack(pady=(5, 10))
+
+        # Star Saturation
+        self.lbl_star_sat_val = ctk.CTkLabel(self.accent_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_star_sat_val.pack(pady=(10, 0))
+        ctk.CTkLabel(self.accent_frame, text="STAR BORDER SATURATION", font=("Inter", 10), text_color="#444444").pack()
+        self.slider_star_sat = ctk.CTkSlider(self.accent_frame, from_=0.0, to=2.0, width=400, command=self.on_star_saturation_change)
+        self.slider_star_sat.pack(pady=(5, 20))
 
         # === 5. Effects Card ===
         self.effect_frame = ctk.CTkFrame(self.scroll_frame, fg_color=COLOR_SURFACE, corner_radius=20)
@@ -231,14 +252,27 @@ class HueControllerApp(ctk.CTk):
             except:
                 pass # Iconbitmap sometimes fails on some persistent windows
             
-            # 3. Set Logo in UI
-            self.logo_frame = ctk.CTkFrame(self, fg_color="transparent")
-            self.logo_frame.grid(row=1, column=0, pady=(20, 10))
+            # 3. Set Logo in UI (Inside Scroll Frame)
             self.lbl_logo = ctk.CTkLabel(self.logo_frame, image=self.logo_img_ctk, text="")
             self.lbl_logo.pack()
             
         except Exception as e:
             print(f"Icon Error: {e}")
+
+    def draw_gradient(self, event=None):
+        self.canvas_bg.delete("gradient")
+        w = self.winfo_width()
+        h = self.winfo_height()
+        
+        # Black to Dark Grey
+        limit = h
+        for i in range(limit):
+            # Calculate color from black (0,0,0) to dark grey (40,40,40)
+            rel = i / limit
+            c = int(40 * rel)
+            color = f"#{c:02x}{c:02x}{c:02x}"
+            # Draw from bottom up to invert (darker at bottom as requested)
+            self.canvas_bg.create_line(0, h-i, w, h-i, fill=color, tags="gradient")
 
     def center_window(self):
         self.update_idletasks()
@@ -288,40 +322,38 @@ class HueControllerApp(ctk.CTk):
                 else:
                     self.current_brightness = 1.0
                 match_cb = re.search(r'window\.GLOBAL_COLOR_BRIGHTNESS\s*=\s*([\d\.]+);', content)
-                if match_cb:
-                    self.current_color_brightness = float(match_cb.group(1))
-                else:
-                    self.current_color_brightness = 1.0
+                self.current_color_brightness = float(match_cb.group(1)) if match_cb else 1.0
+
+                match_cs = re.search(r'window\.GLOBAL_COLOR_SATURATION\s*=\s*([\d\.]+);', content)
+                self.current_saturation = float(match_cs.group(1)) if match_cs else 1.0
 
                 match_sh = re.search(r'window\.STAR_HUE_OFFSET\s*=\s*(\d+);', content)
-                if match_sh:
-                    self.star_hue = int(match_sh.group(1))
-                else:
-                    self.star_hue = 190
+                self.star_hue = int(match_sh.group(1)) if match_sh else 190
 
                 match_ss = re.search(r'window\.STAR_COLOR_BRIGHTNESS\s*=\s*([\d\.]+);', content)
-                if match_ss:
-                    self.star_shade = float(match_ss.group(1))
-                else:
-                    self.star_shade = 1.0
+                self.star_shade = float(match_ss.group(1)) if match_ss else 1.0
+
+                match_sats = re.search(r'window\.STAR_COLOR_SATURATION\s*=\s*([\d\.]+);', content)
+                self.star_saturation = float(match_sats.group(1)) if match_sats else 1.0
 
                 match_gl = re.search(r'window\.GLOSSY_INTENSITY\s*=\s*([\d\.]+);', content)
-                if match_gl:
-                    self.gloss_intensity = float(match_gl.group(1))
-                else:
-                    self.gloss_intensity = 1.0
+                self.gloss_intensity = float(match_gl.group(1)) if match_gl else 1.0
 
                 # Set slider positions
                 self.slider.set(self.current_hue)
                 self.slider_bright.set(self.current_brightness)
                 self.slider_shade.set(self.current_color_brightness)
+                self.slider_sat.set(self.current_saturation)
                 self.slider_star_hue.set(self.star_hue)
                 self.slider_star_shade.set(self.star_shade)
+                self.slider_star_sat.set(self.star_saturation)
                 self.slider_gloss.set(self.gloss_intensity)
 
                 self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
                 self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
+                self.lbl_sat_val.configure(text=f"{int(self.current_saturation*100)}%")
                 self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
+                self.lbl_star_sat_val.configure(text=f"{int(self.star_saturation*100)}%")
                 self.lbl_gloss.configure(text=f"{int(self.gloss_intensity*100)}%")
 
         except Exception as e:
@@ -329,8 +361,10 @@ class HueControllerApp(ctk.CTk):
             self.current_hue = 0
             self.current_brightness = 1.0
             self.current_color_brightness = 1.0
+            self.current_saturation = 1.0
             self.star_hue = 190
             self.star_shade = 1.0
+            self.star_saturation = 1.0
             self.gloss_intensity = 1.0
 
     def on_slider_change(self, value):
@@ -352,6 +386,12 @@ class HueControllerApp(ctk.CTk):
         self.current_color_brightness = val
         self.debounce_write()
 
+    def on_saturation_change(self, value):
+        val = round(float(value), 2)
+        self.lbl_sat_val.configure(text=f"{int(val*100)}%")
+        self.current_saturation = val
+        self.debounce_write()
+
     def on_star_hue_change(self, value):
         val = int(value)
         self.lbl_star_hue.configure(text=f"{val}°")
@@ -362,6 +402,12 @@ class HueControllerApp(ctk.CTk):
         val = round(float(value), 2)
         self.lbl_star_shade.configure(text=f"{int(val*100)}%")
         self.star_shade = val
+        self.debounce_write()
+
+    def on_star_saturation_change(self, value):
+        val = round(float(value), 2)
+        self.lbl_star_sat_val.configure(text=f"{int(val*100)}%")
+        self.star_saturation = val
         self.debounce_write()
 
     def on_gloss_change(self, value):
@@ -413,6 +459,16 @@ class HueControllerApp(ctk.CTk):
             else:
                 content += f"\nwindow.GLOBAL_COLOR_BRIGHTNESS = {self.current_color_brightness};"
 
+            # Update Global Saturation
+            if "window.GLOBAL_COLOR_SATURATION" in content:
+                content = re.sub(
+                    r'(window\.GLOBAL_COLOR_SATURATION\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.current_saturation}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.GLOBAL_COLOR_SATURATION = {self.current_saturation};"
+
             # Update Star Hue
             if "window.STAR_HUE_OFFSET" in content:
                 content = re.sub(
@@ -432,6 +488,16 @@ class HueControllerApp(ctk.CTk):
                 )
             else:
                 content += f"\nwindow.STAR_COLOR_BRIGHTNESS = {self.star_shade};"
+
+            # Update Star Saturation
+            if "window.STAR_COLOR_SATURATION" in content:
+                content = re.sub(
+                    r'(window\.STAR_COLOR_SATURATION\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.star_saturation}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.STAR_COLOR_SATURATION = {self.star_saturation};"
 
             # Update Gloss
             if "window.GLOSSY_INTENSITY" in content:
