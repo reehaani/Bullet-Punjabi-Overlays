@@ -553,7 +553,7 @@
     </div>
 
     <script>
-        const TARGET_GOAL = 50;
+        let TARGET_GOAL = 50;
         const POLL_INTERVAL = 300; // Faster polling for better "gift" responsiveness
 
         function updateProgressBar(current) {
@@ -734,6 +734,13 @@
                 s.src = '../Settings/settings.js?t=' + Date.now();
                 s.id = 'settings-script';
                 s.onload = function () {
+                    // Update target goal from settings
+                    if (window.SUB_GOAL_CONFIG) {
+                        TARGET_GOAL = window.SUB_GOAL_CONFIG;
+                        document.getElementById('target-val').textContent = TARGET_GOAL;
+                        updateProgressBar(lastCount);
+                    }
+
                     const newTarget = window.GLOBAL_HUE_OFFSET || 0;
                     if (newTarget !== State.targetHue) {
                         State.targetHue = newTarget;
@@ -749,9 +756,22 @@
             function applyFilters() {
                 const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
                 const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+                const glow = window.GLOW_SUB_DOCK !== false;
+                const showBorder = window.SHOW_BORDER_SUB_DOCK !== false;
 
                 document.documentElement.style.filter = `brightness(${bright})`;
                 document.documentElement.style.setProperty('--gloss-intensity', gloss);
+
+                const starWrapper = document.querySelector('.star-border-wrapper');
+                const anchor = document.querySelector('.dock-anchor');
+                if (starWrapper) starWrapper.style.opacity = glow ? '1' : '0';
+                if (anchor) anchor.style.filter = glow ? 'drop-shadow(0 -4px 15px rgba(0, 0, 0, 0.5))' : 'none';
+
+                // Border Toggle Logic
+                const innerElements = document.querySelectorAll('.inner-shape, .glass-overlay');
+                innerElements.forEach(el => {
+                    el.style.clipPath = showBorder ? 'url(#dock-inner)' : 'url(#dock-outer)';
+                });
             }
 
             loadSettings();

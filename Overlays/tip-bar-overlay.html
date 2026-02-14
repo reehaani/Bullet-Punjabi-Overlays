@@ -55,11 +55,14 @@
         .tip-bar {
             position: absolute;
             bottom: 0;
-            left: 0;
-            width: 1080px;
+            left: 20px;
+            /* Offset to prevent glow clipping */
+            width: 1040px;
+            /* Adjusted width */
             height: 100px;
             border-radius: 0 40px 0 0;
-            overflow: hidden;
+            overflow: visible;
+            /* Allow glow to bleed out */
             filter: drop-shadow(0 -4px 24px rgba(0, 0, 0, 0.6));
         }
 
@@ -100,11 +103,10 @@
             }
         }
 
-        /* === Glass overlay === */
+        /* === Glass overlay — Move to top level for consistency === */
         .glass-overlay {
             position: absolute;
             inset: 0;
-            /* Ultra Gloss */
             background:
                 linear-gradient(to bottom,
                     rgba(255, 255, 255, 0.25) 0%,
@@ -118,10 +120,11 @@
                     rgba(255, 255, 255, 0.04) 55%,
                     transparent 80%);
             pointer-events: none;
-            z-index: 15;
-            /* Mega Gloss Filter */
+            z-index: 30;
+            /* Above content-layer */
             filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
             opacity: 0.8;
+            border-radius: 0 40px 0 0;
         }
 
         /* === Content layout === */
@@ -139,19 +142,17 @@
         /* === Left side: name tab === */
         .name-tab {
             height: 100%;
-            /* BOOSTED saturation for a more vibrant "Neon Kick" green gradient */
             background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            background-image:
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.2) 100%),
-                linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            padding: 0 8px 0 12px;
-            gap: 4px;
+            /* Removed internal gloss to allow global glass-overlay to handle it */
+            padding: 0 10px 0 45px;
+            /* Boosted left padding for glow */
+            gap: 15px;
             display: flex;
             align-items: center;
-            border-radius: 0 40px 0 0;
+            border-top-right-radius: 40px;
             min-width: 0;
-            flex-grow: 1;
-            flex-shrink: 1;
+            flex: 0 1 auto;
+            /* Changed to not grow excessively */
             z-index: 12;
             position: relative;
         }
@@ -161,15 +162,16 @@
             content: '';
             position: absolute;
             bottom: 0;
-            right: -40px;
-            /* Radius of the curve */
+            right: -39px;
+            /* 1px overlap to prevent gaps */
             width: 40px;
             height: 40px;
             background: var(--gradient-end);
-            /* Matches the vibrant end color of the new gradient */
-            mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
-            -webkit-mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
+            /* Mask to create concave curve at bottom-right connecting to the tab */
+            mask: radial-gradient(circle at 40px 0px, transparent 40px, #000 40px);
+            -webkit-mask: radial-gradient(circle at 40px 0px, transparent 40px, #000 40px);
             pointer-events: none;
+            z-index: 12;
         }
 
         .tip-left {
@@ -178,7 +180,8 @@
             min-width: 0;
             height: 100%;
             flex: 1 1 auto;
-            overflow: hidden;
+            overflow: visible;
+            /* Allow text glow/shadows to bleed */
         }
 
         /* === Logo next to name — always visible, never shrinks === */
@@ -333,10 +336,11 @@
 <body>
     <div class="main-canvas">
         <div class="tip-bar" id="tip-bar">
+            <!-- Gloss layer on top -->
+            <div class="glass-overlay"></div>
+
             <!-- Black fill -->
-            <div class="inner-fill">
-                <div class="glass-overlay"></div>
-            </div>
+            <div class="inner-fill"></div>
 
             <!-- Content -->
             <div class="content-layer">

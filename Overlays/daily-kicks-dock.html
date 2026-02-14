@@ -142,7 +142,7 @@
             right: 0;
             height: 250px;
             overflow: hidden;
-            filter: drop-shadow(0 -5px 8px rgba(56, 239, 125, 0.6));
+            filter: drop-shadow(0 -5px 8px var(--fill-glow-color));
             mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 40%, transparent 100%);
         }
@@ -845,12 +845,12 @@
         }
 
         // === BACKGROUND FILL PROGRESS ===
-        const KICK_TARGET = 10000;
+        let TARGET_GOAL = 10000;
 
         function updateProgressFill(current) {
             const fill = document.getElementById('progress-fill');
             const anchor = document.querySelector('.dock-anchor');
-            const percentage = Math.min((current / KICK_TARGET) * 100, 100);
+            const percentage = Math.min((current / TARGET_GOAL) * 100, 100);
             fill.style.transform = 'translateY(' + (100 - percentage) + '%)';
 
 
@@ -861,17 +861,18 @@
             }
 
             // GOLD THEME TOGGLE
-            if (current >= KICK_TARGET) {
+            if (current >= TARGET_GOAL) {
                 anchor.classList.add('gold-applied');
             } else {
                 anchor.classList.remove('gold-applied');
             }
         }
 
+        let lastValue = 0;
         window.updateKicks = function (val, sub, id) {
+            lastValue = parseInt(val) || 0;
             setAnimatedText("kicks-value", val, id);
-            const numVal = parseInt(val) || 0;
-            updateProgressFill(numVal);
+            updateProgressFill(lastValue);
         };
 
         function injectScript(filename, id) {
@@ -911,7 +912,7 @@
                 '--fill-mid': 'rgba(10, 100, 80, 0.95)',
                 '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
                 '--fill-end': 'rgba(50, 220, 100, 0.95)',
-                '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
+                '--fill-glow-color': 'rgba(56, 239, 125, 0.6)',
                 '--fill-goal-start': 'rgba(17, 153, 142, 0.9)',
                 '--fill-goal-end': 'rgba(56, 239, 125, 0.9)',
                 '--wave-1': 'rgb(17, 153, 142)',
@@ -986,6 +987,12 @@
                 s.src = '../Settings/settings.js?t=' + Date.now();
                 s.id = 'settings-script';
                 s.onload = function () {
+                    // Update target goal from settings
+                    if (window.DAILY_KICKS_GOAL) {
+                        TARGET_GOAL = window.DAILY_KICKS_GOAL;
+                        updateProgressFill(lastValue);
+                    }
+
                     const newTarget = window.GLOBAL_HUE_OFFSET || 0;
                     if (newTarget !== State.targetHue) {
                         State.targetHue = newTarget;
@@ -1002,9 +1009,25 @@
             function applyFilters() {
                 const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
                 const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+                const glow = window.GLOW_KICK_DOCK !== false;
+                const showBorder = window.SHOW_BORDER_KICK_DOCK !== false;
 
                 document.documentElement.style.filter = `brightness(${bright})`;
                 document.documentElement.style.setProperty('--gloss-intensity', gloss);
+
+                const starWrapper = document.querySelector('.star-border-wrapper');
+                const anchor = document.querySelector('.dock-anchor');
+                const waveContainer = document.querySelector('.wave-container');
+
+                if (starWrapper) starWrapper.style.opacity = glow ? '1' : '0';
+                if (anchor) anchor.style.filter = glow ? 'drop-shadow(-4px -4px 15px rgba(0, 0, 0, 0.5))' : 'none';
+                if (waveContainer) waveContainer.style.filter = glow ? 'drop-shadow(0 -5px 8px var(--fill-glow-color))' : 'none';
+
+                // Border Toggle Logic
+                const innerElements = document.querySelectorAll('.inner-shape, .glass-overlay, .progress-fill-wrapper');
+                innerElements.forEach(el => {
+                    el.style.clipPath = showBorder ? 'url(#dock-inner)' : 'url(#dock-outer)';
+                });
             }
 
             loadSettings();
