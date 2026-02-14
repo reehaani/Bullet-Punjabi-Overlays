@@ -29,7 +29,7 @@ class HueControllerApp(ctk.CTk):
 
         # Window Setup
         self.title("Color Controller")
-        self.geometry("420x520")
+        self.geometry("420x680")
         self.configure(fg_color=COLOR_BG)
         # Frameless Mode: This guarantees no OS title bar
         self.overrideredirect(True) 
@@ -77,6 +77,7 @@ class HueControllerApp(ctk.CTk):
 
         # State
         self.current_hue = 0
+        self.current_color_brightness = 1.0 # New
         self.last_write_time = 0
         self.write_delay = 0.05
         self.load_initial_hue()
@@ -152,6 +153,66 @@ class HueControllerApp(ctk.CTk):
         )
         self.slider.set(self.current_hue)
         self.slider.pack(pady=(0, 30))
+
+        # === 4. Brightness Slider ===
+        self.lbl_bright_val = ctk.CTkLabel(
+            self.interaction_frame, 
+            text=f"{int(getattr(self, 'current_brightness', 1.0)*100)}%", 
+            font=("Inter", 24, "bold"),
+            text_color="white"
+        )
+        self.lbl_bright_val.pack(pady=(10, 5))
+
+        self.lbl_bright_sub = ctk.CTkLabel(
+            self.interaction_frame, 
+            text="GLOBAL BRIGHTNESS", 
+            font=("Inter", 10, "bold"),
+            text_color="#444444"
+        )
+        self.lbl_bright_sub.pack(pady=(0, 10))
+
+        self.slider_bright = ctk.CTkSlider(
+            self.interaction_frame, 
+            from_=0.2, to=2.0, 
+            number_of_steps=180,
+            width=280, height=24,
+            progress_color="#ffffff",
+            button_color="white",
+            button_hover_color="#eeeeee",
+            command=self.on_brightness_change
+        )
+        self.slider_bright.set(getattr(self, 'current_brightness', 1.0))
+        self.slider_bright.pack(pady=(0, 20))
+
+        # === 5. Color Shade Slider ===
+        self.lbl_shade_val = ctk.CTkLabel(
+            self.interaction_frame, 
+            text=f"{int(getattr(self, 'current_color_brightness', 1.0)*100)}%", 
+            font=("Inter", 24, "bold"),
+            text_color="white"
+        )
+        self.lbl_shade_val.pack(pady=(10, 5))
+
+        self.lbl_shade_sub = ctk.CTkLabel(
+            self.interaction_frame, 
+            text="COLOR SHADE (RICHER/DARKER)", 
+            font=("Inter", 10, "bold"),
+            text_color="#444444"
+        )
+        self.lbl_shade_sub.pack(pady=(0, 10))
+
+        self.slider_shade = ctk.CTkSlider(
+            self.interaction_frame, 
+            from_=0.2, to=2.0, 
+            number_of_steps=180,
+            width=280, height=24,
+            progress_color="#666666",
+            button_color="white",
+            button_hover_color="#eeeeee",
+            command=self.on_shade_change
+        )
+        self.slider_shade.set(getattr(self, 'current_color_brightness', 1.0))
+        self.slider_shade.pack(pady=(0, 30))
 
         # === 4. Status Bar ===
         self.lbl_status = ctk.CTkLabel(
@@ -235,6 +296,7 @@ class HueControllerApp(ctk.CTk):
         try:
             if not os.path.exists(SETTINGS_PATH):
                 self.current_hue = 0
+                self.current_brightness = 1.0
                 return
 
             with open(SETTINGS_PATH, 'r', encoding='utf-8') as f:
@@ -242,15 +304,42 @@ class HueControllerApp(ctk.CTk):
                 match = re.search(r'window\.GLOBAL_HUE_OFFSET\s*=\s*(\d+);', content)
                 if match:
                     self.current_hue = int(match.group(1))
+                
+                match_br = re.search(r'window\.GLOBAL_BRIGHTNESS\s*=\s*([\d\.]+);', content)
+                if match_br:
+                    self.current_brightness = float(match_br.group(1))
+                else:
+                    self.current_brightness = 1.0
+                match_cb = re.search(r'window\.GLOBAL_COLOR_BRIGHTNESS\s*=\s*([\d\.]+);', content)
+                if match_cb:
+                    self.current_color_brightness = float(match_cb.group(1))
+                else:
+                    self.current_color_brightness = 1.0
         except:
             self.current_hue = 0
+            self.current_brightness = 1.0
+            self.current_color_brightness = 1.0
 
     def on_slider_change(self, value):
         val = int(value)
         self.lbl_value.configure(text=f"{val}°")
         self.current_hue = val
-        
-        # Debounce write
+        self.debounce_write()
+
+    def on_brightness_change(self, value):
+        # Value is 0.2 to 2.0
+        val = round(float(value), 2)
+        self.lbl_bright_val.configure(text=f"{int(val*100)}%")
+        self.current_brightness = val
+        self.debounce_write()
+
+    def on_shade_change(self, value):
+        val = round(float(value), 2)
+        self.lbl_shade_val.configure(text=f"{int(val*100)}%")
+        self.current_color_brightness = val
+        self.debounce_write()
+
+    def debounce_write(self):
         curr = time.time()
         if curr - self.last_write_time > self.write_delay:
             self.write_settings()
@@ -261,6 +350,7 @@ class HueControllerApp(ctk.CTk):
             with open(SETTINGS_PATH, 'r', encoding='utf-8') as f:
                 content = f.read()
 
+            # Update Hue
             content = re.sub(
                 r'(window\.GLOBAL_HUE_OFFSET\s*=\s*)(\d+)(;)', 
                 f'\\g<1>{self.current_hue}\\g<3>', 
@@ -271,6 +361,26 @@ class HueControllerApp(ctk.CTk):
                 f'\\g<1>{self.current_hue}\\g<3>', 
                 content
             )
+
+            # Update Global Brightness
+            if "window.GLOBAL_BRIGHTNESS" in content:
+                content = re.sub(
+                    r'(window\.GLOBAL_BRIGHTNESS\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.current_brightness}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.GLOBAL_BRIGHTNESS = {self.current_brightness};"
+
+            # Update Color Shade
+            if "window.GLOBAL_COLOR_BRIGHTNESS" in content:
+                content = re.sub(
+                    r'(window\.GLOBAL_COLOR_BRIGHTNESS\s*=\s*)([\d\.]+)(;)',
+                    f'\\g<1>{self.current_color_brightness}\\g<3>',
+                    content
+                )
+            else:
+                content += f"\nwindow.GLOBAL_COLOR_BRIGHTNESS = {self.current_color_brightness};"
 
             with open(SETTINGS_PATH, 'w', encoding='utf-8') as f:
                 f.write(content)

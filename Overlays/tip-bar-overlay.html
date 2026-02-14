@@ -347,7 +347,7 @@
     </div>
 
     <script>
-        const POLL_INTERVAL = 1000;
+        const POLL_INTERVAL = 300;
         let lastTipId = '';
 
         const nameEl = document.getElementById('tip-name');
@@ -488,6 +488,9 @@
                             animate();
                         }
                     }
+                    // Apply Brightness
+                    const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                    document.documentElement.style.filter = `brightness(${bright})`;
                 };
                 document.head.appendChild(s);
             }

@@ -11,8 +11,10 @@ window.ENABLE_BULLETS_RECT = true;
 // ║  240 = Red/Orange                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-window.GLOBAL_HUE_OFFSET = 190; // Degrees (0-360)
-window.GLOBAL_HUE_DEFAULT = 190; // Baseline for resets
+window.GLOBAL_HUE_OFFSET = 28; // Degrees (0-360)
+window.GLOBAL_HUE_DEFAULT = 28; // Baseline for resets
+window.GLOBAL_BRIGHTNESS = 1.04; // Brightness Multiplier (0.0 - 2.0)
+window.GLOBAL_COLOR_BRIGHTNESS = 2.0; // Color Shade Multiplier (0.2 - 2.0)
 
 // --------------------------------------------------------------------
 // Utility: Adjust Hue while preserving Saturation, Lightness & Alpha
@@ -68,6 +70,10 @@ window.adjustHue = function (color, degrees) {
     h = (h * 360 + degrees) % 360;
     while (h < 0) h += 360;
 
+    // Apply Color Shade (Lightness Multiplier)
+    let brightnessFactor = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+    l = Math.min(1.0, l * brightnessFactor);
+
     // Convert back to RGB
     const hue2rgb = (p, q, t) => {
         if (t < 0) t += 1;
@@ -97,37 +103,67 @@ window.adjustHue = function (color, degrees) {
 };
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║              BASE COLORS (DO NOT EDIT THESE)                    ║
+// ║              BASE COLORS (DYNAMICALLY ADJUSTED)                  ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
 // Using 'var' allows this script to be re-executed periodically without errors.
-var BASE_COLOR_GRADIENT_START = 'rgba(0, 177, 137, 0.95)';
-var BASE_COLOR_GRADIENT_END = 'rgba(83, 252, 24, 0.95)';
+var BASE_COLOR_NEON = window.adjustHue('#0aff0a', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_NEON_GLOW = window.adjustHue('rgba(10, 255, 10, 0.4)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_NEON_SOFT = window.adjustHue('rgba(10, 255, 10, 0.1)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_NEON_ACCENT = window.adjustHue('rgba(10, 255, 10, 0.3)', window.GLOBAL_HUE_OFFSET);
 
-var BASE_COLOR_NEON = '#0aff0a';
-var BASE_COLOR_NEON_GLOW = 'rgba(10, 255, 10, 0.4)';
-var BASE_COLOR_NEON_SOFT = 'rgba(10, 255, 10, 0.1)';
-var BASE_COLOR_NEON_ACCENT = 'rgba(10, 255, 10, 0.3)';
+var BASE_COLOR_GRADIENT_START = window.adjustHue('rgba(0, 177, 137, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_GRADIENT_END = window.adjustHue('rgba(83, 252, 24, 0.95)', window.GLOBAL_HUE_OFFSET);
 
-var BASE_COLOR_FILL_START = 'rgba(5, 60, 50, 0.95)';
-var BASE_COLOR_FILL_MID = 'rgba(10, 100, 80, 0.95)';
-var BASE_COLOR_FILL_MID2 = 'rgba(30, 170, 80, 0.95)';
-var BASE_COLOR_FILL_END = 'rgba(50, 220, 100, 0.95)';
-var BASE_COLOR_FILL_GOAL_START = 'rgba(17, 153, 142, 0.9)';
-var BASE_COLOR_FILL_GOAL_END = 'rgba(56, 239, 125, 0.9)';
-var BASE_COLOR_FILL_GLOW = 'rgba(56, 239, 125, 0.4)';
+var BASE_COLOR_FILL_START = window.adjustHue('rgba(5, 60, 50, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_MID = window.adjustHue('rgba(10, 100, 80, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_MID2 = window.adjustHue('rgba(30, 170, 80, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_END = window.adjustHue('rgba(50, 220, 100, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_GOAL_START = window.adjustHue('rgba(17, 153, 142, 0.9)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_GOAL_END = window.adjustHue('rgba(56, 239, 125, 0.9)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FILL_GLOW = window.adjustHue('rgba(56, 239, 125, 0.4)', window.GLOBAL_HUE_OFFSET);
 
-var BASE_COLOR_FABRIC_DARK = 'rgba(5, 140, 45, 0.98)';
-var BASE_COLOR_FABRIC_MID = 'rgba(15, 200, 70, 0.95)';
-var BASE_COLOR_FABRIC_BRIGHT = 'rgba(30, 230, 90, 0.92)';
-var BASE_COLOR_FABRIC_MID2 = 'rgba(20, 200, 65, 0.95)';
-var BASE_COLOR_FABRIC_DEEP = 'rgba(10, 170, 55, 0.98)';
+var BASE_COLOR_FABRIC_DARK = window.adjustHue('rgba(5, 140, 45, 0.98)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FABRIC_MID = window.adjustHue('rgba(15, 200, 70, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FABRIC_BRIGHT = window.adjustHue('rgba(30, 230, 90, 0.92)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FABRIC_MID2 = window.adjustHue('rgba(20, 200, 65, 0.95)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_FABRIC_DEEP = window.adjustHue('rgba(10, 170, 55, 0.98)', window.GLOBAL_HUE_OFFSET);
 
-var BASE_COLOR_WAVE_1 = 'rgb(17, 153, 142)';
-var BASE_COLOR_WAVE_2 = 'rgb(37, 196, 134)';
-var BASE_COLOR_WAVE_3 = 'rgb(56, 239, 125)';
+var BASE_COLOR_WAVE_1 = window.adjustHue('rgb(17, 153, 142)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_WAVE_2 = window.adjustHue('rgb(37, 196, 134)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_WAVE_3 = window.adjustHue('rgb(56, 239, 125)', window.GLOBAL_HUE_OFFSET);
 
-var BASE_COLOR_LABEL = 'rgba(10, 255, 10, 0.7)';
-var BASE_COLOR_LABEL_GLOW = 'rgba(10, 255, 10, 0.3)';
-var BASE_COLOR_BORDER_ACCENT = 'rgba(10, 255, 10, 0.6)';
-var BASE_COLOR_ACCENT_LINE = 'rgba(10, 255, 10, 0.3)';
+var BASE_COLOR_LABEL = window.adjustHue('rgba(10, 255, 10, 0.7)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_LABEL_GLOW = window.adjustHue('rgba(10, 255, 10, 0.3)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_BORDER_ACCENT = window.adjustHue('rgba(10, 255, 10, 0.6)', window.GLOBAL_HUE_OFFSET);
+var BASE_COLOR_ACCENT_LINE = window.adjustHue('rgba(10, 255, 10, 0.3)', window.GLOBAL_HUE_OFFSET);
+
+// Global Stylesheet injection to apply variables across all elements
+(function injectGlobalStyles() {
+    let style = document.getElementById('global-sync-styles');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'global-sync-styles';
+        document.head.appendChild(style);
+    }
+
+    style.textContent = `
+        :root {
+            --neon-green: ${BASE_COLOR_NEON};
+            --glow-color: ${BASE_COLOR_NEON_GLOW};
+            --soft-glow: ${BASE_COLOR_NEON_SOFT};
+            --accent-glow: ${BASE_COLOR_NEON_ACCENT};
+            --gradient-start: ${BASE_COLOR_GRADIENT_START};
+            --gradient-end: ${BASE_COLOR_GRADIENT_END};
+            --fill-start: ${BASE_COLOR_FILL_START};
+            --fill-mid: ${BASE_COLOR_FILL_MID};
+            --fill-end: ${BASE_COLOR_FILL_END};
+            --global-brightness: ${window.GLOBAL_BRIGHTNESS};
+        }
+        
+        body, .container, .webcam-frame, .dock-anchor, .goal-container, .gifter-anchor {
+            filter: brightness(${window.GLOBAL_BRIGHTNESS}) !important;
+        }
+    `;
+})();
+

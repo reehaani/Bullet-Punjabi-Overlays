@@ -508,7 +508,7 @@
 
     <script>
         const TARGET_GOAL = 50;
-        const POLL_INTERVAL = 500; // Faster polling for better "gift" responsiveness
+        const POLL_INTERVAL = 300; // Faster polling for better "gift" responsiveness
 
         function updateProgressBar(current) {
             const fill = document.getElementById('progress-fill');
@@ -674,8 +674,13 @@
                 document.head.appendChild(s);
             }
 
+            function applyBrightness() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                document.documentElement.style.filter = `brightness(${bright})`;
+            }
+
             loadSettings();
-            setInterval(loadSettings, 1000);
+            setInterval(() => { loadSettings(); applyBrightness(); }, 1000);
         })();
     </script>
 </body>

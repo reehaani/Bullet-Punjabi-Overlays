@@ -878,6 +878,16 @@
       document.body.appendChild(script);
     }
 
+    // === SETTINGS APPLY ===
+    window.applySettings = function (settings) {
+      if (settings.hue) {
+        document.documentElement.style.setProperty('--hue-rotate', settings.hue + 'deg');
+      }
+      if (window.GLOBAL_BRIGHTNESS !== undefined) {
+        document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
+      }
+    };
+
     function pollAll() {
       injectScript("../Data/data_chatters.js", "script-chatters");
       injectScript("../Data/data_followers.js", "script-followers");
@@ -886,7 +896,7 @@
     }
 
     // === BOOT SEQUENCE ===
-    setInterval(pollAll, POLL_INTERVAL);
+    setInterval(pollAll, 300);
     pollAll();
 
   </script>

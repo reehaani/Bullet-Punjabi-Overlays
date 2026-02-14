@@ -581,6 +581,16 @@
             }
         }
 
+        // === SETTINGS APPLY ===
+        window.applySettings = function (settings) {
+            if (settings.hue) {
+                document.documentElement.style.setProperty('--hue-rotate', settings.hue + 'deg');
+            }
+            if (window.GLOBAL_BRIGHTNESS !== undefined) {
+                document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
+            }
+        };
+
         // === DATA POLLING ===
         window.updateKicks = function (val, sub) { setText("kicks-value", val); };
 
@@ -597,8 +607,9 @@
             injectScript("../Data/data_kicks.js", "script-kicks");
             injectScript("../Settings/settings.js", "script-settings");
         }
+        setInterval(pollAll, 300);
 
-        setInterval(pollAll, POLL_INTERVAL);
+
         pollAll();
 
     </script>

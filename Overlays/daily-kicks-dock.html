@@ -917,6 +917,10 @@
                         State.targetHue = newTarget;
                         if (!State.animationFrame) animate();
                     }
+
+                    // Apply Brightness
+                    const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                    document.documentElement.style.filter = `brightness(${bright})`;
                 };
                 document.head.appendChild(s);
             }

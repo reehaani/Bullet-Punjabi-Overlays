@@ -489,11 +489,21 @@
             document.body.appendChild(s);
         }
 
+        // === SETTINGS APPLY ===
+        window.applySettings = function (settings) {
+            if (settings.hue) {
+                document.documentElement.style.setProperty('--hue-rotate', settings.hue + 'deg');
+            }
+            if (window.GLOBAL_BRIGHTNESS !== undefined) {
+                document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
+            }
+        };
+
         function pollAll() {
             injectScript("../Data/data_kicks.js", "script-kicks");
             injectScript("../Settings/settings.js", "script-settings");
         }
-        setInterval(pollAll, POLL_INTERVAL);
+        setInterval(pollAll, 300);
         pollAll();
     </script>
 </body>
