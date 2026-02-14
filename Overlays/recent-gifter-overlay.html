@@ -397,6 +397,28 @@
                 display: none;
             }
         }
+
+        /* Mustache Background */
+        .mustache-bg {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            opacity: 0.25;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .mustache-bg img {
+            width: 380px;
+            height: auto;
+            filter: brightness(0) invert(1);
+            transform: translateY(-80px);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+            mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+        }
     </style>
 </head>
 
@@ -405,6 +427,9 @@
     <div class="gifter-anchor" id="gifter-anchor">
         <div class="wave-container" id="wave-container">
             <div class="inner-fill">
+                <div class="mustache-bg">
+                    <img src="../Logo/Logo 2.png" alt="Mustache Background">
+                </div>
                 <div class="poly-sheen"></div>
                 <div class="rim-light"></div>
                 <div class="micro-noise"></div>
