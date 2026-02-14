@@ -1,1 +1,1 @@
-window.updateTips("SMU", "18.18", "a8e6563f-4837-41a6-bb46-4eb25219c1ad_2/14/2026 9:19:57 AM");
+window.updateTips("No Tips", "$0", "reset");

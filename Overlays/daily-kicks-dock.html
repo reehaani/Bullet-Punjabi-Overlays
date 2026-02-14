@@ -11,8 +11,8 @@
         :root {
             --gradient-start: rgba(0, 177, 137, 0.95);
             --gradient-end: rgba(83, 252, 24, 0.95);
-            --neon-green: #0aff0a;
-            --neon-green-soft: rgba(10, 255, 10, 0.1);
+            --star-color: #0aff0a;
+            --star-color-soft: rgba(10, 255, 10, 0.1);
             --fill-goal-start: rgba(17, 153, 142, 0.9);
             --fill-goal-end: rgba(56, 239, 125, 0.9);
             --wave-1: rgb(17, 153, 142);
@@ -20,6 +20,7 @@
             --wave-3: rgb(56, 239, 125);
             --inner-bg: rgb(20, 20, 20);
             --spin-speed: 10s;
+            --gloss-intensity: 1;
         }
 
         * {
@@ -76,9 +77,9 @@
             margin-top: -600px;
             background: conic-gradient(from 0deg,
                     transparent 0%,
-                    var(--neon-green-soft) 2%,
-                    var(--neon-green) 12%,
-                    var(--neon-green-soft) 22%,
+                    var(--star-color-soft) 2%,
+                    var(--star-color) 12%,
+                    var(--star-color-soft) 22%,
                     transparent 25%,
                     transparent 100%);
             animation: spin var(--spin-speed) linear infinite;
@@ -198,11 +199,36 @@
             position: absolute;
             inset: 0;
             clip-path: url(#dock-inner);
+            /* Ultra Gloss */
             background: linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 40%,
-                    transparent 55%, rgba(0, 0, 0, 0.1) 100%);
+                    rgba(255, 255, 255, 0.25) 0%,
+                    rgba(255, 255, 255, 0.1) 40%,
+                    transparent 55%,
+                    rgba(0, 0, 0, 0.15) 100%);
             z-index: 15;
             pointer-events: none;
+            /* Mega Gloss Filter */
+            filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
+            opacity: 0.8;
+        }
+
+        /* === SVG Rim Light Layer === */
+        .rim-light-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .rim-light-layer svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .rim-path {
+            fill: none;
+            /* Defined inline for gradient support */
         }
 
 
@@ -571,6 +597,28 @@
 
         <div class="glass-overlay"></div>
 
+        <!-- Rim Light SVG Layer -->
+        <div class="rim-light-layer" style="clip-path: url(#dock-inner);">
+            <svg viewBox="0 0 320 320">
+                <defs>
+                    <linearGradient id="rim-grad-kicks" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="white" stop-opacity="0.8" />
+                        <stop offset="30%" stop-color="white" stop-opacity="0.4" />
+                        <stop offset="100%" stop-color="white" stop-opacity="0" />
+                    </linearGradient>
+                    <filter id="rim-blur-kicks">
+                        <feGaussianBlur stdDeviation="0.5" />
+                    </filter>
+                </defs>
+                <path class="rim-path" d="
+                    M 320 4.5
+                    L 114.5 4.5
+                    C 81 4.5, 54.5 31, 54.5 64
+                    L 54.5 250" stroke="url(#rim-grad-kicks)" stroke-width="1.8" fill="none"
+                    filter="url(#rim-blur-kicks)" stroke-linecap="round" />
+            </svg>
+        </div>
+
         <div class="content-layer">
             <div id="kicks-value" class="value" data-text="00">00</div>
             <div class="title">
@@ -899,9 +947,35 @@
             function updateColors() {
                 if (!window.adjustHue) return;
                 const style = document.documentElement.style;
+
+                // 1. Core Theme Colors
+                const themeHue = State.currentHue;
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
                 for (const key in BASE_COLORS) {
-                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                    const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    const oldSat = window.GLOBAL_COLOR_SATURATION;
+                    window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    window.GLOBAL_COLOR_SATURATION = themeSat;
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                    window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                    window.GLOBAL_COLOR_SATURATION = oldSat;
                 }
+
+                // 2. Star Border Individualism
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
+                const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
+
+                const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                const oldSat = window.GLOBAL_COLOR_SATURATION;
+                window.GLOBAL_COLOR_BRIGHTNESS = starShade;
+                window.GLOBAL_COLOR_SATURATION = starSat;
+                style.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', starHue));
+                style.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', starHue));
+                window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                window.GLOBAL_COLOR_SATURATION = oldSat;
             }
 
             function loadSettings() {
@@ -918,15 +992,23 @@
                         if (!State.animationFrame) animate();
                     }
 
-                    // Apply Brightness
-                    const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
-                    document.documentElement.style.filter = `brightness(${bright})`;
+                    // Always apply everything else immediately
+                    applyFilters();
+                    updateColors();
                 };
                 document.head.appendChild(s);
             }
 
+            function applyFilters() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+
+                document.documentElement.style.filter = `brightness(${bright})`;
+                document.documentElement.style.setProperty('--gloss-intensity', gloss);
+            }
+
             loadSettings();
-            setInterval(loadSettings, 1000);
+            setInterval(loadSettings, 300);
         })();
     </script>
 </body>

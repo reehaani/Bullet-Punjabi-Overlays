@@ -1,1 +1,1 @@
-window.updateKicks("20168", "Top: REHANI3", "db3665ed-6c88-4e97-8034-12fc42b1b469_2/14/2026 9:22:15 AM");
+window.updateKicks("0", "Top: -");

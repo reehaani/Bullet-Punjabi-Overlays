@@ -12,6 +12,7 @@
             --border-accent: rgba(10, 255, 10, 0.6);
             --label-color: rgba(10, 255, 10, 0.7);
             --label-glow: rgba(10, 255, 10, 0.3);
+            --gloss-intensity: 1;
         }
 
         * {
@@ -49,8 +50,9 @@
             /* rounded left, flush right */
             box-shadow:
                 -4px 0 20px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+                /* Rim Light */
+                inset 0 1px 1px rgba(255, 255, 255, calc(0.4 * var(--gloss-intensity, 1))),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.3);
             border-left: 3px solid var(--border-accent);
             border-top: 1px solid rgba(255, 255, 255, 0.06);
             border-bottom: 1px solid rgba(0, 0, 0, 0.4);
@@ -151,10 +153,22 @@
             font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
-            color: var(--label-color);
-            text-shadow: 0 0 8px var(--label-glow);
             line-height: 1;
             margin-bottom: 2px;
+
+            /* Premium Bright Silver Metallic */
+            background: linear-gradient(180deg,
+                    #ffffff 0%,
+                    #ffffff 30%,
+                    #f5f5f5 45%,
+                    #cccccc 50%,
+                    #f5f5f5 55%,
+                    #ffffff 70%,
+                    #ffffff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            text-shadow: 0 0 8px var(--label-glow);
         }
 
         /* === Name — metallic text === */
@@ -163,17 +177,22 @@
             font-size: 32px;
             line-height: 1;
             letter-spacing: 1px;
+            white-space: nowrap;
+
+            /* Premium Bright Silver Metallic */
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 15%,
-                    #e8e8e8 30%, #b0b0b0 50%,
-                    #d0d0d0 65%, #ffffff 80%,
-                    #e0e0e0 100%);
+                    #ffffff 0%,
+                    #ffffff 30%,
+                    #f5f5f5 45%,
+                    #cccccc 50%,
+                    #f5f5f5 55%,
+                    #ffffff 70%,
+                    #ffffff 100%);
             -webkit-background-clip: text;
             background-clip: text;
-            color: transparent;
+            color: transparent !important;
             -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.3);
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
-            white-space: nowrap;
         }
 
         .kicker-text-group {
@@ -183,19 +202,22 @@
         }
 
 
-        /* === Glass highlight on container === */
-        .kicker-container::before {
-            content: '';
+        /* Glass overlay */
+        .glass-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
+            inset: 0;
+            /* Ultra Gloss */
             background: linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.06) 0%,
-                    transparent 100%);
-            border-radius: 12px 0 0 0;
+                    rgba(255, 255, 255, 0.25) 0%,
+                    rgba(255, 255, 255, 0.1) 40%,
+                    transparent 55%,
+                    rgba(0, 0, 0, 0.15) 100%);
+            border-radius: 12px 0 0 12px;
+            z-index: 15;
             pointer-events: none;
+            /* Mega Gloss Filter */
+            filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
+            opacity: 0.8;
         }
 
         /* === GOLD PLATED THEME (Recent Kicker) === */
@@ -247,6 +269,7 @@
             <div class="kicker-label">LATEST KICK</div>
             <div class="kicker-name" id="kicker-name"></div>
         </div>
+        <div class="glass-overlay"></div>
     </div>
 
     <script>
@@ -331,12 +354,7 @@
         }
 
         window.applySettings = function (settings) {
-            if (window.GLOBAL_HUE_OFFSET !== undefined) {
-                document.documentElement.style.setProperty('--hue-rotate', window.GLOBAL_HUE_OFFSET + 'deg');
-            }
-            if (window.GLOBAL_BRIGHTNESS !== undefined) {
-                document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
-            }
+            // Deprecated path, now using embedded engine
         };
 
         function pollAll() {
@@ -389,10 +407,21 @@
 
             function updateColors() {
                 if (!window.adjustHue) return;
-
                 const style = document.documentElement.style;
+
+                // 1. Core Theme Colors
+                const themeHue = State.currentHue;
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
                 for (const key in BASE_COLORS) {
-                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], State.currentHue));
+                    const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    const oldSat = window.GLOBAL_COLOR_SATURATION;
+                    window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    window.GLOBAL_COLOR_SATURATION = themeSat;
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                    window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                    window.GLOBAL_COLOR_SATURATION = oldSat;
                 }
             }
 
@@ -407,16 +436,25 @@
                     const newTarget = window.GLOBAL_HUE_OFFSET || 0;
                     if (newTarget !== State.targetHue) {
                         State.targetHue = newTarget;
-                        if (!State.animationFrame) {
-                            animate();
-                        }
+                        if (!State.animationFrame) animate();
                     }
+
+                    applyFilters();
+                    updateColors();
                 };
                 document.head.appendChild(s);
             }
 
+            function applyFilters() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+
+                document.documentElement.style.filter = `brightness(${bright})`;
+                document.documentElement.style.setProperty('--gloss-intensity', gloss);
+            }
+
             loadSettings();
-            setInterval(loadSettings, 1000);
+            setInterval(loadSettings, 300);
         })();
     </script>
 </body>

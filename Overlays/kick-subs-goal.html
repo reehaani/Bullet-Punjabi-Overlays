@@ -15,6 +15,7 @@
             --fill-goal-end: rgba(56, 239, 125, 0.9);
             --fill-glow-color: rgba(56, 239, 125, 0.4);
             --bar-fill-bg: linear-gradient(135deg, var(--fill-goal-start), var(--fill-goal-end));
+            --gloss-intensity: 1;
 
             /* === Color Group 2: Accent / Star Border === */
             --star-color: #0aff0a;
@@ -50,7 +51,9 @@
             border-radius: 35px;
             /* Fully rounded edges */
             background: var(--track-bg);
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            box-shadow:
+                0 0 30px rgba(0, 0, 0, 0.7),
+                inset 0 1px 1px rgba(255, 255, 255, calc(0.4 * var(--gloss-intensity, 1)));
             overflow: hidden;
             /* Clips the spinning border */
         }
@@ -96,24 +99,40 @@
             background: rgba(20, 20, 20, 0.95);
             z-index: 2;
             overflow: hidden;
-            /* Rim Light: Sharp top catch + soft bottom shadow */
-            box-shadow:
-                inset 0 1px 1px rgba(255, 255, 255, calc(0.6 * var(--gloss-opacity, 1))),
-                inset 0 -1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* === SVG Rim Light Layer === */
+        .rim-light-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .rim-light-layer svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .rim-path {
+            fill: none;
         }
 
         .glass-overlay {
             position: absolute;
             inset: 0;
-            /* Intensified Gloss Gradient */
             background: linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.25) 0%,
-                    rgba(255, 255, 255, 0.1) 40%,
+                    rgba(255, 255, 255, 0.2) 0%,
+                    rgba(255, 255, 255, 0.08) 40%,
                     transparent 55%,
                     rgba(0, 0, 0, 0.15) 100%);
             z-index: 15;
             pointer-events: none;
-            opacity: var(--gloss-opacity, 1);
+            /* Apply filters to allow intensity > 100% */
+            filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
+            opacity: 0.8;
+            /* Base visibility */
         }
 
         /* === Progress Fill === */
@@ -164,9 +183,19 @@
             font-family: 'Anton', sans-serif;
             font-size: 20px;
             font-weight: 400;
-            color: #fff;
             letter-spacing: 2px;
             text-transform: uppercase;
+
+            /* Metallic look */
+            background: linear-gradient(180deg,
+                    #ffffff 0%,
+                    #e0e0e0 45%,
+                    #a0a0a0 50%,
+                    #c8c8c8 55%,
+                    #ffffff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
             transition: all 0.5s ease;
         }
@@ -211,9 +240,21 @@
 
         /* White Numbers (Default) */
         .numbers.white {
-            color: #fff;
             -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+
+            /* Metallic look */
+            background: linear-gradient(180deg,
+                    #ffffff 0%,
+                    #ffffff 25%,
+                    #e0e0e0 45%,
+                    #a0a0a0 50%,
+                    #c8c8c8 55%,
+                    #ffffff 85%,
+                    #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
         }
 
         /* Black Numbers (Inside progress-fill) */
@@ -286,6 +327,26 @@
                         <span class="v-target">50</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Rim Light SVG Layer -->
+            <div class="rim-light-layer">
+                <svg viewBox="0 0 500 70">
+                    <defs>
+                        <linearGradient id="rim-grad-goal" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="white" stop-opacity="0.8" />
+                            <stop offset="40%" stop-color="white" stop-opacity="0.4" />
+                            <stop offset="100%" stop-color="white" stop-opacity="0" />
+                        </linearGradient>
+                        <filter id="rim-blur-goal">
+                            <feGaussianBlur stdDeviation="0.4" />
+                        </filter>
+                    </defs>
+                    <!-- Path follows the fully rounded 500x70 container (inset 4px) -->
+                    <rect x="4.5" y="4.5" width="491" height="61" rx="30.5" stroke="url(#rim-grad-goal)"
+                        stroke-width="1.8" fill="none" filter="url(#rim-blur-goal)" stroke-linecap="round"
+                        clip-path="inset(0 0 50% 0)" />
+                </svg>
             </div>
         </div>
 
@@ -439,7 +500,6 @@
                 const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
 
                 for (const key in BASE_COLORS) {
-                    // Temporarily swap shade so adjustHue can use it
                     const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
                     const oldSat = window.GLOBAL_COLOR_SATURATION;
                     window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
@@ -477,17 +537,18 @@
                         if (!State.animationFrame) animate();
                     }
 
-                    // Apply Global Filters
-                    const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
-                    const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
-
-                    document.documentElement.style.filter = `brightness(${bright})`;
-                    document.documentElement.style.setProperty('--gloss-opacity', gloss);
-
-                    // Update Colors if needed (for instant response on Shade/Star change)
+                    applyFilters();
                     updateColors();
                 };
                 document.head.appendChild(s);
+            }
+
+            function applyFilters() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+
+                document.documentElement.style.filter = `brightness(${bright})`;
+                document.documentElement.style.setProperty('--gloss-intensity', gloss);
             }
 
             loadSettings();

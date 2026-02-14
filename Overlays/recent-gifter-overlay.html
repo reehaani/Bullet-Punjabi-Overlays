@@ -302,7 +302,14 @@
             font-size: 24px;
             letter-spacing: 2px;
             color: transparent;
-            background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 40%, #b0b0b0 100%);
+            background: linear-gradient(180deg,
+                    #ffffff 0%,
+                    #ffffff 30%,
+                    #f5f5f5 45%,
+                    #cccccc 50%,
+                    #f5f5f5 55%,
+                    #ffffff 70%,
+                    #ffffff 100%);
             -webkit-background-clip: text;
             background-clip: text;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
@@ -317,13 +324,15 @@
             line-height: 1;
             letter-spacing: 2px;
             text-transform: uppercase;
+            /* Premium Bright Silver Metallic */
             background: linear-gradient(180deg,
                     #ffffff 0%,
-                    #e0e0e0 45%,
-                    #a0a0a0 50%,
-                    #d0d0d0 60%,
-                    #909090 80%,
-                    #404040 100%);
+                    #ffffff 30%,
+                    #f5f5f5 45%,
+                    #cccccc 50%,
+                    #f5f5f5 55%,
+                    #ffffff 70%,
+                    #ffffff 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -419,13 +428,13 @@
             <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
                 <filter id="fabric-ripple-bg" x="-50%" y="-50%" width="200%" height="200%"
                     filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.009" numOctaves="4" seed="3"
+                    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.009" numOctaves="2" seed="3"
                         stitchTiles="stitch" width="200" height="200" result="noise_tile" />
                     <feTile in="noise_tile" result="tiled_noise" />
                     <feOffset id="noise-scroll-primary" in="tiled_noise" dx="0" dy="0" result="scrolled_noise" />
                     <feGaussianBlur in="scrolled_noise" stdDeviation="2.2" result="smooth_noise" />
 
-                    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="2" seed="9"
+                    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="1" seed="9"
                         stitchTiles="stitch" width="100" height="100" result="noise_tile_soft" />
                     <feTile in="noise_tile_soft" result="tiled_noise_soft" />
                     <feOffset id="noise-scroll-secondary" in="tiled_noise_soft" dx="0" dy="0"
@@ -440,7 +449,7 @@
 
                 <filter id="fabric-ripple-fg" x="-35%" y="-35%" width="170%" height="170%"
                     filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.008" numOctaves="2" seed="4"
+                    <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.008" numOctaves="1" seed="4"
                         stitchTiles="stitch" width="200" height="200" result="fg_noise_tile" />
                     <feTile in="fg_noise_tile" result="fg_tiled_noise" />
                     <feOffset id="noise-scroll-foreground" in="fg_tiled_noise" dx="0" dy="0"
@@ -712,15 +721,22 @@
                     }
 
                     function updateColors() {
-                        // Apply Brightness
-                        const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
-                        document.documentElement.style.filter = `brightness(${bright})`;
-
-                        // Hue logic (scoped)
                         if (!window.adjustHue) return;
-                        if (window.GLOBAL_HUE_OFFSET !== undefined) {
-                            const hueval = window.GLOBAL_HUE_OFFSET;
-                            document.documentElement.style.setProperty('--accent-hue', hueval + 'deg');
+                        const style = document.documentElement.style;
+
+                        // 1. Core Theme Colors
+                        const themeHue = State.currentHue;
+                        const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                        const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
+                        for (const key in BASE_COLORS) {
+                            const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                            const oldSat = window.GLOBAL_COLOR_SATURATION;
+                            window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                            window.GLOBAL_COLOR_SATURATION = themeSat;
+                            style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                            window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                            window.GLOBAL_COLOR_SATURATION = oldSat;
                         }
                     }
 
@@ -737,12 +753,20 @@
                                 State.targetHue = newTarget;
                                 if (!State.animationFrame) animate();
                             }
+
+                            applyFilters();
+                            updateColors();
                         };
                         document.head.appendChild(s);
                     }
 
+                    function applyFilters() {
+                        const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                        document.documentElement.style.filter = `brightness(${bright})`;
+                    }
+
                     loadSettings();
-                    setInterval(loadSettings, 1000);
+                    setInterval(loadSettings, 300);
                 })();
             </script>
         </div>

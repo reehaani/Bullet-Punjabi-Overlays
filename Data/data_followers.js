@@ -1,1 +1,1 @@
-window.updateFollowers("27", "Latest: giftee_name", "1ddaa60e-28b3-44b0-8bc4-e502f63eba08_639066574077862609");
+window.updateFollowers("2", "Latest: REHANI3", "1ddaa60e-28b3-44b0-8bc4-e502f63eba08_639067098815481494");

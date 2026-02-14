@@ -11,16 +11,16 @@ window.ENABLE_BULLETS_RECT = true;
 // ║  240 = Red/Orange                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-window.GLOBAL_HUE_OFFSET = 360; // Degrees (0-360)
-window.GLOBAL_HUE_DEFAULT = 360; // Baseline for resets
+window.GLOBAL_HUE_OFFSET = 217; // Degrees (0-360)
+window.GLOBAL_HUE_DEFAULT = 217; // Baseline for resets
 window.GLOBAL_BRIGHTNESS = 1.0; // Brightness Multiplier (0.0 - 2.0)
-window.GLOBAL_COLOR_BRIGHTNESS = 1.66; // Color Shade Multiplier (0.2 - 2.0)
-window.GLOBAL_COLOR_SATURATION = 1.0; // Color Saturation (0.0 - 2.0)
+window.GLOBAL_COLOR_BRIGHTNESS = 0.2; // Color Shade Multiplier (0.2 - 2.0)
+window.GLOBAL_COLOR_SATURATION = 2.0; // Color Saturation (0.0 - 2.0)
 
 // === STAR BORDER SETTINGS ===
-window.STAR_HUE_OFFSET = 190;
-window.STAR_COLOR_BRIGHTNESS = 2.0;
-window.STAR_COLOR_SATURATION = 1.0;
+window.STAR_HUE_OFFSET = 79;
+window.STAR_COLOR_BRIGHTNESS = 0.67;
+window.STAR_COLOR_SATURATION = 1.09;
 
 // === EFFECTS ===
 window.GLOSSY_INTENSITY = 4.0; // 0.0 to 4.0
