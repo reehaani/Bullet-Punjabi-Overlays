@@ -55,14 +55,11 @@
         .tip-bar {
             position: absolute;
             bottom: 0;
-            left: 20px;
-            /* Offset to prevent glow clipping */
-            width: 1040px;
-            /* Adjusted width */
+            left: 0;
+            width: 1080px;
             height: 100px;
             border-radius: 0 40px 0 0;
             overflow: visible;
-            /* Allow glow to bleed out */
             filter: drop-shadow(0 -4px 24px rgba(0, 0, 0, 0.6));
         }
 
@@ -103,10 +100,11 @@
             }
         }
 
-        /* === Glass overlay — Move to top level for consistency === */
+        /* === Glass overlay === */
         .glass-overlay {
             position: absolute;
             inset: 0;
+            /* Ultra Gloss */
             background:
                 linear-gradient(to bottom,
                     rgba(255, 255, 255, 0.25) 0%,
@@ -120,11 +118,10 @@
                     rgba(255, 255, 255, 0.04) 55%,
                     transparent 80%);
             pointer-events: none;
-            z-index: 30;
-            /* Above content-layer */
+            z-index: 15;
+            /* Mega Gloss Filter */
             filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
             opacity: 0.8;
-            border-radius: 0 40px 0 0;
         }
 
         /* === Content layout === */
@@ -135,24 +132,26 @@
             display: flex;
             flex-direction: row;
             align-items: stretch;
-            justify-content: space-between;
+            justify-content: flex-start;
             padding: 0;
         }
 
         /* === Left side: name tab === */
         .name-tab {
             height: 100%;
+            /* BOOSTED saturation for a more vibrant "Neon Kick" green gradient */
             background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            /* Removed internal gloss to allow global glass-overlay to handle it */
-            padding: 0 10px 0 45px;
-            /* Boosted left padding for glow */
-            gap: 15px;
+            background-image:
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.2) 100%),
+                linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 0 12px 0 24px;
+            gap: 10px;
             display: flex;
             align-items: center;
-            border-top-right-radius: 40px;
+            border-radius: 0 40px 0 0;
             min-width: 0;
+            max-width: calc(100% - 220px);
             flex: 0 1 auto;
-            /* Changed to not grow excessively */
             z-index: 12;
             position: relative;
         }
@@ -162,16 +161,15 @@
             content: '';
             position: absolute;
             bottom: 0;
-            right: -39px;
-            /* 1px overlap to prevent gaps */
+            right: -40px;
+            /* Radius of the curve */
             width: 40px;
             height: 40px;
             background: var(--gradient-end);
-            /* Mask to create concave curve at bottom-right connecting to the tab */
-            mask: radial-gradient(circle at 40px 0px, transparent 40px, #000 40px);
-            -webkit-mask: radial-gradient(circle at 40px 0px, transparent 40px, #000 40px);
+            /* Matches the vibrant end color of the new gradient */
+            mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
+            -webkit-mask: radial-gradient(circle at 40px 0, transparent 40px, #000 40px);
             pointer-events: none;
-            z-index: 12;
         }
 
         .tip-left {
@@ -181,7 +179,7 @@
             height: 100%;
             flex: 1 1 auto;
             overflow: visible;
-            /* Allow text glow/shadows to bleed */
+            padding-left: 4px;
         }
 
         /* === Logo next to name — always visible, never shrinks === */
@@ -218,9 +216,9 @@
             paint-order: stroke fill;
             filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 900px;
+            overflow: visible;
+            text-overflow: clip;
+            max-width: 100%;
             position: relative;
             animation: shine-name 6s infinite linear;
         }
@@ -306,7 +304,7 @@
             filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.25));
             white-space: nowrap;
             flex-shrink: 0;
-            margin-left: 20px;
+            margin-left: auto;
             /* Shines after the name — sequenced via keyframe timing */
             animation: shine-amount 6s infinite linear;
             display: flex;
@@ -336,11 +334,10 @@
 <body>
     <div class="main-canvas">
         <div class="tip-bar" id="tip-bar">
-            <!-- Gloss layer on top -->
-            <div class="glass-overlay"></div>
-
             <!-- Black fill -->
-            <div class="inner-fill"></div>
+            <div class="inner-fill">
+                <div class="glass-overlay"></div>
+            </div>
 
             <!-- Content -->
             <div class="content-layer">
