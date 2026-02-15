@@ -29,3 +29,6 @@ __pycache__/
 # Ignore the virtual environment if created inside
 venv/
 env/
+
+# Build output
+dist/
