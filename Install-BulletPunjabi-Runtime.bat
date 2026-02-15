@@ -64,7 +64,8 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 >> "%PS_SCRIPT%" echo $headers = @{ 'User-Agent' = 'BulletPunjabiInstaller' }
 >> "%PS_SCRIPT%" echo function Get-RepoFiles([string]$Path) {
->> "%PS_SCRIPT%" echo   $apiUrl = "https://api.github.com/repos/$Owner/$Repo/contents/${Path}?ref=${Branch}"
+>> "%PS_SCRIPT%" echo   $encodedApiPath = (($Path -split '/') ^| ForEach-Object { [uri]::EscapeDataString($_) }) -join '/'
+>> "%PS_SCRIPT%" echo   $apiUrl = "https://api.github.com/repos/$Owner/$Repo/contents/$encodedApiPath?ref=${Branch}"
 >> "%PS_SCRIPT%" echo   Write-Host ("Scanning: " ^+ $apiUrl)
 >> "%PS_SCRIPT%" echo   $items = Invoke-RestMethod -Headers $headers -Uri $apiUrl
 >> "%PS_SCRIPT%" echo   $result = @()
@@ -75,7 +76,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   return $result
 >> "%PS_SCRIPT%" echo }
 >> "%PS_SCRIPT%" echo $files = @()
->> "%PS_SCRIPT%" echo foreach ($root in @('Overlays','Data','Settings','Logo')) { $files += Get-RepoFiles -Path $root }
+>> "%PS_SCRIPT%" echo foreach ($root in @('Overlays','Data','Settings','Logo','Streamer Bot')) { $files += Get-RepoFiles -Path $root }
 >> "%PS_SCRIPT%" echo $requiredTopFiles = @('ColorControllerNew.exe')
 >> "%PS_SCRIPT%" echo $optionalTopFiles = @('HueActionNew.exe','Run Color Controller.bat')
 >> "%PS_SCRIPT%" echo $files += $requiredTopFiles + $optionalTopFiles
@@ -89,7 +90,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   $isOptional = ($optionalTopFiles -contains $path)
 >> "%PS_SCRIPT%" echo   try { Invoke-WebRequest -Headers $headers -Uri $rawUrl -OutFile $dest } catch { if (-not $isOptional) { throw } }
 >> "%PS_SCRIPT%" echo }
->> "%PS_SCRIPT%" echo $required = @('Overlays','Data','Settings','Logo','ColorControllerNew.exe')
+>> "%PS_SCRIPT%" echo $required = @('Overlays','Data','Settings','Logo','Streamer Bot','ColorControllerNew.exe')
 >> "%PS_SCRIPT%" echo foreach ($r in $required) {
 >> "%PS_SCRIPT%" echo   $full = Join-Path $TargetDir $r
 >> "%PS_SCRIPT%" echo   if (-not (Test-Path $full)) { throw "Missing required runtime item: $r" }
@@ -112,6 +113,7 @@ echo - Overlays\
 echo - Data\
 echo - Settings\
 echo - Logo\
+echo - Streamer Bot\
 echo - ColorControllerNew.exe
 echo - HueActionNew.exe
 echo - Run Color Controller.bat
