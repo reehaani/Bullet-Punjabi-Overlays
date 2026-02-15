@@ -22,6 +22,10 @@
             /* === Color Group 2: Accent / Star Border === */
             --star-color: #0aff0a;
             --star-color-soft: rgba(10, 255, 10, 0.1);
+            --star-color-secondary: rgba(31, 186, 255, 1);
+            --star-color-secondary-soft: rgba(31, 186, 255, 0.14);
+            --star-secondary-offset: 120deg;
+            --spin-speed: 10s;
 
             /* === Layout === */
             --track-bg: rgba(0, 0, 0, 0.8);
@@ -76,13 +80,20 @@
             margin-left: -600px;
             margin-top: -600px;
             background: conic-gradient(from 0deg,
-                    transparent 0%,
-                    var(--star-color-soft) 2%,
-                    var(--star-color) 12%,
-                    var(--star-color-soft) 22%,
-                    transparent 25%,
-                    transparent 100%);
-            animation: spin 4s linear infinite;
+                    transparent 0deg,
+                    var(--star-color-soft) 8deg,
+                    rgba(10, 255, 10, 0.24) 18deg,
+                    var(--star-color) 30deg,
+                    rgba(10, 255, 10, 0.22) 42deg,
+                    var(--star-color-soft) 52deg,
+                    transparent 62deg,
+                    transparent calc(var(--star-secondary-offset) - 12deg),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) - 6deg),
+                    var(--star-color-secondary) var(--star-secondary-offset),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) + 6deg),
+                    transparent calc(var(--star-secondary-offset) + 12deg),
+                    transparent 360deg);
+            animation: spin var(--spin-speed) linear infinite;
             -webkit-mask-image: radial-gradient(circle, transparent 34px, black 46px);
             mask-image: radial-gradient(circle, transparent 34px, black 46px);
             z-index: 1;
@@ -526,20 +537,30 @@
 
         let lastCount = -1;
         let lastEventId = '';
+        const GLITCH_COOLDOWN_MS = 2000;
+        let nextGlitchAt = 0;
+
+        function parseCount(value) {
+            const cleaned = String(value).replace(/[^\d-]/g, '');
+            return parseInt(cleaned, 10) || 0;
+        }
 
         function triggerPop() {
+            const now = Date.now();
+            if (now < nextGlitchAt) return;
             const el = document.getElementById('current-val');
             el.classList.remove("glitch-active");
             void el.offsetWidth;
             el.classList.add("glitch-active");
+            setTimeout(() => el.classList.remove("glitch-active"), 420);
+            nextGlitchAt = now + GLITCH_COOLDOWN_MS;
         }
 
         window.updateKicks = function (val, top, id) {
-            const current = parseInt(val) || 0;
-            const isNewEvent = id && id !== lastEventId;
+            const current = parseCount(val);
             const isNewCount = current !== lastCount;
 
-            if (isNewCount || isNewEvent) {
+            if (isNewCount) {
                 const formatted = current.toLocaleString('en-US');
                 document.getElementById('current-val').textContent = formatted;
                 const clone = document.querySelector('.clone-val');
@@ -555,6 +576,8 @@
                 if (id) lastEventId = id;
             }
         };
+
+        setInterval(triggerPop, GLITCH_COOLDOWN_MS);
 
         function injectScript(filename, id) {
             const old = document.getElementById(id);
@@ -654,9 +677,18 @@
                     window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
                 }
                 const sh = window.STAR_HUE_OFFSET || 0, ssh = window.STAR_COLOR_BRIGHTNESS || 1.0, ssa = window.STAR_COLOR_SATURATION || 1.0;
+                const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);
+                const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
+                const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
+                const so2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
                 const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
                 window.GLOBAL_COLOR_BRIGHTNESS = ssh; window.GLOBAL_COLOR_SATURATION = ssa;
                 s.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', sh));
+                s.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', sh));
+                window.GLOBAL_COLOR_BRIGHTNESS = ssh2; window.GLOBAL_COLOR_SATURATION = ssa2;
+                s.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', sh2));
+                s.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', sh2));
+                s.setProperty('--star-secondary-offset', `${so2}deg`);
                 window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
             }
 
@@ -672,7 +704,11 @@
                     const nt = window.GLOBAL_HUE_OFFSET || 0;
                     if (nt !== State.targetHue) { State.targetHue = nt; if (!State.animationFrame) animateHue(); }
                     document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS || 1.0})`;
-                    document.documentElement.style.setProperty('--gloss-intensity', window.GLOSSY_INTENSITY || 1.0);
+                    const gloss = window.GLOSSY_INTENSITY || 1.0;
+                    const glossMapped = gloss >= 1
+                        ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+                        : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+                    document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
 
                     const glow = window.GLOW_KICK_RECT !== false;
                     const border = window.SHOW_BORDER_KICK_RECT !== false;

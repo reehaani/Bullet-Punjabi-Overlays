@@ -4,147 +4,88 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kick Daily Overlay - Only Kicks</title>
+    <title>Kick Daily Kicks - Goal</title>
     <style>
-        /* === Modern Square Design === */
-        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;900&display=swap');
-
-        /* === Typography === */
-        .value {
-            font-family: 'Anton', sans-serif;
-            font-size: 130px;
-            line-height: 0.9;
-            color: #fff;
-            margin-top: -15px;
-            -webkit-text-stroke: 3px rgba(0, 0, 0, 0.5);
-            text-shadow:
-                0 0 20px currentColor,
-                4px 4px 0px rgba(0, 0, 0, 0.8);
-        }
-
-        #panel-kicks .value {
-            color: transparent;
-            /* Lower intensity theme glow */
-            text-shadow: 0 0 15px rgba(10, 255, 10, 0.5);
-        }
-
-        .title {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1;
-            margin-top: 25px;
-        }
-
-        .label-daily {
-            font-family: 'Inter', sans-serif;
-            font-size: 25px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: #ffffff;
-            margin-bottom: 5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .label-type {
-            font-family: 'Inter', sans-serif;
-            font-size: 80px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #fff;
-            text-transform: uppercase;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
-            -webkit-text-stroke: 0;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
 
         :root {
-            /* Saturated "Neon Kick" theme */
-            --kicks-bg: linear-gradient(135deg, rgba(0, 177, 137, 0.95), rgba(83, 252, 24, 0.95));
-            /* Neon Accent Color for Border */
-            --neon-green: #0aff0a;
+            --star-color: #0aff0a;
+            --star-color-soft: rgba(10, 255, 10, 0.1);
+            --star-color-secondary: rgba(31, 186, 255, 1);
+            --star-color-secondary-soft: rgba(31, 186, 255, 0.14);
+            --star-secondary-offset: 120deg;
+            --inner-bg: rgba(20, 20, 20, 0.95);
+            --gloss-intensity: 1;
+            --spin-speed: 10s;
+            --rim-light-core: rgba(255, 255, 255, 0.95);
+            --rim-light-soft: rgba(255, 255, 255, 0.55);
+            --rim-light-tail: rgba(255, 255, 255, 0.08);
+            --text-hue-glow: rgba(10, 255, 10, 0.18);
         }
 
+        /* Reset and Base */
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease;
         }
 
         html,
         body {
             width: 100%;
             height: 100%;
-            margin: 0;
             background: transparent;
             overflow: hidden;
-        }
-
-        body {
-            margin: 0;
-            padding: 50px;
-            box-sizing: border-box;
-            width: 100vw;
-            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: transparent;
             font-family: 'Inter', sans-serif;
-            overflow: hidden;
         }
 
-        .stage {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            display: grid;
-            place-items: center;
-        }
-
+        /* Container for the square overlay */
         .container {
             position: relative;
             width: 320px;
             height: 320px;
         }
 
-        /* === The Panel Structure === */
-        .panel {
+        /* Outer Shape / Glow Layer */
+        .star-border-wrapper {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             border-radius: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 1;
-            /* Always visible */
-            transform: scale(1);
-            z-index: 10;
+            overflow: hidden;
+            z-index: 1;
             background: rgba(0, 0, 0, 0.8);
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
         }
 
-        /* === The "Star Border" Animation === */
         .star-border {
             position: absolute;
             top: -50%;
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(transparent, transparent, transparent, var(--border-color));
-            animation: spin 4s linear infinite;
-            z-index: 1;
+            background: conic-gradient(from 0deg,
+                    transparent 0deg,
+                    var(--star-color-soft) 8deg,
+                    var(--star-color) 30deg,
+                    var(--star-color-soft) 52deg,
+                    transparent 62deg,
+                    transparent calc(var(--star-secondary-offset) - 12deg),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) - 6deg),
+                    var(--star-color-secondary) var(--star-secondary-offset),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) + 6deg),
+                    transparent calc(var(--star-secondary-offset) + 12deg),
+                    transparent 360deg);
+            animation: spin var(--spin-speed) linear infinite;
         }
 
         .star-border::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
+            inset: 0;
             background: inherit;
             filter: blur(20px);
             opacity: 0.8;
@@ -160,10 +101,13 @@
             }
         }
 
+        /* Inner Content Area */
         .inner-content {
             position: absolute;
             inset: 6px;
             border-radius: 20px;
+            background: var(--inner-bg);
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.98), rgba(35, 35, 35, 0.95));
             z-index: 2;
             display: flex;
             flex-direction: column;
@@ -173,60 +117,122 @@
             overflow: hidden;
         }
 
-        #panel-kicks .star-border {
-            --border-color: var(--neon-green);
+        .silver-metallic {
+            background: linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 20%,
+                    #e0e0e0 40%, #a0a0a0 55%,
+                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--text-hue-glow));
+            display: inline-block;
         }
 
-        #panel-kicks .inner-content {
-            background: var(--kicks-bg);
+        .gold-metallic {
+            background: linear-gradient(180deg,
+                    #ffed8a 0%,
+                    #fcd04d 25%,
+                    #d4af37 50%,
+                    #8a6d3b 75%,
+                    #d4af37 100%) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            color: transparent !important;
+            -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.4);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 18px rgba(212, 175, 55, 0.6));
+            display: inline-block;
         }
 
-        /* === Typography === */
         .value {
             font-family: 'Anton', sans-serif;
             font-size: 130px;
             line-height: 0.9;
             margin-top: -15px;
-            /* Brighter Metallic Gradient (White prioritized) */
-            background: linear-gradient(180deg,
-                    #ffffff 0%,
-                    #ffffff 40%,
-                    #f0f0f0 70%,
-                    #d0d0d0 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.6);
-            /* Refined Glow: Sharp white + soft theme glow */
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
-            padding-top: 20px;
-            padding-bottom: 20px;
+            padding-top: 10px;
+            padding-bottom: 16px;
             position: relative;
             z-index: 10;
+            white-space: nowrap;
         }
 
         .title {
-            font-size: 28px;
-            font-weight: 800;
-            -webkit-text-stroke: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+            margin-top: 28px;
             z-index: 10;
             position: relative;
         }
 
+        .label-daily {
+            font-size: 25px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+            transition: all 0.35s ease;
+        }
+
+        .label-type {
+            font-size: 80px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.35s ease;
+        }
+
+        /* Glass Overlay */
+        .glass-overlay {
+            display: none !important;
+        }
+
+        /* Watermark Logo */
         .watermark-logo {
             position: absolute;
             bottom: -40px;
             right: -10px;
             width: 240px;
             height: auto;
-            opacity: 0.35;
+            opacity: 0.25;
             z-index: 1;
             pointer-events: none;
             transform: rotate(15deg) perspective(800px) rotateY(-25deg) rotateX(10deg);
-            transform-origin: bottom right;
             -webkit-mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
             mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+        }
+
+        /* Rim Light Layer */
+        .rim-light-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            z-index: 4;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+        }
+
+        .rim-light-layer::before {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 18px;
+            right: 18px;
+            height: 2px;
+            border-radius: 999px;
+            background: linear-gradient(90deg,
+                    var(--rim-light-tail) 0%,
+                    var(--rim-light-core) 40%,
+                    var(--rim-light-soft) 78%,
+                    rgba(255, 255, 255, 0.06) 100%);
+            filter: blur(0.3px) drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+        }
+
+        /* Glitch Heartbeat */
+        .value.glitch-active {
+            animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
 
         @keyframes glitch-skew {
@@ -246,114 +252,12 @@
                 transform: skew(-2deg);
             }
 
-            40% {
-                transform: skew(4deg);
-            }
-
-            50% {
-                transform: skew(-1deg);
-            }
-
             100% {
                 transform: skew(0deg);
             }
         }
 
-        .value.glitch-active {
-            animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-            /* REMOVED color: #fff to prevent white flicker / hiding gradient */
-            position: relative;
-        }
-
-        .value.glitch-active::before,
-        .value.glitch-active::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
-        }
-
-        .value.glitch-active::before {
-            color: #0ff;
-            z-index: -1;
-            animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
-            text-shadow: 2px 0 #0ff;
-        }
-
-        .value.glitch-active::after {
-            color: #f0f;
-            z-index: -2;
-            animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
-            text-shadow: -2px 0 #f0f;
-        }
-
-        @keyframes glitch-anim-1 {
-            0% {
-                clip-path: inset(20% 0 79% 0);
-                transform: translate(-12px, 0);
-            }
-
-            20% {
-                clip-path: inset(60% 0 38% 0);
-                transform: translate(12px, 0);
-            }
-
-            40% {
-                clip-path: inset(40% 0 58% 0);
-                transform: translate(-12px, 0);
-            }
-
-            60% {
-                clip-path: inset(80% 0 18% 0);
-                transform: translate(12px, 0);
-            }
-
-            80% {
-                clip-path: inset(10% 0 88% 0);
-                transform: translate(-12px, 0);
-            }
-
-            100% {
-                clip-path: inset(30% 0 68% 0);
-                transform: translate(12px, 0);
-            }
-        }
-
-        @keyframes glitch-anim-2 {
-            0% {
-                clip-path: inset(10% 0 88% 0);
-                transform: translate(12px, 0);
-            }
-
-            20% {
-                clip-path: inset(30% 0 68% 0);
-                transform: translate(-12px, 0);
-            }
-
-            40% {
-                clip-path: inset(15% 0 82% 0);
-                transform: translate(12px, 0);
-            }
-
-            60% {
-                clip-path: inset(55% 0 42% 0);
-                transform: translate(-12px, 0);
-            }
-
-            80% {
-                clip-path: inset(40% 0 58% 0);
-                transform: translate(12px, 0);
-            }
-
-            100% {
-                clip-path: inset(70% 0 28% 0);
-                transform: translate(-12px, 0);
-            }
-        }
-
+        /* Sparks Canvas */
         #sparks-canvas {
             position: fixed;
             top: -1000px;
@@ -367,251 +271,241 @@
 </head>
 
 <body>
-
     <div class="container">
         <canvas id="sparks-canvas"></canvas>
-
-        <div id="panel-kicks" class="panel">
+        <div class="star-border-wrapper">
             <div class="star-border"></div>
-            <div class="inner-content">
-                <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
-                <div id="kicks-value" class="value" data-text="0">0</div>
-                <div class="title">
-                    <span class="label-daily">DAILY</span>
-                    <span class="label-type">KICKS</span>
-                </div>
+        </div>
+        <div class="inner-content">
+            <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+            <div id="kicks-value" class="value silver-metallic" data-text="0">0</div>
+            <div class="title">
+                <span id="daily-text" class="label-daily silver-metallic">DAILY</span>
+                <span id="type-text" class="label-type silver-metallic">KICKS</span>
             </div>
         </div>
-
+        <div class="rim-light-layer"></div>
+        <div class="glass-overlay"></div>
     </div>
 
     <script>
-        // === CONFIG ===
-        const POLL_INTERVAL = 1000;
-
-        // === BULLET CASING PARTICLES ===
-        const canvas = document.getElementById('sparks-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let bullets = [];
-
-        function resize() {
-            width = canvas.width = canvas.offsetWidth;
-            height = canvas.height = canvas.offsetHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        class Casing {
-            constructor(isBurst = false) {
-                this.reset(isBurst);
-            }
-            reset(isBurst = false) {
-                const container = document.querySelector('.container');
-                const cRect = container.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
-
-                const spawnX = (cRect.left + cRect.width / 2) - canvasRect.left;
-                const spawnY = cRect.top - canvasRect.top;
-
-                this.x = spawnX + (Math.random() * 40 - 20);
-                this.y = spawnY + 20;
-
-                const dir = Math.random() > 0.5 ? 1 : -1;
-
-                if (isBurst) {
-                    this.vx = (Math.random() * 8 + 4) * dir;
-                    this.vy = -(Math.random() * 15 + 20);
-                    this.life = 200;
-                } else {
-                    this.vx = (Math.random() * 6 + 4) * dir;
-                    this.vy = -(Math.random() * 10 + 15);
-                    this.life = 150;
-                }
-
-                this.gravity = 0.4;
-                this.angle = Math.random() * Math.PI;
-                this.vAngle = (Math.random() * 0.2 + 0.05) * dir;
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += this.gravity;
-                this.angle += this.vAngle;
-                this.life--;
-            }
-            draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-
-                const gradient = ctx.createLinearGradient(-18, 0, 18, 0);
-                gradient.addColorStop(0, '#b8860b');
-                gradient.addColorStop(0.5, '#f0e68c');
-                gradient.addColorStop(1, '#daa520');
-
-                ctx.fillStyle = gradient;
-                ctx.fillRect(-18, -48, 36, 96);
-
-                ctx.fillStyle = '#8b4500';
-                ctx.fillRect(-22, 38, 44, 10);
-
-                ctx.restore();
-            }
-        }
-
+        const POLL_INTERVAL = 120;
+        let TARGET_GOAL = 10000;
+        let lastCount = -1;
         let rapidFireUntil = 0;
+        const GLITCH_COOLDOWN_MS = 2000;
+        let nextGlitchAt = 0;
 
-        function animateBullets() {
-            ctx.clearRect(0, 0, width, height);
-
-            const now = Date.now();
-            const isRapidFire = now < rapidFireUntil;
-            const threshold = 0.98;
-
-            if (isRapidFire && Math.random() > threshold) {
-                bullets.push(new Casing(false));
-            }
-
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                const b = bullets[i];
-                if (b.y >= height + 50 || b.life <= -50) {
-                    bullets.splice(i, 1);
-                } else {
-                    b.update();
-                    b.draw();
-                }
-            }
-
-            requestAnimationFrame(animateBullets);
+        function parseCount(value) {
+            const cleaned = String(value).replace(/[^\d-]/g, '');
+            return parseInt(cleaned, 10) || 0;
         }
-        animateBullets();
 
-        // === HEARTBEAT GLITCH SYSTEM ===
-        function triggerHeartbeatGlitch() {
+        function applyGoalState(current) {
             const valueEl = document.getElementById('kicks-value');
-            if (!valueEl) return;
+            const dailyEl = document.getElementById('daily-text');
+            const typeEl = document.getElementById('type-text');
+            const reached = current >= TARGET_GOAL;
 
-            if (!valueEl.getAttribute('data-text')) {
-                valueEl.setAttribute('data-text', valueEl.textContent);
-            }
-
-            valueEl.classList.remove("glitch-active");
-            void valueEl.offsetWidth;
-            valueEl.classList.add("glitch-active");
-
-            setTimeout(() => valueEl.classList.remove("glitch-active"), 400);
+            [valueEl, dailyEl, typeEl].forEach(el => {
+                if (!el) return;
+                if (reached) {
+                    el.classList.remove('silver-metallic');
+                    el.classList.add('gold-metallic');
+                } else {
+                    el.classList.remove('gold-metallic');
+                    el.classList.add('silver-metallic');
+                }
+            });
         }
-        setInterval(triggerHeartbeatGlitch, 1500);
 
-        // === COUNTER ANIMATION WITH GLITCH ===
         function setAnimatedText(id, newValue) {
             const el = document.getElementById(id);
             if (!el) return;
+            const numVal = parseCount(newValue);
+            const lastTarget = parseInt(el.getAttribute("data-target"), 10);
+            if (!Number.isNaN(lastTarget) && lastTarget === numVal) return;
+            el.setAttribute("data-target", String(numVal));
+            const oldVal = parseCount(el.textContent);
+            if (numVal === oldVal && !el._isAnimating) return;
 
-            const numVal = parseInt(newValue) || 0;
-            const lastTarget = parseInt(el.getAttribute("data-target"));
+            if (numVal > oldVal) rapidFireUntil = Date.now() + 5000;
 
-            if (lastTarget === numVal) return;
-
-            el.setAttribute("data-target", numVal);
-            el.setAttribute("data-text", newValue);
-
-            const oldVal = parseInt(el.textContent.replace(/,/g, '')) || 0;
-
-            if (numVal > oldVal) {
-                rapidFireUntil = Date.now() + 5000;
-            }
-
-            if (isNaN(numVal)) {
-                el.textContent = newValue;
-                return;
-            }
-
-            if (numVal !== oldVal) {
+            const now = Date.now();
+            if (numVal > oldVal && now >= nextGlitchAt) {
                 el.classList.remove("glitch-active");
                 void el.offsetWidth;
                 el.classList.add("glitch-active");
-                setTimeout(() => el.classList.remove("glitch-active"), 400);
+                setTimeout(() => el.classList.remove("glitch-active"), 420);
+                nextGlitchAt = now + GLITCH_COOLDOWN_MS;
             }
 
-            animateValue(el, oldVal, numVal, 2000);
-        }
-
-        function updateFontSize(obj, text) {
-            const len = text.length;
-            let size = 130;
-            obj.style.letterSpacing = "normal";
-            if (len >= 5) size = 100;
-            if (len >= 6) obj.style.letterSpacing = "-3px";
-            obj.style.fontSize = size + "px";
+            const duration = Math.max(180, Math.min(480, 140 + Math.abs(numVal - oldVal) * 0.015));
+            animateValue(el, oldVal, numVal, duration);
+            applyGoalState(numVal);
         }
 
         function animateValue(obj, start, end, duration) {
             let startTimestamp = null;
+            if (obj._animFrame) cancelAnimationFrame(obj._animFrame);
+            obj._isAnimating = true;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 4);
-                const currentNum = Math.floor(progress * (end - start) + start);
-                const current = currentNum.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
-
+                const current = Math.floor(progress * (end - start) + start).toLocaleString('en-US');
                 obj.textContent = current;
-                obj.setAttribute("data-text", current);
                 updateFontSize(obj, current);
-
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    const finalVal = end.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
-                    obj.textContent = finalVal;
-                    obj.setAttribute("data-text", finalVal);
-                    updateFontSize(obj, finalVal);
+                if (progress < 1) obj._animFrame = window.requestAnimationFrame(step);
+                else {
+                    obj._animFrame = null;
+                    obj._isAnimating = false;
                 }
             };
-            window.requestAnimationFrame(step);
+            obj._animFrame = window.requestAnimationFrame(step);
         }
 
-        function setText(id, value) {
-            if (id.includes("-value")) {
-                setAnimatedText(id, value);
-            } else {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
-            }
+        function updateFontSize(obj, text) {
+            const len = text.length;
+            obj.style.fontSize = len >= 6 ? "90px" : len >= 5 ? "110px" : "130px";
         }
 
-        // === SETTINGS APPLY ===
-        window.applySettings = function (settings) {
-            if (settings.hue) {
-                document.documentElement.style.setProperty('--hue-rotate', settings.hue + 'deg');
-            }
-            if (window.GLOBAL_BRIGHTNESS !== undefined) {
-                document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
-            }
+        window.updateKicks = function (val) {
+            setAnimatedText("kicks-value", val);
         };
 
-        // === DATA POLLING ===
-        window.updateKicks = function (val, sub) { setText("kicks-value", val); };
+        setInterval(() => {
+            const el = document.getElementById('kicks-value');
+            if (!el) return;
+            const now = Date.now();
+            if (now < nextGlitchAt) return;
+            el.classList.remove('glitch-active');
+            void el.offsetWidth;
+            el.classList.add('glitch-active');
+            setTimeout(() => el.classList.remove('glitch-active'), 420);
+            nextGlitchAt = now + GLITCH_COOLDOWN_MS;
+        }, GLITCH_COOLDOWN_MS);
 
-        function injectScript(filename, id) {
-            const old = document.getElementById(id);
-            if (old) old.remove();
+        // === BULLET CASING PARTICLES ===
+        const canvas = document.getElementById('sparks-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, bullets = [];
+
+        function resize() { width = canvas.width = 320; height = canvas.height = 320; }
+        resize();
+
+        class Casing {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = width / 2 + (Math.random() * 40 - 20);
+                this.y = 20;
+                const dir = Math.random() > 0.5 ? 1 : -1;
+                this.vx = (Math.random() * 6 + 4) * dir;
+                this.vy = -(Math.random() * 10 + 15);
+                this.life = 150;
+                this.gravity = 0.4;
+                this.angle = Math.random() * Math.PI;
+                this.vAngle = (Math.random() * 0.2 + 0.05) * dir;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.angle += this.vAngle; this.life--; }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                const grad = ctx.createLinearGradient(-18, 0, 18, 0);
+                grad.addColorStop(0, '#b8860b'); grad.addColorStop(0.5, '#f0e68c'); grad.addColorStop(1, '#daa520');
+                ctx.fillStyle = grad; ctx.fillRect(-18, -48, 36, 96);
+                ctx.fillStyle = '#8b4500'; ctx.fillRect(-22, 38, 44, 10);
+                ctx.restore();
+            }
+        }
+
+        function animateSparks() {
+            ctx.clearRect(0, 0, width, height);
+            if (Date.now() < rapidFireUntil && Math.random() > 0.98) bullets.push(new Casing());
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                if (b.y > height + 50 || b.life < -50) bullets.splice(i, 1);
+                else { b.update(); b.draw(); }
+            }
+            requestAnimationFrame(animateSparks);
+        }
+        animateSparks();
+
+        function pollData() {
             const s = document.createElement("script");
-            s.src = filename + "?t=" + new Date().getTime();
-            s.id = id;
+            s.src = "../Data/data_kicks.js?t=" + Date.now();
+            s.onload = () => s.remove();
             document.body.appendChild(s);
         }
 
-        function pollAll() {
-            injectScript("../Data/data_kicks.js", "script-kicks");
-            injectScript("../Settings/settings.js", "script-settings");
+        function pollSettings() {
+            const st = document.createElement("script");
+            st.src = "../Settings/settings.js?t=" + Date.now();
+            st.id = 'settings-script';
+            st.onload = () => {
+                if (window.DAILY_KICKS_GOAL) {
+                    TARGET_GOAL = parseInt(window.DAILY_KICKS_GOAL, 10) || TARGET_GOAL;
+                }
+                applyFilters();
+                applyGoalState(Math.max(0, lastCount));
+                st.remove();
+            };
+            document.body.appendChild(st);
         }
-        setInterval(pollAll, 300);
 
+        function applyFilters() {
+            const bright = window.GLOBAL_BRIGHTNESS || 1.0;
+            const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+            const glossMapped = gloss >= 1
+                ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+                : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+            const glow = window.GLOW_KICK_RECT !== false;
+            document.documentElement.style.filter = `brightness(${bright})`;
+            document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
+            const sw = document.querySelector('.star-border-wrapper');
+            if (sw) sw.style.opacity = glow ? '1' : '0';
+        }
 
-        pollAll();
+        setInterval(pollData, POLL_INTERVAL);
+        setInterval(pollSettings, 300);
+        pollData();
+        pollSettings();
+    </script>
 
+    <!-- Embedded Color Engine -->
+    <script>
+        (function () {
+            const BASE_COLORS = { '--inner-bg': 'rgba(20, 20, 20, 0.95)' };
+            const State = { curHue: 0, tgtHue: 0, raf: null };
+            function update() {
+                if (!window.adjustHue) return;
+                const s = document.documentElement.style, h = State.curHue;
+                const shade = window.GLOBAL_COLOR_BRIGHTNESS || 1.0, sat = window.GLOBAL_COLOR_SATURATION || 1.0;
+                const sh = window.STAR_HUE_OFFSET || 0, ssh = window.STAR_COLOR_BRIGHTNESS || 1.0, ssa = window.STAR_COLOR_SATURATION || 1.0;
+                const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);
+                const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
+                const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
+                const so2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+
+                const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
+                window.GLOBAL_COLOR_BRIGHTNESS = ssh; window.GLOBAL_COLOR_SATURATION = ssa;
+                s.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', sh));
+                s.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', sh));
+                window.GLOBAL_COLOR_BRIGHTNESS = ssh2; window.GLOBAL_COLOR_SATURATION = ssa2;
+                s.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', sh2));
+                s.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', sh2));
+                s.setProperty('--star-secondary-offset', `${so2}deg`);
+                s.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.18)', h));
+                window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
+            }
+            function anim() {
+                const d = State.tgtHue - State.curHue;
+                if (Math.abs(d) > 0.05) { State.curHue += d * 0.08; update(); State.raf = requestAnimationFrame(anim); }
+                else { State.curHue = State.tgtHue; update(); State.raf = null; }
+            }
+            setInterval(() => {
+                const nt = window.GLOBAL_HUE_OFFSET || 0;
+                if (nt !== State.tgtHue) { State.tgtHue = nt; if (!State.raf) anim(); }
+            }, 300);
+        })();
     </script>
 </body>
 

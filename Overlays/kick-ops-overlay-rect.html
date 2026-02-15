@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -58,11 +58,18 @@
       font-weight: 700;
       /* Bolder */
       letter-spacing: 6px;
-      color: #ffffff;
-      /* Full White */
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f2f2f2 35%,
+          #b2b2b2 58%,
+          #ededed 78%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-stroke: 0.7px rgba(255, 255, 255, 0.35);
       margin-bottom: 2px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 1);
-      /* Strong Shadow */
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
     }
 
     .label-type {
@@ -71,25 +78,42 @@
       /* Much Bigger (was 30px) */
       font-weight: 900;
       letter-spacing: 2px;
-      color: #fff;
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f4f4f4 28%,
+          #b5b5b5 50%,
+          #ebebeb 72%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
       text-transform: uppercase;
-      text-shadow: 0 4px 8px rgba(0, 0, 0, 1);
-      /* deeper shadow */
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 8px var(--text-hue-glow));
     }
 
     :root {
       /* Brighter Cyberpunk Gradients (Inner Backgrounds) */
       /* Chatters: HIGH ENERGY Electric Blue to Cyber Purple */
-      --chatters-bg: linear-gradient(135deg, rgba(0, 85, 255, 0.9), rgba(138, 43, 226, 0.9));
+      --chatters-bg-start: rgba(0, 85, 255, 0.9);
+      --chatters-bg-end: rgba(138, 43, 226, 0.9);
       /* Followers: Neon Green to Teal */
-      --followers-bg: linear-gradient(135deg, rgba(17, 153, 142, 0.9), rgba(56, 239, 125, 0.9));
+      --followers-bg-start: rgba(17, 153, 142, 0.9);
+      --followers-bg-end: rgba(56, 239, 125, 0.9);
       /* Kicks: Hot Pink to Orange */
-      --kicks-bg: linear-gradient(135deg, rgba(255, 65, 108, 0.9), rgba(255, 75, 43, 0.9));
+      --kicks-bg-start: rgba(255, 65, 108, 0.9);
+      --kicks-bg-end: rgba(255, 75, 43, 0.9);
 
       /* Neon Accent Colors for Border */
       --neon-blue: #00f2ff;
       --neon-green: #0aff0a;
       --neon-red: #ff9900;
+      --spin-speed: 10s;
+      --rim-light-core: rgba(255, 255, 255, 0.92);
+      --rim-light-soft: rgba(255, 255, 255, 0.5);
+      --rim-light-tail: rgba(255, 255, 255, 0.08);
+      --gloss-intensity: 1;
+      --text-hue-glow: rgba(10, 255, 10, 0.14);
     }
 
     * {
@@ -133,9 +157,9 @@
     /* Container for the rotator */
     .container {
       position: relative;
-      width: 500px;
+      width: 560px;
       /* FIXED: Wide */
-      height: 140px;
+      height: 155px;
       /* FIXED: Short */
       /* Ensure glow doesn't get cut off */
     }
@@ -185,9 +209,17 @@
       /* Center without transform */
       margin-top: -600px;
       /* Center without transform */
-      background: conic-gradient(transparent, transparent, transparent, var(--border-color));
-      animation: spin 4s linear infinite;
+      background: conic-gradient(from 0deg,
+          transparent 0deg,
+          var(--border-color-soft, rgba(255, 255, 255, 0.12)) 8deg,
+          var(--border-color) 30deg,
+          var(--border-color-soft, rgba(255, 255, 255, 0.12)) 52deg,
+          transparent 62deg,
+          transparent 360deg);
+      animation: spin var(--spin-speed) linear infinite;
       z-index: 1;
+      -webkit-mask-image: radial-gradient(circle, transparent 22px, black 28px);
+      mask-image: radial-gradient(circle, transparent 22px, black 28px);
     }
 
     /* Second tail for better glow */
@@ -226,23 +258,52 @@
       align-items: center;
       justify-content: flex-start;
       /* Align contents left */
-      padding-left: 40px;
-      gap: 30px;
+      padding-left: 28px;
+      padding-right: 24px;
+      gap: 14px;
       /* Space between Number and Text */
       overflow: hidden;
+    }
+
+    .rim-light-layer {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      z-index: 9;
+      pointer-events: none;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+    }
+
+    .rim-light-layer::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 16px;
+      right: 16px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+          var(--rim-light-tail) 0%,
+          var(--rim-light-core) 40%,
+          var(--rim-light-soft) 78%,
+          rgba(255, 255, 255, 0.06) 100%);
+      filter: blur(0.3px) drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
     }
 
     /* Panel Specific Styles */
     #panel-chatters .star-border {
       --border-color: var(--neon-blue);
+      --border-color-soft: rgba(0, 242, 255, 0.16);
     }
 
     #panel-chatters .inner-content {
-      background: var(--chatters-bg);
+      background: linear-gradient(135deg, var(--chatters-bg-start), var(--chatters-bg-end));
     }
 
     #panel-followers .star-border {
       --border-color: var(--neon-green);
+      --border-color-soft: rgba(10, 255, 10, 0.16);
     }
 
     /* Text Colors per panel */
@@ -265,15 +326,16 @@
     }
 
     #panel-followers .inner-content {
-      background: var(--followers-bg);
+      background: linear-gradient(135deg, var(--followers-bg-start), var(--followers-bg-end));
     }
 
     #panel-kicks .star-border {
       --border-color: var(--neon-red);
+      --border-color-soft: rgba(255, 153, 0, 0.18);
     }
 
     #panel-kicks .inner-content {
-      background: var(--kicks-bg);
+      background: linear-gradient(135deg, var(--kicks-bg-start), var(--kicks-bg-end));
     }
 
 
@@ -304,7 +366,7 @@
       -webkit-font-smoothing: antialiased;
 
       /* Strong Black Barrier + Subtle Glow */
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 8px var(--text-hue-glow));
 
       padding-top: 10px;
       padding-bottom: 10px;
@@ -321,7 +383,7 @@
       line-height: 1;
       margin-top: 5px;
       order: 2;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 5px var(--text-hue-glow);
     }
 
     .label-daily {
@@ -329,9 +391,18 @@
       font-size: 20px;
       font-weight: 700;
       letter-spacing: 4px;
-      color: #ffffff;
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f2f2f2 35%,
+          #b2b2b2 58%,
+          #ededed 78%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-stroke: 0.7px rgba(255, 255, 255, 0.35);
       margin-bottom: 5px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
     }
 
     .label-type {
@@ -339,10 +410,18 @@
       font-size: 48px;
       font-weight: 900;
       letter-spacing: 1px;
-      color: #fff;
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f4f4f4 28%,
+          #b5b5b5 50%,
+          #ebebeb 72%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
       text-transform: uppercase;
-      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
-      -webkit-text-stroke: 0;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 8px var(--text-hue-glow));
     }
 
     .watermark-logo {
@@ -528,6 +607,118 @@
     .debug.show {
       opacity: 1;
     }
+
+    /* === Legend Text Theme Override (from daily-kicks-overlay-rect) === */
+    .silver-metallic {
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #fdfdfd 20%,
+          #ececec 42%,
+          #d6d6d6 56%,
+          #efefef 72%,
+          #ffffff 86%,
+          #f3f3f3 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.55);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.3)) drop-shadow(0 0 10px var(--text-hue-glow));
+      display: inline-block;
+      background-repeat: no-repeat;
+    }
+
+    .gold-metallic {
+      background: linear-gradient(180deg,
+          #ffed8a 0%,
+          #fcd04d 25%,
+          #d4af37 50%,
+          #8a6d3b 75%,
+          #d4af37 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.4);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 38px rgba(255, 215, 0, 0.35));
+      display: inline-block;
+      background-repeat: no-repeat;
+    }
+
+    .value {
+      font-family: 'Anton', sans-serif !important;
+      font-size: 118px !important;
+      line-height: 0.92 !important;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.85)) !important;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3) !important;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      text-align: right;
+      flex: 0 0 auto;
+      min-width: 180px;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 0.95 !important;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+      margin-top: 5px !important;
+      margin-left: 8px !important;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .label-daily {
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      letter-spacing: 2.8px !important;
+      color: #ffffff !important;
+      margin-bottom: 2px !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      -webkit-text-stroke: 0 !important;
+      filter: none !important;
+      transition: color 0.5s ease;
+    }
+
+    .label-type {
+      font-size: 48px !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.8px !important;
+      text-transform: uppercase;
+      transition: color 0.5s ease;
+    }
+
+    /* OBS-safe fallback for alphabet labels (prevents black/outline-only letters) */
+    .label-type.silver-metallic,
+    .label-daily.silver-metallic {
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      color: #f2f2f2 !important;
+      -webkit-text-fill-color: #f2f2f2 !important;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.38) !important;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px var(--text-hue-glow)) !important;
+    }
+
+    @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+      .silver-metallic,
+      .gold-metallic {
+        color: #f5f5f5 !important;
+        -webkit-text-fill-color: #f5f5f5 !important;
+        background: none !important;
+      }
+    }
+
+    #panel-chatters .value,
+    #panel-followers .value,
+    #panel-kicks .value {
+      text-shadow: none !important;
+      color: transparent !important;
+    }
   </style>
 </head>
 
@@ -552,11 +743,12 @@
       <div class="inner-content">
         <div class="noise-overlay"></div>
         <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
-        <div id="chatters-value" class="value" data-text="0">0</div>
+        <div id="chatters-value" class="value silver-metallic" data-text="0">0</div>
         <div class="title">
           <span class="label-daily">DAILY</span>
-          <span class="label-type">CHAT</span>
+          <span class="label-type silver-metallic">CHAT</span>
         </div>
+        <div class="rim-light-layer"></div>
       </div>
     </div>
 
@@ -566,11 +758,12 @@
       <div class="inner-content">
         <div class="noise-overlay"></div>
         <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
-        <div id="followers-value" class="value" data-text="0">0</div>
+        <div id="followers-value" class="value silver-metallic" data-text="0">0</div>
         <div class="title">
           <span class="label-daily">DAILY</span>
-          <span class="label-type">SUBS</span>
+          <span class="label-type silver-metallic">SUBS</span>
         </div>
+        <div class="rim-light-layer"></div>
       </div>
     </div>
 
@@ -580,11 +773,12 @@
       <div class="inner-content">
         <div class="noise-overlay"></div>
         <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
-        <div id="kicks-value" class="value" data-text="0">0</div>
+        <div id="kicks-value" class="value silver-metallic" data-text="0">0</div>
         <div class="title">
           <span class="label-daily">DAILY</span>
-          <span class="label-type">KICKS</span>
+          <span class="label-type silver-metallic">KICKS</span>
         </div>
+        <div class="rim-light-layer"></div>
       </div>
     </div>
 
@@ -595,7 +789,7 @@
   <script>
     // === CONFIG ===
     const ROTATE_MS = 15000;
-    const POLL_INTERVAL = 1000;
+    const POLL_INTERVAL = 120;
     window.ENABLE_BULLETS = true;
 
     // === ROTATION LOGIC (Defined First) ===
@@ -818,21 +1012,29 @@
         */
       }
 
-      animateValue(el, oldVal, numVal, 2000);
+      const duration = Math.max(180, Math.min(480, 140 + Math.abs(numVal - oldVal) * 0.015));
+      animateValue(el, oldVal, numVal, duration);
     }
 
     function updateFontSize(obj, text) {
-      const len = text.length;
-      let size = 110; // Unified Base Size (0-5 digits)
+      const digits = String(text).replace(/\D/g, '').length;
+      let size = 106;
 
-      // Only shrink if >= 6 digits (100,000)
-      if (len >= 6) size = 85;
+      if (digits <= 2) size = 106;
+      else if (digits === 3) size = 100;
+      else if (digits === 4) size = 92;
+      else if (digits === 5) size = 80;
+      else if (digits === 6) size = 72;
+      else if (digits === 7) size = 66;
+      else size = 60;
 
       obj.style.fontSize = size + "px";
     }
 
     function animateValue(obj, start, end, duration) {
       let startTimestamp = null;
+      if (obj._animFrame) cancelAnimationFrame(obj._animFrame);
+      obj._isAnimating = true;
       const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
@@ -844,15 +1046,17 @@
         updateFontSize(obj, current); // Scale
 
         if (progress < 1) {
-          window.requestAnimationFrame(step);
+          obj._animFrame = window.requestAnimationFrame(step);
         } else {
           const finalVal = end.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
           obj.textContent = finalVal;
           obj.setAttribute("data-text", finalVal);
           updateFontSize(obj, finalVal);
+          obj._animFrame = null;
+          obj._isAnimating = false;
         }
       };
-      window.requestAnimationFrame(step);
+      obj._animFrame = window.requestAnimationFrame(step);
     }
 
     function setText(id, value) {
@@ -892,13 +1096,70 @@
       injectScript("../Data/data_chatters.js", "script-chatters");
       injectScript("../Data/data_followers.js", "script-followers");
       injectScript("../Data/data_kicks.js", "script-kicks");
-      injectScript("../Settings/settings.js", "script-settings");
     }
 
     // === BOOT SEQUENCE ===
-    setInterval(pollAll, 300);
+    setInterval(pollAll, POLL_INTERVAL);
     pollAll();
 
+  </script>
+
+  <script>
+    (function () {
+      function applyThemeSync() {
+        if (!window.adjustHue) return;
+        const style = document.documentElement.style;
+
+        const gh = window.GLOBAL_HUE_OFFSET || 0;
+        const gShade = window.GLOBAL_COLOR_BRIGHTNESS || 1.0;
+        const gSat = window.GLOBAL_COLOR_SATURATION || 1.0;
+
+        const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
+        window.GLOBAL_COLOR_BRIGHTNESS = gShade;
+        window.GLOBAL_COLOR_SATURATION = gSat;
+        style.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.14)', gh));
+        style.setProperty('--chatters-bg-start', window.adjustHue('rgba(0, 85, 255, 0.9)', gh));
+        style.setProperty('--chatters-bg-end', window.adjustHue('rgba(138, 43, 226, 0.9)', gh));
+        style.setProperty('--followers-bg-start', window.adjustHue('rgba(17, 153, 142, 0.9)', gh));
+        style.setProperty('--followers-bg-end', window.adjustHue('rgba(56, 239, 125, 0.9)', gh));
+        style.setProperty('--kicks-bg-start', window.adjustHue('rgba(255, 65, 108, 0.9)', gh));
+        style.setProperty('--kicks-bg-end', window.adjustHue('rgba(255, 75, 43, 0.9)', gh));
+        window.GLOBAL_COLOR_BRIGHTNESS = os;
+        window.GLOBAL_COLOR_SATURATION = osa;
+
+        const sh = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : gh;
+        const sShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
+        const sSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
+        window.GLOBAL_COLOR_BRIGHTNESS = sShade;
+        window.GLOBAL_COLOR_SATURATION = sSat;
+        style.setProperty('--neon-blue', window.adjustHue('#00f2ff', sh));
+        style.setProperty('--neon-green', window.adjustHue('#0aff0a', sh));
+        style.setProperty('--neon-red', window.adjustHue('#ff9900', sh));
+        window.GLOBAL_COLOR_BRIGHTNESS = os;
+        window.GLOBAL_COLOR_SATURATION = osa;
+
+        const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+        const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+        const glossMapped = gloss >= 1
+          ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+          : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+        document.documentElement.style.filter = `brightness(${bright})`;
+        style.setProperty('--gloss-intensity', glossMapped);
+      }
+
+      function loadSettings() {
+        const old = document.getElementById('ops-rect-theme-settings');
+        if (old) old.remove();
+        const s = document.createElement('script');
+        s.src = '../Settings/settings.js?t=' + Date.now();
+        s.id = 'ops-rect-theme-settings';
+        s.onload = applyThemeSync;
+        document.body.appendChild(s);
+      }
+
+      loadSettings();
+      setInterval(loadSettings, 120);
+    })();
   </script>
 </body>
 

@@ -40,7 +40,7 @@
         .gifter-anchor {
             position: fixed;
             top: 25px;
-            left: 50%;
+            left: calc(50% - 320px);
             width: 640px;
             height: 110px;
             border-radius: 0 0 50px 50px;
@@ -50,7 +50,7 @@
                 drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5))
                 drop-shadow(0 24px 42px rgba(0, 0, 0, 0.36))
                 drop-shadow(0 0 28px rgba(0, 0, 0, 0.2));
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
             transform-origin: top center;
             opacity: 1;
             transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
@@ -125,12 +125,12 @@
         }
 
         .gifter-anchor.slide-in {
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
             opacity: 1;
         }
 
         .gifter-anchor.slide-out {
-            transform: translateX(-50%) translateY(-150%);
+            transform: translateY(-150%);
             opacity: 0;
             transition: transform 0.6s cubic-bezier(0.55, 0, 1, 0.45), opacity 0.4s ease;
         }
@@ -207,7 +207,7 @@
             flex-direction: row;
             align-items: center;
             gap: 20px;
-            padding: 0 40px 0 25px;
+            padding: 0 8px 0 25px;
             pointer-events: none;
             animation: content-parallax 6.2s ease-in-out infinite;
             transform-origin: center center;
@@ -347,9 +347,9 @@
             -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.5);
             filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 480px;
+            overflow: visible;
+            text-overflow: clip;
+            max-width: none;
             transition: all 0.5s ease;
             animation: name-drift 4.2s ease-in-out infinite;
             will-change: transform, filter;
@@ -669,11 +669,17 @@
         const container = document.getElementById('gifter-anchor');
         const surfaceEl = document.getElementById('wave-container');
         const nameEl = document.getElementById('gifter-name');
+        const textGroupEl = document.querySelector('.gifter-text-group');
         const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         let isBannerVisible = true;
         let pollIntervalMs = BASE_POLL_INTERVAL;
         let pollTimer = null;
         let pollFailures = 0;
+        let lastShownName = '';
+
+        const MIN_ANCHOR_WIDTH = 420;
+        const RIGHT_GUTTER = 40;
+        const FIXED_CHROME_WIDTH = 25 + 8 + 60 + 20 + 8; // left padding + right padding + icon + gap + small safety
 
         function clamp(val, min, max) {
             return Math.min(max, Math.max(min, val));
@@ -681,6 +687,28 @@
 
         function setWaveVar(name, value) {
             surfaceEl.style.setProperty(name, value);
+        }
+
+        function updateAnchorWidth() {
+            if (!container || !nameEl || !textGroupEl) return;
+
+            const textWidth = Math.ceil(textGroupEl.scrollWidth);
+            const desiredWidth = Math.max(MIN_ANCHOR_WIDTH, FIXED_CHROME_WIDTH + textWidth);
+            const maxWidth = Math.max(MIN_ANCHOR_WIDTH, window.innerWidth - RIGHT_GUTTER);
+            const finalWidth = Math.min(desiredWidth, maxWidth);
+
+            container.style.width = `${finalWidth}px`;
+
+            const availableTextWidth = Math.max(120, finalWidth - FIXED_CHROME_WIDTH);
+            if (desiredWidth > maxWidth) {
+                nameEl.style.maxWidth = `${availableTextWidth}px`;
+                nameEl.style.overflow = 'hidden';
+                nameEl.style.textOverflow = 'ellipsis';
+            } else {
+                nameEl.style.maxWidth = 'none';
+                nameEl.style.overflow = 'visible';
+                nameEl.style.textOverflow = 'clip';
+            }
         }
 
         function resetMotionState() {
@@ -693,9 +721,11 @@
             if (!name) return;
             if (id && id === lastGifterId) return;
             lastGifterId = id;
+            lastShownName = name;
             nameEl.classList.remove('gifter-flash');
             void container.offsetWidth;
             nameEl.textContent = name;
+            updateAnchorWidth();
             nameEl.classList.add('gifter-flash');
             if (surfaceEl) {
                 surfaceEl.classList.remove('event-burst');
@@ -780,6 +810,11 @@
                 applyRenderMode();
             }
         });
+
+        window.addEventListener('resize', () => {
+            if (lastShownName) updateAnchorWidth();
+        });
+        requestAnimationFrame(updateAnchorWidth);
 
         resetMotionState();
         applyRenderMode();

@@ -21,13 +21,21 @@
             /* === Color Group 2: Accent / Star Border === */
             --star-color: #0aff0a;
             --star-color-soft: rgba(10, 255, 10, 0.1);
+            --star-color-secondary: rgba(31, 186, 255, 1);
+            --star-color-secondary-soft: rgba(31, 186, 255, 0.14);
+            --star-secondary-offset: 120deg;
             --border-glow-color: rgba(10, 255, 10, 0.4);
 
             /* === Layout & Anim === */
             --border-bg: rgba(0, 0, 0, 0.85);
-            --inner-bg: rgb(20, 20, 20);
+            --inner-bg: rgb(12, 12, 12);
+            --inner-bg-top: rgba(18, 18, 18, 0.985);
+            --inner-bg-mid: rgba(10, 10, 10, 0.97);
+            --inner-bg-bottom: rgba(6, 6, 6, 0.99);
             --spin-speed: 10s;
             --border-glow-size: 12px;
+            --gloss-intensity: 1;
+            --rim-light-intensity: 1;
         }
 
         * {
@@ -53,7 +61,7 @@
             transform: translateX(-50%);
             width: 650px;
             height: 70px;
-            filter: drop-shadow(0 -4px 15px rgba(0, 0, 0, 0.5));
+            filter: drop-shadow(0 -5px 18px rgba(0, 0, 0, 0.56));
         }
 
         /* === Star Border Wrapper ===
@@ -78,12 +86,17 @@
             margin-left: -700px;
             margin-top: -700px;
             background: conic-gradient(from 0deg,
-                    transparent 0%,
-                    var(--star-color-soft) 2%,
-                    var(--star-color) 12%,
-                    var(--star-color-soft) 22%,
-                    transparent 25%,
-                    transparent 100%);
+                    transparent 0deg,
+                    var(--star-color-soft) 8deg,
+                    var(--star-color) 30deg,
+                    var(--star-color-soft) 52deg,
+                    transparent 62deg,
+                    transparent calc(var(--star-secondary-offset) - 12deg),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) - 6deg),
+                    var(--star-color-secondary) var(--star-secondary-offset),
+                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) + 6deg),
+                    transparent calc(var(--star-secondary-offset) + 12deg),
+                    transparent 360deg);
             animation: spin var(--spin-speed) linear infinite;
             /* Precise masking: Hide only the center 'wick' origin */
             -webkit-mask-image: radial-gradient(circle, transparent 20px, black 25px);
@@ -116,15 +129,19 @@
             position: absolute;
             inset: 0;
             clip-path: url(#dock-inner);
-            background: var(--inner-bg);
+            background:
+                linear-gradient(180deg,
+                    var(--inner-bg-top) 0%,
+                    var(--inner-bg-mid) 46%,
+                    var(--inner-bg-bottom) 100%);
             z-index: 2;
             overflow: hidden;
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             /* Thin black border like the rectangle overlay */
             box-shadow:
-                inset 0 0 0 1px rgba(0, 0, 0, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+                inset 0 0 0 1px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.045);
         }
 
         /* === Glossy / Glass overlay === */
@@ -132,17 +149,16 @@
             position: absolute;
             inset: 0;
             clip-path: url(#dock-inner);
-            /* Ultra Gloss */
+            /* Minimal realistic gloss */
             background: linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.25) 0%,
-                    rgba(255, 255, 255, 0.1) 40%,
-                    transparent 55%,
-                    rgba(0, 0, 0, 0.15) 100%);
+                    rgba(255, 255, 255, 0.15) 0%,
+                    rgba(255, 255, 255, 0.06) 26%,
+                    transparent 40%,
+                    rgba(0, 0, 0, 0.08) 100%);
             z-index: 15;
             pointer-events: none;
-            /* Mega Gloss Filter */
-            filter: brightness(var(--gloss-intensity, 1)) contrast(var(--gloss-intensity, 1));
-            opacity: 0.8;
+            filter: brightness(calc(0.92 + (var(--gloss-intensity, 1) * 0.08))) contrast(calc(0.94 + (var(--gloss-intensity, 1) * 0.06)));
+            opacity: calc(0.2 + (0.3 * var(--gloss-intensity, 1)));
         }
 
         /* === SVG Rim Light Layer === */
@@ -151,6 +167,7 @@
             inset: 0;
             z-index: 25;
             pointer-events: none;
+            opacity: var(--rim-light-intensity, 1);
             -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 86%, transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 86%, transparent 100%);
         }
@@ -526,21 +543,19 @@
             <svg viewBox="0 0 650 70">
                 <defs>
                     <linearGradient id="rim-grad-sub" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="white" stop-opacity="0.8" />
-                        <stop offset="40%" stop-color="white" stop-opacity="0.4" />
+                        <stop offset="0%" stop-color="white" stop-opacity="0.95" />
+                        <stop offset="30%" stop-color="white" stop-opacity="0.52" />
                         <stop offset="100%" stop-color="white" stop-opacity="0" />
                     </linearGradient>
                     <filter id="rim-blur-sub">
-                        <feGaussianBlur stdDeviation="0.35" />
+                        <feGaussianBlur stdDeviation="0.28" />
                     </filter>
                 </defs>
                 <path class="rim-path" d="
-                    M 25.5 45.5
-                    L 25.5 30
-                    C 25.5 13, 38 0.5, 55 0.5
-                    L 595 0.5
-                    C 612 0.5, 624.5 13, 624.5 30
-                    L 624.5 45.5" stroke="url(#rim-grad-sub)" stroke-width="1.6" fill="none" filter="url(#rim-blur-sub)"
+                    M 36 11
+                    C 38 6.2, 44 3.8, 52 3.8
+                    L 598 3.8
+                    C 606 3.8, 612 6.2, 614 11" stroke="url(#rim-grad-sub)" stroke-width="1.35" fill="none" filter="url(#rim-blur-sub)"
                     stroke-linecap="round" />
             </svg>
         </div>
@@ -723,6 +738,10 @@
                 const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
                 const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
+                const starHue2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (starHue + 205);
+                const starShade2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
+                const starSat2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
+                const starOffset2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
 
                 const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
                 const oldSat = window.GLOBAL_COLOR_SATURATION;
@@ -730,6 +749,11 @@
                 window.GLOBAL_COLOR_SATURATION = starSat;
                 style.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', starHue));
                 style.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', starHue));
+                window.GLOBAL_COLOR_BRIGHTNESS = starShade2;
+                window.GLOBAL_COLOR_SATURATION = starSat2;
+                style.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', starHue2));
+                style.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', starHue2));
+                style.setProperty('--star-secondary-offset', `${starOffset2}deg`);
                 window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
                 window.GLOBAL_COLOR_SATURATION = oldSat;
             }
@@ -764,16 +788,28 @@
             function applyFilters() {
                 const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
                 const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+                const glossMapped = gloss >= 1
+                    ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+                    : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+                const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
+                const rimIntensity = rimValue >= 1
+                    ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+                    : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
                 const glow = window.GLOW_SUB_DOCK !== false;
                 const showBorder = window.SHOW_BORDER_SUB_DOCK !== false;
 
                 document.documentElement.style.filter = `brightness(${bright})`;
-                document.documentElement.style.setProperty('--gloss-intensity', gloss);
+                document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
+                document.documentElement.style.setProperty('--rim-light-intensity', rimIntensity);
 
                 const starWrapper = document.querySelector('.star-border-wrapper');
                 const anchor = document.querySelector('.dock-anchor');
+                const rim = document.querySelector('.rim-light-layer');
+                const fillGlow = document.querySelector('.fill-glow');
                 if (starWrapper) starWrapper.style.opacity = glow ? '1' : '0';
                 if (anchor) anchor.style.filter = glow ? 'drop-shadow(0 -4px 15px rgba(0, 0, 0, 0.5))' : 'none';
+                if (rim) rim.style.opacity = glow ? String(rimIntensity) : '0';
+                if (fillGlow) fillGlow.style.opacity = glow ? '' : '0';
 
                 // Border Toggle Logic
                 const innerElements = document.querySelectorAll('.inner-shape, .glass-overlay');
