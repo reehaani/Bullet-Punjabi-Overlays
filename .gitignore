@@ -32,3 +32,4 @@ env/
 
 # Build output
 dist/
+build/

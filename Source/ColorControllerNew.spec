@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['F:\\Automation\\Bullet Punjabi\\hue_controller_premium.py'],
+    ['Source\\hue_controller_premium.py'],
     pathex=[],
     binaries=[],
     datas=[('Logo/Logo.png', '.')],
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['Logo.ico'],
+    icon=['Logo\\Logo.ico'],
 )

@@ -11,29 +11,29 @@ window.ENABLE_BULLETS_RECT = true;
 // ║  240 = Red/Orange                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-window.GLOBAL_HUE_OFFSET = 0; // Degrees (0-360)
+window.GLOBAL_HUE_OFFSET = 38; // Degrees (0-360)
 window.GLOBAL_HUE_DEFAULT = 0; // Baseline for resets
 window.GLOBAL_BRIGHTNESS = 1.00; // Brightness Multiplier (0.0 - 2.0)
-window.GLOBAL_COLOR_BRIGHTNESS = 1.00; // Color Shade Multiplier (0.2 - 2.0)
-window.GLOBAL_COLOR_SATURATION = 1.00; // Color Saturation (0.0 - 2.0)
+window.GLOBAL_COLOR_BRIGHTNESS = 0.20; // Color Shade Multiplier (0.2 - 2.0)
+window.GLOBAL_COLOR_SATURATION = 0.00; // Color Saturation (0.0 - 2.0)
 
 // === STAR BORDER SETTINGS ===
 window.STAR_HUE_OFFSET = 190;
-window.STAR_COLOR_BRIGHTNESS = 1.00;
+window.STAR_COLOR_BRIGHTNESS = 4.00;
 window.STAR_COLOR_SATURATION = 1.0;
-window.STAR_SECONDARY_HUE_OFFSET = 205;
-window.STAR_SECONDARY_COLOR_BRIGHTNESS = 1.60;
+window.STAR_SECONDARY_HUE_OFFSET = 95;
+window.STAR_SECONDARY_COLOR_BRIGHTNESS = 0.57;
 window.STAR_SECONDARY_COLOR_SATURATION = 1.0;
-window.STAR_SECONDARY_OFFSET_DEG = 120;
-window.STAR_SPIN_SPEED = 10.0; // seconds (2.0 - 30.0)
+window.STAR_SECONDARY_OFFSET_DEG = 216;
+window.STAR_SPIN_SPEED = 30.0; // seconds (2.0 - 30.0)
 
 // === EFFECTS ===
-window.GLOSSY_INTENSITY = 0.68; // 0.0 to 4.0
-window.RIM_LIGHT_INTENSITY = 3.00; // 0.0 to 3.0 (100% baseline)
+window.GLOSSY_INTENSITY = 1.00; // 0.0 to 4.0
+window.RIM_LIGHT_INTENSITY = 1.00; // 0.0 to 3.0 (100% baseline)
 
 // === GOAL CONFIGURATION ===
-window.DAILY_KICKS_GOAL = 10000;
-window.SUB_GOAL_CONFIG = 50;
+window.DAILY_KICKS_GOAL = 14000;
+window.SUB_GOAL_CONFIG = 5;
 
 // === GLOW TOGGLES ===
 window.GLOW_KICK_DOCK = true;
