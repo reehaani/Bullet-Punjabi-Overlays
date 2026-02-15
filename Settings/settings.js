@@ -11,28 +11,28 @@ window.ENABLE_BULLETS_RECT = true;
 // ║  240 = Red/Orange                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-window.GLOBAL_HUE_OFFSET = 0; // Degrees (0-360)
+window.GLOBAL_HUE_OFFSET = 158; // Degrees (0-360)
 window.GLOBAL_HUE_DEFAULT = 0; // Baseline for resets
-window.GLOBAL_BRIGHTNESS = 1.0; // Brightness Multiplier (0.0 - 2.0)
-window.GLOBAL_COLOR_BRIGHTNESS = 1.0; // Color Shade Multiplier (0.2 - 2.0)
-window.GLOBAL_COLOR_SATURATION = 1.0; // Color Saturation (0.0 - 2.0)
+window.GLOBAL_BRIGHTNESS = 1.00; // Brightness Multiplier (0.0 - 2.0)
+window.GLOBAL_COLOR_BRIGHTNESS = 0.26; // Color Shade Multiplier (0.2 - 2.0)
+window.GLOBAL_COLOR_SATURATION = 0.32; // Color Saturation (0.0 - 2.0)
 
 // === STAR BORDER SETTINGS ===
-window.STAR_HUE_OFFSET = 190;
-window.STAR_COLOR_BRIGHTNESS = 1.0;
+window.STAR_HUE_OFFSET = 278;
+window.STAR_COLOR_BRIGHTNESS = 1.88;
 window.STAR_COLOR_SATURATION = 1.0;
-window.STAR_SECONDARY_HUE_OFFSET = 180;
+window.STAR_SECONDARY_HUE_OFFSET = 29;
 window.STAR_SECONDARY_COLOR_BRIGHTNESS = 4.00;
 window.STAR_SECONDARY_COLOR_SATURATION = 1.0;
 window.STAR_SECONDARY_OFFSET_DEG = 0;
 
 // === EFFECTS ===
-window.GLOSSY_INTENSITY = 1.0; // 0.0 to 4.0
-window.RIM_LIGHT_INTENSITY = 1.0; // 0.0 to 3.0 (100% baseline)
+window.GLOSSY_INTENSITY = 0.00; // 0.0 to 4.0
+window.RIM_LIGHT_INTENSITY = 0.00; // 0.0 to 3.0 (100% baseline)
 
 // === GOAL CONFIGURATION ===
-window.DAILY_KICKS_GOAL = 25000;
-window.SUB_GOAL_CONFIG = 55;
+window.DAILY_KICKS_GOAL = 29000;
+window.SUB_GOAL_CONFIG = 15;
 
 // === GLOW TOGGLES ===
 window.GLOW_KICK_DOCK = true;

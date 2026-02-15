@@ -26,6 +26,29 @@ COLOR_SLIDER = "#0aff0a"   # Neon Green (Signature)
 COLOR_TEXT = "#F5F5F5"
 COLOR_MUTED = "#D0D0D0"
 
+DEFAULTS = {
+    "GLOBAL_HUE_OFFSET": 0,
+    "GLOBAL_BRIGHTNESS": 1.0,
+    "GLOBAL_COLOR_BRIGHTNESS": 1.0,
+    "GLOBAL_COLOR_SATURATION": 1.0,
+    "STAR_HUE_OFFSET": 190,
+    "STAR_COLOR_BRIGHTNESS": 1.0,
+    "STAR_SECONDARY_HUE_OFFSET": 205,
+    "STAR_SECONDARY_COLOR_BRIGHTNESS": 1.6,
+    "STAR_SECONDARY_OFFSET_DEG": 120,
+    "GLOSSY_INTENSITY": 1.0,
+    "RIM_LIGHT_INTENSITY": 1.0,
+    "DAILY_KICKS_GOAL": 10000,
+    "SUB_GOAL_CONFIG": 50,
+    "GLOW_KICK_DOCK": True,
+    "GLOW_SUB_DOCK": True,
+    "GLOW_KICK_RECT": True,
+    "GLOW_SUB_RECT": True,
+    "SHOW_BORDER_KICK_DOCK": True,
+    "SHOW_BORDER_SUB_DOCK": True,
+    "SHOW_BORDER_KICK_RECT": True,
+}
+
 class HueControllerApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -54,19 +77,19 @@ class HueControllerApp(ctk.CTk):
         self.center_window()
 
         # State
-        self.current_hue = 0
-        self.current_brightness = 1.0
-        self.current_color_brightness = 1.0
-        self.current_color_saturation = 1.0
-        self.star_hue = 190
-        self.star_shade = 1.0
-        self.star_secondary_hue = 205
-        self.star_secondary_shade = 1.6
-        self.star_secondary_offset = 120
-        self.gloss_intensity = 1.0
-        self.rim_light_intensity = 1.0
-        self.daily_kicks_goal = 10000
-        self.sub_goal_config = 50
+        self.current_hue = DEFAULTS["GLOBAL_HUE_OFFSET"]
+        self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
+        self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
+        self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+        self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
+        self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
+        self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
+        self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
+        self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+        self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
+        self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
+        self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
+        self.sub_goal_config = DEFAULTS["SUB_GOAL_CONFIG"]
         
         self.last_write_time = 0
         self.write_delay = 0.12
@@ -301,7 +324,15 @@ class HueControllerApp(ctk.CTk):
             hover_color=COLOR_SLIDER, text_color="white", height=60, corner_radius=15,
             command=self.save_defaults
         )
-        self.btn_save.pack(fill="x", padx=20)
+        self.btn_save.pack(fill="x", padx=20, pady=(0, 10))
+
+        self.btn_restore = ctk.CTkButton(
+            self.save_frame, text="RESTORE DEFAULTS",
+            font=("Inter", 14, "bold"), fg_color="#151515", border_width=2, border_color="#333333",
+            hover_color="#2a2a2a", text_color="white", height=52, corner_radius=15,
+            command=self.restore_defaults
+        )
+        self.btn_restore.pack(fill="x", padx=20)
 
         # Status Bar
         self.lbl_status = ctk.CTkLabel(
@@ -516,17 +547,17 @@ class HueControllerApp(ctk.CTk):
 
         except Exception as e:
             print(f"Load Settings error: {e}")
-            self.current_hue = 0
-            self.current_brightness = 1.0
-            self.current_color_brightness = 1.0
-            self.current_color_saturation = 1.0
-            self.star_hue = 190
-            self.star_shade = 1.0
-            self.star_secondary_hue = 205
-            self.star_secondary_shade = 1.6
-            self.star_secondary_offset = 120
-            self.gloss_intensity = 1.0
-            self.rim_light_intensity = 1.0
+            self.current_hue = DEFAULTS["GLOBAL_HUE_OFFSET"]
+            self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
+            self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
+            self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+            self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
+            self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
+            self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
+            self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
+            self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+            self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
+            self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
 
     def on_slider_change(self, value):
         self.current_hue = int(float(value))
@@ -670,6 +701,88 @@ class HueControllerApp(ctk.CTk):
     def save_defaults(self):
         self.write_settings(is_default=True)
         self.lbl_status.configure(text="DEFAULTS SAVED!")
+
+    def restore_defaults(self):
+        self.is_loading = True
+        try:
+            self.current_hue = DEFAULTS["GLOBAL_HUE_OFFSET"]
+            self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
+            self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
+            self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+            self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
+            self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
+            self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
+            self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
+            self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+            self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
+            self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
+            self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
+            self.sub_goal_config = DEFAULTS["SUB_GOAL_CONFIG"]
+
+            self.slider.set(self.current_hue)
+            self.slider_bright.set(self.current_brightness)
+            self.slider_shade.set(self.current_color_brightness)
+            self.slider_sat.set(self.current_color_saturation)
+            self.slider_star_hue.set(self.star_hue)
+            self.slider_star_shade.set(self.star_shade)
+            self.slider_star_hue_2.set(self.star_secondary_hue)
+            self.slider_star_shade_2.set(self.star_secondary_shade)
+            self.slider_star_offset_2.set(self.star_secondary_offset)
+            self.slider_gloss.set(self.gloss_intensity)
+            self.slider_rim.set(self.rim_light_intensity)
+            self.slider_kicks_goal.set(self.daily_kicks_goal)
+            self.slider_sub_goal.set(self.sub_goal_config)
+
+            self.lbl_value.configure(text=f"{self.current_hue}Â°")
+            self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
+            self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
+            self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
+            self.lbl_star_hue.configure(text=f"{self.star_hue}Â°")
+            self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
+            self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue}Â°")
+            self.lbl_star_shade_2.configure(text=f"{int(self.star_secondary_shade*100)}%")
+            self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset}Â°")
+            self.lbl_gloss.configure(text=f"{int(self.gloss_intensity*100)}%")
+            self.lbl_rim.configure(text=f"{int(self.rim_light_intensity*100)}%")
+            self.lbl_kicks_goal.configure(text=f"{self.daily_kicks_goal:,}")
+            self.lbl_sub_goal.configure(text=f"{self.sub_goal_config}")
+
+            if DEFAULTS["GLOW_KICK_DOCK"]:
+                self.sw_glow_kick_dock.select()
+            else:
+                self.sw_glow_kick_dock.deselect()
+            if DEFAULTS["GLOW_SUB_DOCK"]:
+                self.sw_glow_sub_dock.select()
+            else:
+                self.sw_glow_sub_dock.deselect()
+            if DEFAULTS["GLOW_KICK_RECT"]:
+                self.sw_glow_kick_rect.select()
+            else:
+                self.sw_glow_kick_rect.deselect()
+            if DEFAULTS["GLOW_SUB_RECT"]:
+                self.sw_glow_sub_rect.select()
+            else:
+                self.sw_glow_sub_rect.deselect()
+            if DEFAULTS["SHOW_BORDER_KICK_DOCK"]:
+                self.sw_border_kick_dock.select()
+            else:
+                self.sw_border_kick_dock.deselect()
+            if DEFAULTS["SHOW_BORDER_SUB_DOCK"]:
+                self.sw_border_sub_dock.select()
+            else:
+                self.sw_border_sub_dock.deselect()
+            if DEFAULTS["SHOW_BORDER_KICK_RECT"]:
+                self.sw_border_kick_rect.select()
+            else:
+                self.sw_border_kick_rect.deselect()
+        finally:
+            self.is_loading = False
+
+        if self.pending_write_job is not None:
+            self.after_cancel(self.pending_write_job)
+            self.pending_write_job = None
+        self.write_settings()
+        self.lbl_status.configure(text="RESTORED TO DEFAULTS")
 
 if __name__ == "__main__":
     c = HueControllerApp()
