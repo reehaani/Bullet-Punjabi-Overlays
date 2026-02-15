@@ -65,7 +65,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo $headers = @{ 'User-Agent' = 'BulletPunjabiInstaller' }
 >> "%PS_SCRIPT%" echo function Get-RepoFiles([string]$Path) {
 >> "%PS_SCRIPT%" echo   $encodedApiPath = (($Path -split '/') ^| ForEach-Object { [uri]::EscapeDataString($_) }) -join '/'
->> "%PS_SCRIPT%" echo   $apiUrl = "https://api.github.com/repos/$Owner/$Repo/contents/$encodedApiPath?ref=${Branch}"
+>> "%PS_SCRIPT%" echo   $apiUrl = "https://api.github.com/repos/$Owner/$Repo/contents/${encodedApiPath}?ref=${Branch}"
 >> "%PS_SCRIPT%" echo   Write-Host ("Scanning: " ^+ $apiUrl)
 >> "%PS_SCRIPT%" echo   $items = Invoke-RestMethod -Headers $headers -Uri $apiUrl
 >> "%PS_SCRIPT%" echo   $result = @()
