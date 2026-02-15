@@ -8,12 +8,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
 
-        @property --mask-stop {
-            syntax: '<percentage>';
-            initial-value: 85%;
-            inherits: false;
-        }
-
         :root {
             /* === Color Group 4: Mono/Metallic === */
             --fabric-dark: #050505;
@@ -47,81 +41,98 @@
             position: fixed;
             top: 25px;
             left: 50%;
-            width: 840px;
-            height: 140px;
-            border-radius: 0 0 60px 60px;
-            overflow: hidden;
-            filter: drop-shadow(8px 8px 24px rgba(0, 0, 0, 0.4));
-            transform: translateX(-50%) translateY(-110%) scale(0.5);
+            width: 640px;
+            height: 110px;
+            border-radius: 0 0 50px 50px;
+            overflow: visible;
+            filter:
+                drop-shadow(0 3px 0 rgba(255, 255, 255, 0.05))
+                drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5))
+                drop-shadow(0 24px 42px rgba(0, 0, 0, 0.36))
+                drop-shadow(0 0 28px rgba(0, 0, 0, 0.2));
+            transform: translateX(-50%) translateY(0);
             transform-origin: top center;
-            opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-            -webkit-mask-image: linear-gradient(to right,
-                    rgba(0, 0, 0, 1) 0%,
-                    rgba(0, 0, 0, 1) 60%,
-                    rgba(0, 0, 0, 0.4) var(--mask-stop),
-                    transparent 100%);
-            mask-image: linear-gradient(to right,
-                    rgba(0, 0, 0, 1) 0%,
-                    rgba(0, 0, 0, 1) 60%,
-                    rgba(0, 0, 0, 0.4) var(--mask-stop),
-                    transparent 100%);
+            opacity: 1;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
             perspective: 1200px;
             will-change: transform;
         }
 
-        .wave-container {
+        .main-surface {
             position: absolute;
-            inset: -40px;
-            width: calc(100% + 80px);
-            height: calc(100% + 80px);
-            transform-style: preserve-3d;
-            --phase: 0;
-            --crest: 0;
-            --flash: 0;
-            --sway-x: 0px;
-            --sway-y: 0px;
-            --tilt-x: 0deg;
-            --tilt-y: 0deg;
-            --wave-scale: 1.006;
-            --sheen-pos: 48%;
-            --rim-alpha: 0.34;
-            --poly-alpha: 0.36;
-            transform:
-                translateX(var(--sway-x)) translateY(var(--sway-y)) rotateY(var(--tilt-y)) rotateX(var(--tilt-x)) scale(var(--wave-scale));
-            will-change: transform;
+            inset: 0;
+            border-radius: 0 0 50px 50px;
+            background: linear-gradient(145deg,
+                    var(--fabric-dark) 0%,
+                    var(--fabric-mid) 24%,
+                    var(--fabric-mid2) 52%,
+                    var(--fabric-deep) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: none;
+            box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            transform: none;
+            transform-style: flat;
+            will-change: auto;
+        }
+
+        .main-surface::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.5;
+            mix-blend-mode: overlay;
+            background:
+                repeating-linear-gradient(112deg,
+                    rgba(255, 255, 255, 0.08) 0 2px,
+                    transparent 2px 11px),
+                linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.06) 0%,
+                    transparent 22%,
+                    rgba(255, 255, 255, 0.03) 42%,
+                    transparent 58%,
+                    rgba(255, 255, 255, 0.07) 78%,
+                    transparent 100%);
+            transform: translateX(-7%);
+            animation: fabric-drift 14s linear infinite alternate;
+        }
+
+        .main-surface::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+            opacity: 0.42;
+            mix-blend-mode: screen;
+            background:
+                linear-gradient(120deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.05) 26%,
+                    transparent 34%,
+                    rgba(255, 255, 255, 0.035) 47%,
+                    transparent 58%,
+                    rgba(255, 255, 255, 0.05) 70%,
+                    transparent 100%),
+                repeating-linear-gradient(22deg,
+                    rgba(0, 0, 0, 0.22) 0 4px,
+                    transparent 4px 14px);
+            animation: fabric-ripple 10s ease-in-out infinite;
         }
 
         .gifter-anchor.slide-in {
-            transform: translateX(-50%) translateY(0) scale(0.5);
+            transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
 
         .gifter-anchor.slide-out {
-            transform: translateX(-50%) translateY(-110%) scale(0.5);
+            transform: translateX(-50%) translateY(-150%);
             opacity: 0;
-            transition: transform 0.5s cubic-bezier(0.55, 0, 1, 0.45), opacity 0.3s ease;
-        }
-
-        .inner-fill {
-            position: absolute;
-            inset: 30px;
-            border-radius: 0 0 60px 60px;
-            background: #000000;
-            /* FORCE BLACK */
-            /* Optional: Subtle gradient if desired, but base is black */
-            background-image: linear-gradient(145deg, #0a0a0a 0%, #000000 100%);
-            box-shadow:
-                inset 0 2px 0 rgba(255, 255, 255, 0.4),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-                inset 2px 0 0 rgba(255, 255, 255, 0.15),
-                inset -2px 0 0 rgba(255, 255, 255, 0.15),
-                inset 0 4px 15px rgba(255, 255, 255, 0.2),
-                inset 0 -4px 10px rgba(0, 0, 0, 0.15);
-            z-index: 2;
-            overflow: hidden;
-            filter: url(#fabric-ripple-bg);
-            will-change: filter;
+            transition: transform 0.6s cubic-bezier(0.55, 0, 1, 0.45), opacity 0.4s ease;
         }
 
         .poly-sheen {
@@ -130,19 +141,15 @@
             z-index: 7;
             pointer-events: none;
             mix-blend-mode: screen;
-            opacity: var(--poly-alpha);
+            opacity: var(--poly-alpha, 0.42);
             background:
                 linear-gradient(118deg,
                     transparent 6%,
-                    rgba(255, 255, 255, calc(0.04 + var(--crest) * 0.06)) 28%,
-                    rgba(255, 255, 255, calc(0.14 + var(--crest) * 0.14 + var(--flash) * 0.20)) var(--sheen-pos),
-                    rgba(255, 255, 255, calc(0.04 + var(--crest) * 0.06)) calc(var(--sheen-pos) + 16%),
-                    transparent 88%),
-                linear-gradient(168deg,
-                    rgba(255, 255, 255, calc(0.03 + var(--flash) * 0.08)) 0%,
-                    transparent 32%,
-                    transparent 68%,
-                    rgba(255, 255, 255, calc(0.04 + var(--flash) * 0.10)) 100%);
+                    rgba(255, 255, 255, calc(0.04 + var(--crest, 0) * 0.06)) 28%,
+                    rgba(255, 255, 255, calc(0.1 + var(--crest, 0) * 0.05)) var(--sheen-pos),
+                    rgba(255, 255, 255, calc(0.04 + var(--crest, 0) * 0.06)) calc(var(--sheen-pos) + 16%),
+                    transparent 88%);
+            animation: sheen-sweep 8s linear infinite;
         }
 
         .rim-light {
@@ -150,16 +157,26 @@
             inset: 0;
             z-index: 8;
             pointer-events: none;
+            border-radius: 0 0 50px 50px;
             background:
                 linear-gradient(to right,
-                    rgba(255, 255, 255, calc(var(--rim-alpha) * 0.85 + var(--flash) * 0.12)) 0%,
-                    transparent 14%,
-                    transparent 86%,
-                    rgba(255, 255, 255, calc(var(--rim-alpha) * 0.75 + var(--flash) * 0.10)) 100%),
-                linear-gradient(to bottom,
-                    rgba(255, 255, 255, calc(0.18 + var(--crest) * 0.12 + var(--flash) * 0.12)) 0%,
-                    rgba(255, 255, 255, 0) 45%);
-            mix-blend-mode: soft-light;
+                    rgba(255, 255, 255, 0.15) 0%,
+                    transparent 10%,
+                    transparent 90%,
+                    rgba(255, 255, 255, 0.1) 100%),
+                linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.05) 48%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0.05) 52%,
+                    transparent 100%),
+                linear-gradient(to top,
+                    rgba(255, 255, 255, 0.24) 0%,
+                    rgba(255, 255, 255, 0.08) 18%,
+                    transparent 36%);
+            mix-blend-mode: overlay;
+            opacity: var(--rim-alpha, 0.4);
+            animation: rim-breathe 4.6s ease-in-out infinite;
         }
 
         .micro-noise {
@@ -167,85 +184,71 @@
             inset: 0;
             z-index: 9;
             pointer-events: none;
-            opacity: calc(0.06 + var(--crest) * 0.04 + var(--flash) * 0.03);
+            opacity: 0.04;
             mix-blend-mode: overlay;
             background:
-                repeating-linear-gradient(22deg,
-                    rgba(255, 255, 255, 0.10) 0px,
-                    rgba(255, 255, 255, 0.10) 1px,
-                    transparent 1px,
-                    transparent 3px),
-                repeating-linear-gradient(112deg,
-                    rgba(0, 0, 0, 0.10) 0px,
-                    rgba(0, 0, 0, 0.10) 1px,
-                    transparent 1px,
-                    transparent 4px);
+                repeating-linear-gradient(22deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px),
+                repeating-linear-gradient(112deg, #000 0px, #000 1px, transparent 1px, transparent 4px);
         }
 
-        .glass-overlay {
-            position: absolute;
-            inset: 0;
-            background:
-                linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.30) 0%,
-                    rgba(255, 255, 255, 0.12) 30%,
-                    transparent 50%,
-                    rgba(0, 0, 0, 0.06) 70%,
-                    rgba(0, 0, 0, 0.12) 100%),
-                linear-gradient(110deg,
-                    transparent 0%,
-                    rgba(255, 255, 255, 0.08) 30%,
-                    rgba(255, 255, 255, 0.15) 50%,
-                    rgba(255, 255, 255, 0.08) 70%,
-                    transparent 100%);
-            z-index: 15;
-            pointer-events: none;
-            opacity: calc(0.80 + var(--crest) * 0.14 + var(--flash-ui, 0) * 0.12);
+        /* Removed Rim Highlight Pseudo */
+
+        /* Hidden layers */
+        .glass-overlay,
+        .lightning-wash {
+            display: none !important;
         }
 
         .content-layer {
             position: absolute;
-            inset: 30px;
-            border-radius: 0 0 52px 52px;
-            z-index: 16;
+            inset: 0;
+            z-index: 10;
             display: flex;
             flex-direction: row;
             align-items: center;
-            gap: 24px;
-            padding: 0 40px 0 28px;
-            filter: url(#fabric-ripple-fg);
-            will-change: filter;
+            gap: 20px;
+            padding: 0 40px 0 25px;
+            pointer-events: none;
+            animation: content-parallax 6.2s ease-in-out infinite;
+            transform-origin: center center;
         }
 
-        .lightning-wash {
-            position: absolute;
-            inset: 30px;
-            z-index: 18;
-            pointer-events: none;
-            border-radius: 0 0 52px 52px;
-            mix-blend-mode: screen;
-            opacity: calc(var(--flash-bg, 0) * 0.40);
-            background:
-                radial-gradient(120% 110% at 50% -20%,
-                    rgba(255, 255, 255, 0.45),
-                    /* Pure White Flash */
-                    rgba(255, 255, 255, 0.20) 45%,
-                    rgba(255, 255, 255, 0) 80%),
-                linear-gradient(120deg,
-                    rgba(255, 255, 255, 0) 0%,
-                    rgba(255, 255, 255, 0.18) 50%,
-                    rgba(255, 255, 255, 0) 100%);
-        }
+        /* Lightning Wash Removed */
 
         .kick-icon {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             flex-shrink: 0;
             filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.5));
             transform: rotateZ(-5deg);
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: icon-sway 3.2s ease-in-out infinite;
+            will-change: transform, filter;
+            position: relative;
+        }
+
+        .kick-icon::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle,
+                    rgba(255, 255, 255, 0.46) 0%,
+                    rgba(255, 255, 255, 0.14) 38%,
+                    rgba(255, 255, 255, 0.04) 62%,
+                    transparent 80%);
+            filter: blur(3px);
+            opacity: 0.95;
+            animation: icon-glow-breathe 2.8s ease-in-out infinite;
+        }
+
+        .kick-icon img {
+            position: relative;
+            z-index: 1;
         }
 
         .logo-3d {
@@ -293,8 +296,10 @@
         .gifter-text-group {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 0px;
             min-width: 0;
+            animation: text-stack-drift 4.8s ease-in-out infinite;
+            will-change: transform;
         }
 
         .gifter-label {
@@ -302,12 +307,13 @@
             font-size: 24px;
             letter-spacing: 2px;
             color: transparent;
+            /* Brighter Premium Metallic */
             background: linear-gradient(180deg,
                     #ffffff 0%,
                     #ffffff 30%,
-                    #f5f5f5 45%,
-                    #cccccc 50%,
-                    #f5f5f5 55%,
+                    #f8f8f8 45%,
+                    #f0f0f0 50%,
+                    #f8f8f8 55%,
                     #ffffff 70%,
                     #ffffff 100%);
             -webkit-background-clip: text;
@@ -315,50 +321,258 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
             text-transform: uppercase;
             margin-bottom: -4px;
+            transition: all 0.5s ease;
+            animation: label-flicker 5.2s ease-in-out infinite;
         }
 
         .gifter-name {
             font-family: 'Inter', sans-serif;
-            font-size: 64px;
+            font-size: 52px;
             font-weight: 900;
             line-height: 1;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            /* Premium Bright Silver Metallic */
+            /* Brighter Premium Metallic */
             background: linear-gradient(180deg,
                     #ffffff 0%,
                     #ffffff 30%,
-                    #f5f5f5 45%,
-                    #cccccc 50%,
-                    #f5f5f5 55%,
+                    #f8f8f8 45%,
+                    #f0f0f0 50%,
+                    #f8f8f8 55%,
                     #ffffff 70%,
                     #ffffff 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+            -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.5);
             filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 600px;
-            text-transform: uppercase;
-            /* Enforce Uppercase */
+            max-width: 480px;
+            transition: all 0.5s ease;
+            animation: name-drift 4.2s ease-in-out infinite;
+            will-change: transform, filter;
+        }
+
+        /* === Text Glow === */
+        .text-glow {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--neon-green)) !important;
+        }
+
+        .label-glow {
+            text-shadow: 0 0 10px var(--neon-green) !important;
         }
 
         .gifter-flash {
             animation: gifter-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
         }
 
+        .main-surface.event-burst {
+            animation: burst-pulse 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .main-surface.event-burst .content-layer {
+            animation: content-burst 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .main-surface.event-burst .kick-icon {
+            animation: icon-burst 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .main-surface.event-burst .gifter-name {
+            animation: name-burst 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
         @keyframes gifter-pop {
             0% {
                 filter: brightness(5) drop-shadow(0 0 30px #fff);
-                transform: scale(1.1);
+                transform: scale(1);
             }
 
             100% {
                 filter: brightness(1) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.25));
                 transform: scale(1);
+            }
+        }
+
+        @keyframes fabric-drift {
+            0% {
+                transform: translateX(-7%);
+            }
+
+            100% {
+                transform: translateX(7%);
+            }
+        }
+
+        @keyframes fabric-ripple {
+            0% {
+                transform: translateY(-2px) scaleX(1.012);
+            }
+
+            50% {
+                transform: translateY(2px) scaleX(0.988);
+            }
+
+            100% {
+                transform: translateY(-2px) scaleX(1.012);
+            }
+        }
+
+        @keyframes sheen-sweep {
+            0% {
+                background-position: -40% 0;
+            }
+
+            100% {
+                background-position: 140% 0;
+            }
+        }
+
+        @keyframes rim-breathe {
+            0% {
+                opacity: 0.28;
+            }
+
+            50% {
+                opacity: 0.52;
+            }
+
+            100% {
+                opacity: 0.28;
+            }
+        }
+
+        @keyframes burst-pulse {
+            0% {
+                filter: brightness(1.14) contrast(1.08);
+            }
+
+            100% {
+                filter: brightness(1) contrast(1);
+            }
+        }
+
+        @keyframes content-parallax {
+            0% {
+                transform: translateX(-3px) translateY(-1px) rotate(-0.45deg);
+            }
+
+            50% {
+                transform: translateX(3px) translateY(2px) rotate(0.45deg);
+            }
+
+            100% {
+                transform: translateX(-3px) translateY(-1px) rotate(-0.45deg);
+            }
+        }
+
+        @keyframes icon-sway {
+            0% {
+                transform: rotateZ(-10deg) translateY(0px) scale(1);
+                filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.45));
+            }
+
+            50% {
+                transform: rotateZ(4deg) translateY(-2px) scale(1.06);
+                filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.72));
+            }
+
+            100% {
+                transform: rotateZ(-10deg) translateY(0px) scale(1);
+                filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.45));
+            }
+        }
+
+        @keyframes icon-glow-breathe {
+            0% {
+                transform: scale(0.94);
+                opacity: 0.72;
+            }
+
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.94);
+                opacity: 0.72;
+            }
+        }
+
+        @keyframes text-stack-drift {
+            0% {
+                transform: translateX(-2px);
+            }
+
+            50% {
+                transform: translateX(2px);
+            }
+
+            100% {
+                transform: translateX(-2px);
+            }
+        }
+
+        @keyframes name-drift {
+            0% {
+                transform: translateY(0px) scale(1);
+            }
+
+            50% {
+                transform: translateY(-2px) scale(1.02);
+            }
+
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+        }
+
+        @keyframes label-flicker {
+            0% {
+                opacity: 0.88;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.88;
+            }
+        }
+
+        @keyframes content-burst {
+            0% {
+                transform: scale(1.03) translateY(-2px);
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes icon-burst {
+            0% {
+                transform: rotateZ(8deg) scale(1.14);
+            }
+
+            100% {
+                transform: rotateZ(-5deg) scale(1);
+            }
+        }
+
+        @keyframes name-burst {
+            0% {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.65));
+            }
+
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
             }
         }
 
@@ -425,16 +639,13 @@
 <body>
 
     <div class="gifter-anchor" id="gifter-anchor">
-        <div class="wave-container" id="wave-container">
-            <div class="inner-fill">
-                <div class="mustache-bg">
-                    <img src="../Logo/Logo 2.png" alt="Mustache Background">
-                </div>
-                <div class="poly-sheen"></div>
-                <div class="rim-light"></div>
-                <div class="micro-noise"></div>
-                <div class="glass-overlay"></div>
+        <div class="main-surface" id="wave-container">
+            <div class="mustache-bg">
+                <img src="../Logo/Logo 2.png" alt="Mustache Background">
             </div>
+            <div class="poly-sheen"></div>
+            <div class="rim-light"></div>
+            <div class="micro-noise"></div>
 
             <div class="content-layer">
                 <!-- Gift Icon (SVG) -->
@@ -447,355 +658,227 @@
                     <div class="gifter-name" id="gifter-name"></div>
                 </div>
             </div>
-
-            <div class="lightning-wash"></div>
-
-            <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
-                <filter id="fabric-ripple-bg" x="-50%" y="-50%" width="200%" height="200%"
-                    filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.005 0.009" numOctaves="2" seed="3"
-                        stitchTiles="stitch" width="200" height="200" result="noise_tile" />
-                    <feTile in="noise_tile" result="tiled_noise" />
-                    <feOffset id="noise-scroll-primary" in="tiled_noise" dx="0" dy="0" result="scrolled_noise" />
-                    <feGaussianBlur in="scrolled_noise" stdDeviation="2.2" result="smooth_noise" />
-
-                    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="1" seed="9"
-                        stitchTiles="stitch" width="100" height="100" result="noise_tile_soft" />
-                    <feTile in="noise_tile_soft" result="tiled_noise_soft" />
-                    <feOffset id="noise-scroll-secondary" in="tiled_noise_soft" dx="0" dy="0"
-                        result="scrolled_noise_soft" />
-                    <feGaussianBlur in="scrolled_noise_soft" stdDeviation="1.5" result="smooth_noise_soft" />
-
-                    <feDisplacementMap in="SourceGraphic" in2="smooth_noise" scale="24" xChannelSelector="R"
-                        yChannelSelector="G" result="primary_warp" />
-                    <feDisplacementMap in="primary_warp" in2="smooth_noise_soft" scale="8" xChannelSelector="R"
-                        yChannelSelector="G" />
-                </filter>
-
-                <filter id="fabric-ripple-fg" x="-35%" y="-35%" width="170%" height="170%"
-                    filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.008" numOctaves="1" seed="4"
-                        stitchTiles="stitch" width="200" height="200" result="fg_noise_tile" />
-                    <feTile in="fg_noise_tile" result="fg_tiled_noise" />
-                    <feOffset id="noise-scroll-foreground" in="fg_tiled_noise" dx="0" dy="0"
-                        result="fg_scrolled_noise" />
-                    <feGaussianBlur in="fg_scrolled_noise" stdDeviation="1.1" result="fg_smooth_noise" />
-                    <feDisplacementMap in="SourceGraphic" in2="fg_smooth_noise" scale="5" xChannelSelector="R"
-                        yChannelSelector="G" />
-                </filter>
-            </svg>
-
-            <script>
-                const BASE_POLL_INTERVAL = 300;
-                const RENDER_MODE = 'full'; // 'full' | 'safe'
-                const WAVE_SPEED = 1.18;
-                const MAX_FLASH_BG = RENDER_MODE === 'safe' ? 0.28 : 0.62;
-                const MAX_FLASH_UI = RENDER_MODE === 'safe' ? 0.12 : 0.34;
-                let lastGifterId = '';
-
-                const container = document.getElementById('gifter-anchor');
-                const waveEl = document.getElementById('wave-container');
-                const nameEl = document.getElementById('gifter-name');
-                const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-                const noisePrimary = document.getElementById('noise-scroll-primary');
-                const noiseSecondary = document.getElementById('noise-scroll-secondary');
-                const noiseForeground = document.getElementById('noise-scroll-foreground');
-
-                let phase = 0;
-                let lastFrame = performance.now();
-                let flash = 0;
-                let nextFlashAt = performance.now() + 3500;
-                let isBannerVisible = false;
-                let pollIntervalMs = BASE_POLL_INTERVAL;
-                let pollTimer = null;
-                let pollFailures = 0;
-
-                function clamp(val, min, max) {
-                    return Math.min(max, Math.max(min, val));
-                }
-
-                function setWaveVar(name, value) {
-                    waveEl.style.setProperty(name, value);
-                }
-
-                function resetMotionState() {
-                    setWaveVar('--sway-x', '0px');
-                    setWaveVar('--sway-y', '0px');
-                    setWaveVar('--tilt-x', '0deg');
-                    setWaveVar('--tilt-y', '0deg');
-                    setWaveVar('--wave-scale', '1.006');
-                    setWaveVar('--crest', '0');
-                    setWaveVar('--flash', '0');
-                    setWaveVar('--flash-bg', '0');
-                    setWaveVar('--flash-ui', '0');
-                    setWaveVar('--sheen-pos', '48%');
-                    setWaveVar('--rim-alpha', '0.34');
-                    setWaveVar('--poly-alpha', '0.36');
-                    if (noisePrimary) noisePrimary.setAttribute('dx', '0');
-                    if (noiseSecondary) noiseSecondary.setAttribute('dx', '0');
-                    if (noiseForeground) noiseForeground.setAttribute('dx', '0');
-                }
-
-                function shouldAnimate() {
-                    return !reduceMotionQuery.matches && !document.hidden && isBannerVisible;
-                }
-
-                function updateFabricFrame(ts) {
-                    const dt = clamp((ts - lastFrame) / 1000, 0, 0.05);
-                    lastFrame = ts;
-
-                    if (shouldAnimate()) {
-                        phase += dt * WAVE_SPEED;
-
-                        const primary = Math.sin(phase);
-                        const secondary = Math.sin(phase * 1.37 + 0.9);
-                        const crest = clamp((primary * 0.72 + secondary * 0.28 + 1) * 0.5, 0, 1);
-
-                        const swayX = primary * 7 + secondary * 1.8;
-                        const swayY = Math.sin(phase * 0.82 + 1.1) * 2.2;
-                        const tiltY = primary * 1.8 + secondary * 0.35;
-                        const tiltX = Math.sin(phase * 0.9 + 0.3) * 0.62;
-                        const scale = 1.006 + crest * 0.006;
-
-                        flash = Math.max(0, flash - dt * 2.9);
-                        if (ts >= nextFlashAt && crest > 0.78) {
-                            flash = 0.9;
-                            nextFlashAt = ts + 3200 + Math.random() * 5200;
-                        }
-                        const flashBg = clamp(flash * 0.55, 0, MAX_FLASH_BG);
-                        const flashUi = clamp(flash * 0.30, 0, MAX_FLASH_UI);
-
-                        const sheenPos = clamp(48 + primary * 12 + secondary * 5, 28, 74);
-                        const rimAlpha = clamp(0.22 + Math.abs(tiltY) * 0.045 + crest * 0.08 + flash * 0.12, 0.2, 0.6);
-                        const polyAlpha = clamp(0.24 + crest * 0.16 + flash * 0.18, 0.2, 0.62);
-
-                        setWaveVar('--phase', phase.toFixed(4));
-                        setWaveVar('--crest', crest.toFixed(3));
-                        setWaveVar('--flash', flash.toFixed(3));
-                        setWaveVar('--flash-bg', flashBg.toFixed(3));
-                        setWaveVar('--flash-ui', flashUi.toFixed(3));
-                        setWaveVar('--sway-x', `${swayX.toFixed(2)}px`);
-                        setWaveVar('--sway-y', `${swayY.toFixed(2)}px`);
-                        setWaveVar('--tilt-y', `${tiltY.toFixed(2)}deg`);
-                        setWaveVar('--tilt-x', `${tiltX.toFixed(2)}deg`);
-                        setWaveVar('--wave-scale', scale.toFixed(4));
-                        setWaveVar('--sheen-pos', `${sheenPos.toFixed(2)}%`);
-                        setWaveVar('--rim-alpha', rimAlpha.toFixed(3));
-                        setWaveVar('--poly-alpha', polyAlpha.toFixed(3));
-
-                        const cycleA = ((phase % (Math.PI * 2)) / (Math.PI * 2)) * 200;
-                        const cycleB = (((phase * 1.37) % (Math.PI * 2)) / (Math.PI * 2)) * 100;
-                        const cycleFg = (((phase * 0.82) % (Math.PI * 2)) / (Math.PI * 2)) * 200;
-                        if (noisePrimary) noisePrimary.setAttribute('dx', cycleA.toFixed(2));
-                        if (noiseSecondary) noiseSecondary.setAttribute('dx', cycleB.toFixed(2));
-                        if (noiseForeground) noiseForeground.setAttribute('dx', cycleFg.toFixed(2));
-                    } else if (!isBannerVisible || document.hidden) {
-                        flash = Math.max(0, flash - dt * 4.5);
-                        setWaveVar('--flash', flash.toFixed(3));
-                        setWaveVar('--flash-bg', '0');
-                        setWaveVar('--flash-ui', '0');
-                    }
-
-                    requestAnimationFrame(updateFabricFrame);
-                }
-
-                function showGifter(name, id) {
-                    if (!name) return;
-                    if (id && id === lastGifterId) return;
-                    lastGifterId = id;
-                    isBannerVisible = true;
-
-                    container.classList.remove('slide-in');
-                    nameEl.classList.remove('gifter-flash');
-                    void container.offsetWidth;
-
-                    nameEl.textContent = name;
-                    container.classList.add('slide-in');
-                    nameEl.classList.add('gifter-flash');
-                }
-
-                // Tips logic removed as per user request
-                window.updateTips = function (name, amount, id) {
-                    // No-op
-                };
-
-                window.updateFollowers = function (val, extra, id) {
-                    // extra format: "Latest: Username"
-                    let name = extra;
-                    if (extra && extra.includes(':')) {
-                        name = extra.split(':')[1].trim();
-                    }
-                    if (name && name !== '-') {
-                        showGifter(name, id);
-                        container.classList.remove('gold-applied');
-                    }
-                };
-
-                function schedulePoll(ms) {
-                    if (pollTimer) clearTimeout(pollTimer);
-                    pollTimer = setTimeout(pollAll, ms);
-                }
-
-                function injectScript(filename, id) {
-                    const old = document.getElementById(id);
-                    if (old) old.remove();
-                    const s = document.createElement('script');
-                    s.src = filename + '?t=' + Date.now();
-                    s.id = id;
-                    s.async = true;
-                    s.onload = () => {
-                        pollFailures = 0;
-                        pollIntervalMs = BASE_POLL_INTERVAL;
-                        schedulePoll(pollIntervalMs);
-                    };
-                    s.onerror = () => {
-                        pollFailures += 1;
-                        pollIntervalMs = Math.min(BASE_POLL_INTERVAL * Math.pow(2, pollFailures), 8000);
-                        schedulePoll(pollIntervalMs);
-                    };
-                    document.body.appendChild(s);
-                }
-
-                function pollAll() {
-                    injectScript('../Data/data_followers.js', 'script-followers');
-                    injectScript('../Settings/settings.js', 'script-settings');
-                }
-
-                function onMotionPreferenceChange() {
-                    if (reduceMotionQuery.matches) {
-                        resetMotionState();
-                        applyRenderMode();
-                    }
-                }
-
-                function applyRenderMode() {
-                    if (RENDER_MODE !== 'safe') return;
-                    setWaveVar('--poly-alpha', '0.22');
-                    setWaveVar('--rim-alpha', '0.26');
-                    const lightning = document.querySelector('.lightning-wash');
-                    const noise = document.querySelector('.micro-noise');
-                    if (lightning) lightning.style.display = 'none';
-                    if (noise) noise.style.display = 'none';
-                }
-
-                if (typeof reduceMotionQuery.addEventListener === 'function') {
-                    reduceMotionQuery.addEventListener('change', onMotionPreferenceChange);
-                } else if (typeof reduceMotionQuery.addListener === 'function') {
-                    reduceMotionQuery.addListener(onMotionPreferenceChange);
-                }
-
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) {
-                        resetMotionState();
-                        applyRenderMode();
-                    }
-                });
-
-                resetMotionState();
-                applyRenderMode();
-                requestAnimationFrame(updateFabricFrame);
-                pollAll();
-            </script>
-
-            <!-- Color Settings Loader -->
-            <script src="../Settings/settings.js"></script>
-            <script src="../Data/data_tips.js"></script>
-            <script>
-                (function () {
-                    // ╔══════════════════════════════════════════════════════════════════╗
-                    // ║              EMBEDDED SMOOTH HUE ENGINE                         ║
-                    // ╚══════════════════════════════════════════════════════════════════╝
-
-                    const BASE_COLORS = {
-                        '--fabric-dark': 'rgba(5, 140, 45, 0.98)',
-                        '--fabric-mid': 'rgba(15, 200, 70, 0.95)',
-                        '--fabric-bright': 'rgba(30, 230, 90, 0.92)',
-                        '--fabric-mid2': 'rgba(20, 200, 65, 0.95)',
-                        '--fabric-deep': 'rgba(10, 170, 55, 0.98)',
-                        '--wave-1': 'rgb(17, 153, 142)',
-                        '--wave-2': 'rgb(37, 196, 134)',
-                        '--wave-3': 'rgb(56, 239, 125)',
-                        '--label-color': 'rgba(10, 255, 10, 0.7)',
-                        '--border-accent': 'rgba(10, 255, 10, 0.6)'
-                    };
-
-                    const State = {
-                        currentHue: 0,
-                        targetHue: 0,
-                        animationFrame: null
-                    };
-
-                    function lerp(start, end, factor) {
-                        return start + (end - start) * factor;
-                    }
-
-                    function animate() {
-                        const diff = State.targetHue - State.currentHue;
-                        if (Math.abs(diff) > 0.05) {
-                            State.currentHue = lerp(State.currentHue, State.targetHue, 0.08);
-                            updateColors();
-                            State.animationFrame = requestAnimationFrame(animate);
-                        } else if (Math.abs(diff) > 0) {
-                            State.currentHue = State.targetHue;
-                            updateColors();
-                            State.animationFrame = null;
-                        } else {
-                            State.animationFrame = null;
-                        }
-                    }
-
-                    function updateColors() {
-                        if (!window.adjustHue) return;
-                        const style = document.documentElement.style;
-
-                        // 1. Core Theme Colors
-                        const themeHue = State.currentHue;
-                        const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
-                        const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
-
-                        for (const key in BASE_COLORS) {
-                            const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
-                            const oldSat = window.GLOBAL_COLOR_SATURATION;
-                            window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
-                            window.GLOBAL_COLOR_SATURATION = themeSat;
-                            style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
-                            window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
-                            window.GLOBAL_COLOR_SATURATION = oldSat;
-                        }
-                    }
-
-                    function loadSettings() {
-                        const old = document.getElementById('settings-script');
-                        if (old) old.remove();
-
-                        const s = document.createElement('script');
-                        s.src = '../Settings/settings.js?t=' + Date.now();
-                        s.id = 'settings-script';
-                        s.onload = function () {
-                            const newTarget = window.GLOBAL_HUE_OFFSET || 0;
-                            if (newTarget !== State.targetHue) {
-                                State.targetHue = newTarget;
-                                if (!State.animationFrame) animate();
-                            }
-
-                            applyFilters();
-                            updateColors();
-                        };
-                        document.head.appendChild(s);
-                    }
-
-                    function applyFilters() {
-                        const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
-                        document.documentElement.style.filter = `brightness(${bright})`;
-                    }
-
-                    loadSettings();
-                    setInterval(loadSettings, 300);
-                })();
-            </script>
         </div>
     </div>
+
+    <script>
+        const BASE_POLL_INTERVAL = 300;
+        const RENDER_MODE = 'full'; // 'full' | 'safe'
+        let lastGifterId = '';
+
+        const container = document.getElementById('gifter-anchor');
+        const surfaceEl = document.getElementById('wave-container');
+        const nameEl = document.getElementById('gifter-name');
+        const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let isBannerVisible = true;
+        let pollIntervalMs = BASE_POLL_INTERVAL;
+        let pollTimer = null;
+        let pollFailures = 0;
+
+        function clamp(val, min, max) {
+            return Math.min(max, Math.max(min, val));
+        }
+
+        function setWaveVar(name, value) {
+            surfaceEl.style.setProperty(name, value);
+        }
+
+        function resetMotionState() {
+            setWaveVar('--sheen-pos', '48%');
+            setWaveVar('--rim-alpha', '0.26');
+            setWaveVar('--poly-alpha', '0.24');
+        }
+
+        function showGifter(name, id) {
+            if (!name) return;
+            if (id && id === lastGifterId) return;
+            lastGifterId = id;
+            nameEl.classList.remove('gifter-flash');
+            void container.offsetWidth;
+            nameEl.textContent = name;
+            nameEl.classList.add('gifter-flash');
+            if (surfaceEl) {
+                surfaceEl.classList.remove('event-burst');
+                void surfaceEl.offsetWidth;
+                surfaceEl.classList.add('event-burst');
+            }
+        }
+
+        // Tips logic removed as per user request
+        window.updateTips = function (name, amount, id) {
+            // No-op
+        };
+
+        window.updateFollowers = function (val, extra, id) {
+            // extra format: "Latest: Username"
+            let name = extra;
+            if (extra && extra.includes(':')) {
+                name = extra.split(':')[1].trim();
+            }
+            if (name && name !== '-') {
+                showGifter(name, id);
+                container.classList.remove('gold-applied');
+            }
+        };
+
+        function schedulePoll(ms) {
+            if (pollTimer) clearTimeout(pollTimer);
+            pollTimer = setTimeout(pollAll, ms);
+        }
+
+        function injectScript(filename, id) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const s = document.createElement('script');
+            s.src = filename + '?t=' + Date.now();
+            s.id = id;
+            s.async = true;
+            s.onload = () => {
+                pollFailures = 0;
+                pollIntervalMs = BASE_POLL_INTERVAL;
+                schedulePoll(pollIntervalMs);
+            };
+            s.onerror = () => {
+                pollFailures += 1;
+                pollIntervalMs = Math.min(BASE_POLL_INTERVAL * Math.pow(2, pollFailures), 8000);
+                schedulePoll(pollIntervalMs);
+            };
+            document.body.appendChild(s);
+        }
+
+        function pollAll() {
+            injectScript('../Data/data_followers.js', 'script-followers');
+            injectScript('../Settings/settings.js', 'script-settings');
+        }
+
+        function onMotionPreferenceChange() {
+            if (reduceMotionQuery.matches) {
+                resetMotionState();
+                applyRenderMode();
+            }
+        }
+
+        function applyRenderMode() {
+            if (RENDER_MODE !== 'safe') return;
+            setWaveVar('--poly-alpha', '0.22');
+            setWaveVar('--rim-alpha', '0.26');
+            const lightning = document.querySelector('.lightning-wash');
+            const noise = document.querySelector('.micro-noise');
+            if (lightning) lightning.style.display = 'none';
+            if (noise) noise.style.display = 'none';
+        }
+
+        if (typeof reduceMotionQuery.addEventListener === 'function') {
+            reduceMotionQuery.addEventListener('change', onMotionPreferenceChange);
+        } else if (typeof reduceMotionQuery.addListener === 'function') {
+            reduceMotionQuery.addListener(onMotionPreferenceChange);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                resetMotionState();
+                applyRenderMode();
+            }
+        });
+
+        resetMotionState();
+        applyRenderMode();
+        pollAll();
+    </script>
+
+    <!-- Color Settings Loader -->
+    <script src="../Settings/settings.js"></script>
+    <script src="../Data/data_tips.js"></script>
+    <script>
+        (function () {
+            // ╔══════════════════════════════════════════════════════════════════╗
+            // ║              EMBEDDED SMOOTH HUE ENGINE                         ║
+            // ╚══════════════════════════════════════════════════════════════════╝
+
+            const BASE_COLORS = {
+                // Keep container strictly monochrome; only text glow hue shifts.
+                '--neon-green': 'rgba(10, 255, 10, 0.95)'
+            };
+
+            const State = {
+                currentHue: 0,
+                targetHue: 0,
+                animationFrame: null
+            };
+
+            function lerp(start, end, factor) {
+                return start + (end - start) * factor;
+            }
+
+            function animate() {
+                const diff = State.targetHue - State.currentHue;
+                if (Math.abs(diff) > 0.05) {
+                    State.currentHue = lerp(State.currentHue, State.targetHue, 0.08);
+                    updateColors();
+                    State.animationFrame = requestAnimationFrame(animate);
+                } else if (Math.abs(diff) > 0) {
+                    State.currentHue = State.targetHue;
+                    updateColors();
+                    State.animationFrame = null;
+                } else {
+                    State.animationFrame = null;
+                }
+            }
+
+            function updateColors() {
+                if (!window.adjustHue) return;
+                const style = document.documentElement.style;
+
+                // 1. Core Theme Colors
+                const themeHue = State.currentHue;
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
+                for (const key in BASE_COLORS) {
+                    const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    const oldSat = window.GLOBAL_COLOR_SATURATION;
+                    window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    window.GLOBAL_COLOR_SATURATION = themeSat;
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                    window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                    window.GLOBAL_COLOR_SATURATION = oldSat;
+                }
+            }
+
+            function loadSettings() {
+                const old = document.getElementById('settings-script');
+                if (old) old.remove();
+
+                const s = document.createElement('script');
+                s.src = '../Settings/settings.js?t=' + Date.now();
+                s.onload = () => {
+                    const nt = window.GLOBAL_HUE_OFFSET || 0;
+                    if (nt !== State.targetHue) { State.targetHue = nt; if (!State.animationFrame) animate(); }
+                    document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS || 1.0})`;
+
+                    const glow = window.GLOW_KICK_RECT !== false; // Reuse rect glow for consistency in top area
+                    const label = document.querySelector('.gifter-label');
+
+                    if (glow) {
+                        if (label) label.classList.add('label-glow');
+                    } else {
+                        if (label) label.classList.remove('label-glow');
+                    }
+
+                    updateColors();
+                };
+                document.head.appendChild(s);
+            }
+
+            function applyFilters() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                document.documentElement.style.filter = `brightness(${bright})`;
+            }
+
+            loadSettings();
+            setInterval(loadSettings, 300);
+        })();
+    </script>
 </body>
 
 </html>
