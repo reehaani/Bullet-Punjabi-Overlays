@@ -8,6 +8,36 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
 
+        @property --star-color {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: #0aff0a;
+        }
+
+        @property --star-color-soft {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(10, 255, 10, 0.1);
+        }
+
+        @property --star-color-secondary {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(31, 186, 255, 1);
+        }
+
+        @property --star-color-secondary-soft {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(31, 186, 255, 0.14);
+        }
+
+        @property --star-secondary-offset {
+            syntax: '<angle>';
+            inherits: true;
+            initial-value: 120deg;
+        }
+
         :root {
             --gradient-start: rgba(0, 177, 137, 0.95);
             --gradient-end: rgba(83, 252, 24, 0.95);
@@ -28,6 +58,12 @@
             --spin-speed: 10s;
             --gloss-intensity: 1;
             --rim-light-intensity: 1;
+            transition:
+                --star-color 320ms linear,
+                --star-color-soft 320ms linear,
+                --star-color-secondary 320ms linear,
+                --star-color-secondary-soft 320ms linear,
+                --star-secondary-offset 320ms ease;
         }
 
         * {
@@ -88,16 +124,26 @@
                     var(--star-color) 30deg,
                     var(--star-color-soft) 52deg,
                     transparent 62deg,
-                    transparent calc(var(--star-secondary-offset) - 12deg),
-                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) - 6deg),
-                    var(--star-color-secondary) var(--star-secondary-offset),
-                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) + 6deg),
-                    transparent calc(var(--star-secondary-offset) + 12deg),
                     transparent 360deg);
             animation: spin var(--spin-speed) linear infinite;
             /* Precise masking: Hide only the center 'wick' origin */
             -webkit-mask-image: radial-gradient(circle, transparent 20px, black 25px);
             mask-image: radial-gradient(circle, transparent 20px, black 25px);
+        }
+
+        .star-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: conic-gradient(from 0deg,
+                    transparent 0deg,
+                    var(--star-color-secondary-soft) 8deg,
+                    var(--star-color-secondary) 30deg,
+                    var(--star-color-secondary-soft) 52deg,
+                    transparent 62deg,
+                    transparent 360deg);
+            transform: rotate(var(--star-secondary-offset));
+            z-index: 2;
         }
 
         .star-border::after {
@@ -107,6 +153,7 @@
             background: inherit;
             filter: blur(20px);
             opacity: 0.8;
+            z-index: 1;
         }
 
         @keyframes spin {
@@ -992,6 +1039,7 @@
                 const starShade2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
                 const starSat2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
                 const starOffset2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+                const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
 
                 const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
                 const oldSat = window.GLOBAL_COLOR_SATURATION;
@@ -1004,6 +1052,7 @@
                 style.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', starHue2));
                 style.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', starHue2));
                 style.setProperty('--star-secondary-offset', `${starOffset2}deg`);
+                style.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
                 window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
                 window.GLOBAL_COLOR_SATURATION = oldSat;
             }

@@ -1,4 +1,4 @@
-import customtkinter as ctk
+﻿import customtkinter as ctk
 import sys
 import re
 import os
@@ -18,6 +18,31 @@ def get_settings_path():
 
 SETTINGS_PATH = get_settings_path()
 
+
+def resolve_logo_path():
+    candidates = []
+    if hasattr(sys, "_MEIPASS"):
+        candidates.append(os.path.join(sys._MEIPASS, "Logo.png"))
+        candidates.append(os.path.join(sys._MEIPASS, "Logo", "Logo.png"))
+
+    exe_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    cwd = os.getcwd()
+
+    candidates.extend([
+        os.path.join(exe_dir, "Logo.png"),
+        os.path.join(exe_dir, "Logo", "Logo.png"),
+        os.path.join(script_dir, "..", "Logo", "Logo.png"),
+        os.path.join(script_dir, "Logo", "Logo.png"),
+        os.path.join(cwd, "Logo", "Logo.png"),
+        LOGO_REL_PATH,
+    ])
+
+    for p in candidates:
+        if p and os.path.exists(p):
+            return p
+    return None
+
 # THEME COLORS
 COLOR_BG = "#000000"       # Pitch Black
 COLOR_SURFACE = "#111111"  # Slightly lighter black for cards
@@ -36,6 +61,7 @@ DEFAULTS = {
     "STAR_SECONDARY_HUE_OFFSET": 205,
     "STAR_SECONDARY_COLOR_BRIGHTNESS": 1.6,
     "STAR_SECONDARY_OFFSET_DEG": 120,
+    "STAR_SPIN_SPEED": 10.0,
     "GLOSSY_INTENSITY": 1.0,
     "RIM_LIGHT_INTENSITY": 1.0,
     "DAILY_KICKS_GOAL": 10000,
@@ -67,10 +93,7 @@ class HueControllerApp(ctk.CTk):
         except:
             pass
             
-        # 2. Setup Icon (Taskbar needs .ico)
-        self.setup_icon()
-
-        # 3. Force Taskbar Icon (The specific hack for overrideredirect)
+        # 2. Force Taskbar Icon (The specific hack for overrideredirect)
         self.after(10, lambda: self.set_app_window())
 
         # Center Window
@@ -86,6 +109,7 @@ class HueControllerApp(ctk.CTk):
         self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
         self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
         self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+        self.star_spin_speed = DEFAULTS["STAR_SPIN_SPEED"]
         self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
         self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
         self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
@@ -119,7 +143,7 @@ class HueControllerApp(ctk.CTk):
 
         # Close Button
         self.btn_close = ctk.CTkButton(
-            self.title_bar, text="×", width=40, height=40,
+            self.title_bar, text="X", width=40, height=40,
             fg_color="transparent", hover_color="#330000",
             text_color="white", font=("Arial", 20),
             command=self.close_app
@@ -153,6 +177,9 @@ class HueControllerApp(ctk.CTk):
         self.logo_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
         self.logo_frame.grid(row=0, column=0, columnspan=2, pady=(10, 20))
         # Label will be packed here by setup_icon later
+
+        # Setup icon/logo after widgets exist (prevents silent init failures)
+        self.setup_icon()
         
         # Left Column Section
         self.left_col = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
@@ -169,7 +196,7 @@ class HueControllerApp(ctk.CTk):
         ctk.CTkLabel(self.theme_frame, text="CORE THEME", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
 
         # Hue
-        self.lbl_value = ctk.CTkLabel(self.theme_frame, text="0°", font=("Inter", 38, "bold"), text_color="white")
+        self.lbl_value = ctk.CTkLabel(self.theme_frame, text="0 deg", font=("Inter", 38, "bold"), text_color="white")
         self.lbl_value.pack(pady=(10, 0))
         self.slider = ctk.CTkSlider(self.theme_frame, from_=0, to=360, number_of_steps=360, width=380, command=self.on_slider_change)
         self.slider.pack(pady=(5, 10))
@@ -202,7 +229,7 @@ class HueControllerApp(ctk.CTk):
         ctk.CTkLabel(self.accent_frame, text="STAR BORDER & ACCENTS", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
 
         # Star Hue
-        self.lbl_star_hue = ctk.CTkLabel(self.accent_frame, text="0°", font=("Inter", 24, "bold"), text_color="white")
+        self.lbl_star_hue = ctk.CTkLabel(self.accent_frame, text="0 deg", font=("Inter", 24, "bold"), text_color="white")
         self.lbl_star_hue.pack(pady=(10, 0))
         self.slider_star_hue = ctk.CTkSlider(self.accent_frame, from_=0, to=360, number_of_steps=360, width=380, command=self.on_star_hue_change)
         self.slider_star_hue.pack(pady=(5, 10))
@@ -215,7 +242,7 @@ class HueControllerApp(ctk.CTk):
         self.slider_star_shade.pack(pady=(5, 10))
 
         # Secondary Star Hue
-        self.lbl_star_hue_2 = ctk.CTkLabel(self.accent_frame, text="205°", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_star_hue_2 = ctk.CTkLabel(self.accent_frame, text="205 deg", font=("Inter", 20, "bold"), text_color="white")
         self.lbl_star_hue_2.pack(pady=(8, 0))
         ctk.CTkLabel(self.accent_frame, text="STAR SECONDARY HUE", font=("Inter", 10), text_color=COLOR_TEXT).pack()
         self.slider_star_hue_2 = ctk.CTkSlider(self.accent_frame, from_=0, to=360, number_of_steps=360, width=380, command=self.on_star_hue_2_change)
@@ -229,11 +256,18 @@ class HueControllerApp(ctk.CTk):
         self.slider_star_shade_2.pack(pady=(5, 10))
 
         # Secondary Star Offset
-        self.lbl_star_offset_2 = ctk.CTkLabel(self.accent_frame, text="120°", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_star_offset_2 = ctk.CTkLabel(self.accent_frame, text="120 deg", font=("Inter", 20, "bold"), text_color="white")
         self.lbl_star_offset_2.pack(pady=(8, 0))
         ctk.CTkLabel(self.accent_frame, text="STAR SECONDARY OFFSET", font=("Inter", 10), text_color=COLOR_TEXT).pack()
         self.slider_star_offset_2 = ctk.CTkSlider(self.accent_frame, from_=0, to=300, number_of_steps=300, width=380, command=self.on_star_offset_2_change)
-        self.slider_star_offset_2.pack(pady=(5, 20))
+        self.slider_star_offset_2.pack(pady=(5, 10))
+
+        # Star Border Speed
+        self.lbl_star_speed = ctk.CTkLabel(self.accent_frame, text="10.0s", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_star_speed.pack(pady=(8, 0))
+        ctk.CTkLabel(self.accent_frame, text="STAR BORDER SPEED", font=("Inter", 10), text_color=COLOR_TEXT).pack()
+        self.slider_star_speed = ctk.CTkSlider(self.accent_frame, from_=2.0, to=30.0, number_of_steps=280, width=380, command=self.on_star_speed_change)
+        self.slider_star_speed.pack(pady=(5, 20))
 
         # === 6. Goal Settings Card (Left) ===
         self.goal_frame = ctk.CTkFrame(self.left_col, fg_color=COLOR_SURFACE, corner_radius=20)
@@ -370,16 +404,8 @@ class HueControllerApp(ctk.CTk):
 
     def setup_icon(self):
         try:
-            # Determine path
-            logo_path = LOGO_REL_PATH
-            if hasattr(sys, '_MEIPASS'):
-                # We will bundle it to root "." in PyInstaller
-                logo_path = os.path.join(sys._MEIPASS, "Logo.png")
-            elif not os.path.exists(logo_path):
-                # Running from source (Development) - fallback for different dev setups
-                logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Logo", "Logo.png")
-            
-            if not os.path.exists(logo_path):
+            logo_path = resolve_logo_path()
+            if not logo_path:
                 return
 
             # 1. Set internal window icon (Title bar, Alt-Tab)
@@ -388,11 +414,12 @@ class HueControllerApp(ctk.CTk):
             
             # Background Logo (large + transparent)
             faded = pil_img.copy()
-            alpha = faded.split()[3].point(lambda p: int(p * 0.07))
+            alpha = faded.split()[3].point(lambda p: int(p * 0.12))
             faded.putalpha(alpha)
             bg_logo_size = (1100, 1100)
             self.bg_logo_ctk = ctk.CTkImage(light_image=faded, dark_image=faded, size=bg_logo_size)
             self.lbl_bg_logo.configure(image=self.bg_logo_ctk)
+            self.lbl_bg_logo.lift(self.canvas_bg)
             
             # To simulate 3D/Opacity, we can blend the image with background if PIL is used
             # For now, let's keep it simple with self.bg_logo_ctk and place it under
@@ -482,6 +509,7 @@ class HueControllerApp(ctk.CTk):
                 self.star_secondary_hue = int(re.search(r'STAR_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content).group(1)) if re.search(r'STAR_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content) else 205
                 self.star_secondary_shade = float(re.search(r'STAR_SECONDARY_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'STAR_SECONDARY_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content) else 1.6
                 self.star_secondary_offset = int(re.search(r'STAR_SECONDARY_OFFSET_DEG\s*=\s*(\d+)', content).group(1)) if re.search(r'STAR_SECONDARY_OFFSET_DEG\s*=\s*(\d+)', content) else 120
+                self.star_spin_speed = float(re.search(r'STAR_SPIN_SPEED\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'STAR_SPIN_SPEED\s*=\s*([\d\.]+)', content) else 10.0
                 self.gloss_intensity = float(re.search(r'GLOSSY_INTENSITY\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOSSY_INTENSITY\s*=\s*([\d\.]+)', content) else 1.0
                 self.rim_light_intensity = float(re.search(r'RIM_LIGHT_INTENSITY\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'RIM_LIGHT_INTENSITY\s*=\s*([\d\.]+)', content) else 1.0
                 self.daily_kicks_goal = int(re.search(r'DAILY_KICKS_GOAL\s*=\s*(\d+)', content).group(1)) if re.search(r'DAILY_KICKS_GOAL\s*=\s*(\d+)', content) else 10000
@@ -526,20 +554,21 @@ class HueControllerApp(ctk.CTk):
                 self.slider_star_hue_2.set(self.star_secondary_hue)
                 self.slider_star_shade_2.set(self.star_secondary_shade)
                 self.slider_star_offset_2.set(self.star_secondary_offset)
+                self.slider_star_speed.set(self.star_spin_speed)
                 self.slider_gloss.set(self.gloss_intensity)
                 self.slider_rim.set(self.rim_light_intensity)
                 self.slider_kicks_goal.set(self.daily_kicks_goal)
                 self.slider_sub_goal.set(self.sub_goal_config)
 
-                self.lbl_value.configure(text=f"{self.current_hue}°")
+                self.lbl_value.configure(text=f"{self.current_hue} deg")
                 self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
                 self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
                 self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
-                self.lbl_star_hue.configure(text=f"{self.star_hue}°")
+                self.lbl_star_hue.configure(text=f"{self.star_hue} deg")
                 self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
-                self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue}°")
+                self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue} deg")
                 self.lbl_star_shade_2.configure(text=f"{int(self.star_secondary_shade*100)}%")
-                self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset}°")
+                self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset} deg")
                 self.lbl_gloss.configure(text=f"{int(self.gloss_intensity*100)}%")
                 self.lbl_rim.configure(text=f"{int(self.rim_light_intensity*100)}%")
                 self.lbl_kicks_goal.configure(text=f"{self.daily_kicks_goal:,}")
@@ -556,12 +585,13 @@ class HueControllerApp(ctk.CTk):
             self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
             self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
             self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+            self.star_spin_speed = DEFAULTS["STAR_SPIN_SPEED"]
             self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
             self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
 
     def on_slider_change(self, value):
         self.current_hue = int(float(value))
-        self.lbl_value.configure(text=f"{self.current_hue}°")
+        self.lbl_value.configure(text=f"{self.current_hue} deg")
         self.debounce_write()
 
     def on_brightness_change(self, value):
@@ -582,7 +612,7 @@ class HueControllerApp(ctk.CTk):
 
     def on_star_hue_change(self, value):
         self.star_hue = int(float(value))
-        self.lbl_star_hue.configure(text=f"{self.star_hue}°")
+        self.lbl_star_hue.configure(text=f"{self.star_hue} deg")
         self.debounce_write()
 
     def on_star_shade_change(self, value):
@@ -592,7 +622,7 @@ class HueControllerApp(ctk.CTk):
 
     def on_star_hue_2_change(self, value):
         self.star_secondary_hue = int(float(value))
-        self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue}°")
+        self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue} deg")
         self.debounce_write()
 
     def on_star_shade_2_change(self, value):
@@ -602,7 +632,12 @@ class HueControllerApp(ctk.CTk):
 
     def on_star_offset_2_change(self, value):
         self.star_secondary_offset = int(float(value))
-        self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset}°")
+        self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset} deg")
+        self.debounce_write()
+
+    def on_star_speed_change(self, value):
+        self.star_spin_speed = round(float(value), 1)
+        self.lbl_star_speed.configure(text=f"{self.star_spin_speed:.1f}s")
         self.debounce_write()
 
     def on_gloss_change(self, value):
@@ -665,6 +700,7 @@ class HueControllerApp(ctk.CTk):
                 "STAR_SECONDARY_HUE_OFFSET": str(self.star_secondary_hue),
                 "STAR_SECONDARY_COLOR_BRIGHTNESS": f"{self.star_secondary_shade:.2f}",
                 "STAR_SECONDARY_OFFSET_DEG": str(self.star_secondary_offset),
+                "STAR_SPIN_SPEED": f"{self.star_spin_speed:.1f}",
                 "GLOSSY_INTENSITY": f"{self.gloss_intensity:.2f}",
                 "RIM_LIGHT_INTENSITY": f"{self.rim_light_intensity:.2f}",
                 "DAILY_KICKS_GOAL": str(self.daily_kicks_goal),
@@ -714,6 +750,7 @@ class HueControllerApp(ctk.CTk):
             self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
             self.star_secondary_shade = DEFAULTS["STAR_SECONDARY_COLOR_BRIGHTNESS"]
             self.star_secondary_offset = DEFAULTS["STAR_SECONDARY_OFFSET_DEG"]
+            self.star_spin_speed = DEFAULTS["STAR_SPIN_SPEED"]
             self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
             self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
             self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
@@ -728,20 +765,22 @@ class HueControllerApp(ctk.CTk):
             self.slider_star_hue_2.set(self.star_secondary_hue)
             self.slider_star_shade_2.set(self.star_secondary_shade)
             self.slider_star_offset_2.set(self.star_secondary_offset)
+            self.slider_star_speed.set(self.star_spin_speed)
             self.slider_gloss.set(self.gloss_intensity)
             self.slider_rim.set(self.rim_light_intensity)
             self.slider_kicks_goal.set(self.daily_kicks_goal)
             self.slider_sub_goal.set(self.sub_goal_config)
 
-            self.lbl_value.configure(text=f"{self.current_hue}Â°")
+            self.lbl_value.configure(text=f"{self.current_hue} deg")
             self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
             self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
             self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
-            self.lbl_star_hue.configure(text=f"{self.star_hue}Â°")
+            self.lbl_star_hue.configure(text=f"{self.star_hue} deg")
             self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
-            self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue}Â°")
+            self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue} deg")
             self.lbl_star_shade_2.configure(text=f"{int(self.star_secondary_shade*100)}%")
-            self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset}Â°")
+            self.lbl_star_offset_2.configure(text=f"{self.star_secondary_offset} deg")
+            self.lbl_star_speed.configure(text=f"{self.star_spin_speed:.1f}s")
             self.lbl_gloss.configure(text=f"{int(self.gloss_intensity*100)}%")
             self.lbl_rim.configure(text=f"{int(self.rim_light_intensity*100)}%")
             self.lbl_kicks_goal.configure(text=f"{self.daily_kicks_goal:,}")
@@ -787,3 +826,4 @@ class HueControllerApp(ctk.CTk):
 if __name__ == "__main__":
     c = HueControllerApp()
     c.mainloop()
+

@@ -15,6 +15,7 @@
             --panel-edge-black: rgba(0, 0, 0, 0.82);
             --rim-light-core: rgba(255, 255, 255, 0.85);
             --gloss-intensity: 1;
+            --rim-light-intensity: 1;
         }
 
         * {
@@ -241,6 +242,7 @@
             border-radius: 12px 0 0 12px;
             pointer-events: none;
             z-index: 16;
+            opacity: var(--rim-light-intensity, 1);
             -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
         }
@@ -510,9 +512,18 @@
                 const glossMapped = gloss >= 1
                     ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
                     : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+                const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
+                const rimIntensity = rimValue >= 1
+                    ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+                    : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
+                const glow = window.GLOW_KICK_RECT !== false;
 
                 document.documentElement.style.filter = `brightness(${bright})`;
                 document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
+                document.documentElement.style.setProperty('--rim-light-intensity', rimIntensity);
+
+                const rim = document.querySelector('.rim-light-layer');
+                if (rim) rim.style.opacity = glow ? String(rimIntensity) : '0';
             }
 
             loadSettings();

@@ -1,1 +1,1 @@
-window.updateFollowers("0", "Latest: -");
+window.updateFollowers("1", "Latest: REHANI3", "1ddaa60e-28b3-44b0-8bc4-e502f63eba08_639067482093596862");

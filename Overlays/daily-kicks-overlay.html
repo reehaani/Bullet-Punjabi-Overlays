@@ -8,6 +8,36 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
 
+        @property --star-color {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: #0aff0a;
+        }
+
+        @property --star-color-soft {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(10, 255, 10, 0.1);
+        }
+
+        @property --star-color-secondary {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(31, 186, 255, 1);
+        }
+
+        @property --star-color-secondary-soft {
+            syntax: '<color>';
+            inherits: true;
+            initial-value: rgba(31, 186, 255, 0.14);
+        }
+
+        @property --star-secondary-offset {
+            syntax: '<angle>';
+            inherits: true;
+            initial-value: 120deg;
+        }
+
         :root {
             --star-color: #0aff0a;
             --star-color-soft: rgba(10, 255, 10, 0.1);
@@ -20,7 +50,14 @@
             --rim-light-core: rgba(255, 255, 255, 0.95);
             --rim-light-soft: rgba(255, 255, 255, 0.55);
             --rim-light-tail: rgba(255, 255, 255, 0.08);
+            --rim-light-intensity: 1;
             --text-hue-glow: rgba(10, 255, 10, 0.18);
+            transition:
+                --star-color 320ms linear,
+                --star-color-soft 320ms linear,
+                --star-color-secondary 320ms linear,
+                --star-color-secondary-soft 320ms linear,
+                --star-secondary-offset 320ms ease;
         }
 
         /* Reset and Base */
@@ -73,13 +110,23 @@
                     var(--star-color) 30deg,
                     var(--star-color-soft) 52deg,
                     transparent 62deg,
-                    transparent calc(var(--star-secondary-offset) - 12deg),
-                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) - 6deg),
-                    var(--star-color-secondary) var(--star-secondary-offset),
-                    var(--star-color-secondary-soft) calc(var(--star-secondary-offset) + 6deg),
-                    transparent calc(var(--star-secondary-offset) + 12deg),
                     transparent 360deg);
             animation: spin var(--spin-speed) linear infinite;
+        }
+
+        .star-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: conic-gradient(from 0deg,
+                    transparent 0deg,
+                    var(--star-color-secondary-soft) 8deg,
+                    var(--star-color-secondary) 30deg,
+                    var(--star-color-secondary-soft) 52deg,
+                    transparent 62deg,
+                    transparent 360deg);
+            transform: rotate(var(--star-secondary-offset));
+            z-index: 2;
         }
 
         .star-border::after {
@@ -89,6 +136,7 @@
             background: inherit;
             filter: blur(20px);
             opacity: 0.8;
+            z-index: 1;
         }
 
         @keyframes spin {
@@ -210,6 +258,7 @@
             border-radius: 24px;
             z-index: 4;
             pointer-events: none;
+            opacity: var(--rim-light-intensity, 1);
             -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
         }
@@ -457,11 +506,18 @@
             const glossMapped = gloss >= 1
                 ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
                 : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+            const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
+            const rimIntensity = rimValue >= 1
+                ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+                : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
             const glow = window.GLOW_KICK_RECT !== false;
             document.documentElement.style.filter = `brightness(${bright})`;
             document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
+            document.documentElement.style.setProperty('--rim-light-intensity', rimIntensity);
             const sw = document.querySelector('.star-border-wrapper');
+            const rim = document.querySelector('.rim-light-layer');
             if (sw) sw.style.opacity = glow ? '1' : '0';
+            if (rim) rim.style.opacity = glow ? String(rimIntensity) : '0';
         }
 
         setInterval(pollData, POLL_INTERVAL);
@@ -484,6 +540,7 @@
                 const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
                 const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
                 const so2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+                const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
 
                 const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
                 window.GLOBAL_COLOR_BRIGHTNESS = ssh; window.GLOBAL_COLOR_SATURATION = ssa;
@@ -493,6 +550,7 @@
                 s.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', sh2));
                 s.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', sh2));
                 s.setProperty('--star-secondary-offset', `${so2}deg`);
+                s.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
                 s.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.18)', h));
                 window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
             }

@@ -93,6 +93,42 @@
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
     }
 
+    @property --chatters-bg-start {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(0, 85, 255, 0.9);
+    }
+
+    @property --chatters-bg-end {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(138, 43, 226, 0.9);
+    }
+
+    @property --followers-bg-start {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(17, 153, 142, 0.9);
+    }
+
+    @property --followers-bg-end {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(56, 239, 125, 0.9);
+    }
+
+    @property --kicks-bg-start {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(255, 65, 108, 0.9);
+    }
+
+    @property --kicks-bg-end {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(255, 75, 43, 0.9);
+    }
+
     :root {
       /* Brighter Cyberpunk Gradients (Inner Backgrounds) */
       /* Chatters: HIGH ENERGY Electric Blue to Cyber Purple */
@@ -114,7 +150,22 @@
       --rim-light-soft: rgba(255, 255, 255, 0.5);
       --rim-light-tail: rgba(255, 255, 255, 0.08);
       --gloss-intensity: 1;
+      --rim-light-intensity: 1;
       --text-hue-glow: rgba(10, 255, 10, 0.14);
+      --star-hue-primary: 190deg;
+      --star-shade-primary: 1;
+      --star-sat-primary: 1;
+      --star-hue-secondary: 205deg;
+      --star-shade-secondary: 1.6;
+      --star-sat-secondary: 1;
+      --star-secondary-offset: 120deg;
+      transition:
+        --chatters-bg-start 320ms linear,
+        --chatters-bg-end 320ms linear,
+        --followers-bg-start 320ms linear,
+        --followers-bg-end 320ms linear,
+        --kicks-bg-start 320ms linear,
+        --kicks-bg-end 320ms linear;
     }
 
     * {
@@ -209,11 +260,36 @@
           transparent 360deg);
       animation: spin var(--spin-speed) linear infinite;
       z-index: 1;
+      will-change: transform, filter;
+      filter: hue-rotate(var(--star-hue-primary, 190deg)) saturate(var(--star-sat-primary, 1)) brightness(var(--star-shade-primary, 1));
+      transition: filter 320ms linear;
       -webkit-mask-image: radial-gradient(circle, transparent 22px, black 28px);
       mask-image: radial-gradient(circle, transparent 22px, black 28px);
     }
 
-    /* Second tail for better glow */
+    /* Secondary star layer controlled by STAR_SECONDARY_* settings */
+    .star-border::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: conic-gradient(from 0deg,
+          transparent 0deg,
+          var(--border-color-secondary-soft, rgba(255, 255, 255, 0.1)) 8deg,
+          var(--border-color-secondary, rgba(255, 255, 255, 0.95)) 30deg,
+          var(--border-color-secondary-soft, rgba(255, 255, 255, 0.1)) 52deg,
+          transparent 62deg,
+          transparent 360deg);
+      opacity: 0.75;
+      transform: rotate(var(--star-secondary-offset, 120deg));
+      will-change: transform, filter;
+      filter: hue-rotate(var(--star-hue-secondary, 205deg)) saturate(var(--star-sat-secondary, 1)) brightness(var(--star-shade-secondary, 1));
+      transition: filter 320ms linear, transform 320ms ease;
+    }
+
+    /* Extra bloom tail */
     .star-border::after {
       content: '';
       position: absolute;
@@ -223,7 +299,7 @@
       right: 0;
       background: inherit;
       filter: blur(20px);
-      opacity: 0.8;
+      opacity: 0.65;
     }
 
     @keyframes spin {
@@ -260,6 +336,7 @@
       border-radius: 20px;
       z-index: 9;
       pointer-events: none;
+      opacity: var(--rim-light-intensity, 1);
       -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
       mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
     }
@@ -284,6 +361,8 @@
     #panel-chatters .star-border {
       --border-color: var(--neon-blue);
       --border-color-soft: rgba(0, 242, 255, 0.16);
+      --border-color-secondary: #60a8ff;
+      --border-color-secondary-soft: rgba(96, 168, 255, 0.18);
     }
 
     #panel-chatters .inner-content {
@@ -293,6 +372,8 @@
     #panel-followers .star-border {
       --border-color: var(--neon-green);
       --border-color-soft: rgba(10, 255, 10, 0.16);
+      --border-color-secondary: #00ffd1;
+      --border-color-secondary-soft: rgba(0, 255, 209, 0.18);
     }
 
     #panel-followers .inner-content {
@@ -302,10 +383,18 @@
     #panel-kicks .star-border {
       --border-color: var(--neon-red);
       --border-color-soft: rgba(255, 153, 0, 0.18);
+      --border-color-secondary: #ff4db8;
+      --border-color-secondary-soft: rgba(255, 77, 184, 0.18);
     }
 
     #panel-kicks .inner-content {
       background: linear-gradient(135deg, var(--kicks-bg-start), var(--kicks-bg-end));
+    }
+
+    #panel-chatters .inner-content,
+    #panel-followers .inner-content,
+    #panel-kicks .inner-content {
+      transition: background 320ms linear;
     }
 
 
@@ -1060,6 +1149,11 @@
         const sh = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : gh;
         const sShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
         const sSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
+        const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : ((sh + 120) % 360);
+        const sShade2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : sShade;
+        const sSat2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : sSat;
+        const sOff2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+        const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
         window.GLOBAL_COLOR_BRIGHTNESS = sShade;
         window.GLOBAL_COLOR_SATURATION = sSat;
         style.setProperty('--neon-blue', window.adjustHue('#00f2ff', sh));
@@ -1067,14 +1161,27 @@
         style.setProperty('--neon-red', window.adjustHue('#ff9900', sh));
         window.GLOBAL_COLOR_BRIGHTNESS = os;
         window.GLOBAL_COLOR_SATURATION = osa;
+        style.setProperty('--star-hue-primary', `${sh}deg`);
+        style.setProperty('--star-shade-primary', `${sShade}`);
+        style.setProperty('--star-sat-primary', `${sSat}`);
+        style.setProperty('--star-hue-secondary', `${sh2}deg`);
+        style.setProperty('--star-shade-secondary', `${sShade2}`);
+        style.setProperty('--star-sat-secondary', `${sSat2}`);
+        style.setProperty('--star-secondary-offset', `${sOff2}deg`);
+        style.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
 
         const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
         const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
         const glossMapped = gloss >= 1
           ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
           : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+        const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
+        const rimIntensity = rimValue >= 1
+          ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+          : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
         document.documentElement.style.filter = `brightness(${bright})`;
         style.setProperty('--gloss-intensity', glossMapped);
+        style.setProperty('--rim-light-intensity', rimIntensity);
       }
 
       function loadSettings() {
