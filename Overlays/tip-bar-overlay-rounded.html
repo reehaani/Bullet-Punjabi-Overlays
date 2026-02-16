@@ -1,0 +1,806 @@
+﻿<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tip Bar Rounded - Above Camera</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --gradient-start: rgba(0, 177, 137, 0.95);
+            --gradient-end: rgba(83, 252, 24, 0.95);
+            --accent-line: rgba(10, 255, 10, 0.3);
+            --gloss-intensity: 1;
+            --amount-rim-start: 760px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 1s ease, color 1s ease, border-color 1s ease, box-shadow 1s ease;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;
+            /* Pin to bottom */
+        }
+
+        /* Left-aligned canvas capped at 1080 width */
+        .main-canvas {
+            width: min(1080px, 100vw);
+            height: 100vh;
+            position: relative;
+            background: transparent;
+            overflow: visible;
+            flex-shrink: 0;
+        }
+
+        #sparks-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* =============================================
+           TIP BAR â€” fixed 1080px width
+           ============================================= */
+
+        .tip-bar {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 0;
+            width: 100%;
+            height: 100px;
+            border-radius: 40px;
+            overflow: visible;
+            filter: drop-shadow(0 -4px 24px rgba(0, 0, 0, 0.6));
+            z-index: 10;
+        }
+
+        /* === Inner fill (glossy black) === */
+        .inner-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 40px;
+            background: linear-gradient(135deg,
+                    rgba(15, 15, 15, 0.98) 0%,
+                    rgba(25, 25, 25, 0.96) 50%,
+                    rgba(15, 15, 15, 0.98) 100%);
+            z-index: 2;
+            overflow: hidden;
+            /* Rim Light */
+            box-shadow:
+                inset 0 1px 1px rgba(255, 255, 255, calc(0.16 * var(--gloss-intensity, 1))),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.3),
+                inset 1px 0 0 rgba(255, 255, 255, 0.025),
+                inset 0 2px 8px rgba(255, 255, 255, 0.025),
+                inset 0 -2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Dark base only on the amount-side container */
+        .inner-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--amount-rim-start);
+            right: 0;
+            background: linear-gradient(90deg,
+                    rgba(6, 6, 6, 0.88) 0%,
+                    rgba(4, 4, 4, 0.93) 52%,
+                    rgba(2, 2, 2, 0.96) 100%);
+            border-radius: 40px;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Thin realistic rim light only over amount-side top edge */
+        .inner-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: calc(var(--amount-rim-start) + 10px);
+            right: 8px;
+            height: 2px;
+            background:
+                linear-gradient(104deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.22) 18%,
+                    rgba(255, 255, 255, 0.82) 58%,
+                    rgba(255, 255, 255, 0.92) 82%,
+                    rgba(255, 255, 255, 0.58) 100%),
+                radial-gradient(150% 210% at 100% 0%,
+                    rgba(255, 255, 255, 0.95) 0%,
+                    rgba(255, 255, 255, 0.45) 30%,
+                    rgba(255, 255, 255, 0.08) 65%,
+                    transparent 100%);
+            border-top-right-radius: 40px;
+            filter: blur(0.28px) drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+            opacity: 0.95;
+            z-index: 18;
+            pointer-events: none;
+        }
+
+        /* Removed background beam */
+
+
+        @keyframes sweep {
+            0% {
+                left: -150%;
+            }
+
+            20% {
+                left: 150%;
+            }
+
+            100% {
+                left: 150%;
+            }
+        }
+
+        /* === Glass overlay === */
+        .glass-overlay {
+            position: absolute;
+            inset: 0;
+            /* Ultra Gloss */
+            background:
+                linear-gradient(to bottom,
+                    rgba(255, 255, 255, 0.17) 0%,
+                    rgba(255, 255, 255, 0.07) 28%,
+                    transparent 42%,
+                    rgba(0, 0, 0, 0.08) 100%),
+                linear-gradient(100deg,
+                    transparent 28%,
+                    rgba(255, 255, 255, 0.03) 47%,
+                    rgba(255, 255, 255, 0.06) 50%,
+                    rgba(255, 255, 255, 0.03) 53%,
+                    transparent 72%);
+            pointer-events: none;
+            z-index: 15;
+            /* Mega Gloss Filter */
+            filter: brightness(calc(0.92 + (var(--gloss-intensity, 1) * 0.08))) contrast(calc(0.94 + (var(--gloss-intensity, 1) * 0.06)));
+            opacity: 0.5;
+        }
+
+        /* === Content layout === */
+        .content-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 0 18px 0 0;
+        }
+
+        /* === Left side: name tab === */
+        .name-tab {
+            height: 100%;
+            /* BOOSTED saturation for a more vibrant "Neon Kick" green gradient */
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            background-image:
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 50%, rgba(0, 0, 0, 0.2) 100%),
+                linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            padding: 0 12px 0 12px;
+            gap: 10px;
+            display: flex;
+            align-items: center;
+            border-radius: 40px;
+            min-width: 0;
+            max-width: calc(100% - 220px);
+            flex: 0 1 auto;
+            z-index: 12;
+            position: relative;
+            /* Outward cast toward amount side so the tab pops up */
+            filter:
+                drop-shadow(10px 1px 10px rgba(0, 0, 0, 0.42))
+                drop-shadow(18px 2px 16px rgba(0, 0, 0, 0.26));
+        }
+
+        /* Inverted rounded edge (concave) at bottom-right */
+        .name-tab::after {
+            display: none;
+        }
+
+        .tip-left {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            height: 100%;
+            flex: 1 1 auto;
+            overflow: hidden;
+            padding-left: 4px;
+        }
+
+        /* === Logo next to name â€” always visible, never shrinks === */
+        .tip-logo {
+            height: 70px;
+            width: auto;
+            flex-shrink: 0;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        /* === Tipper name â€” premium metallic with deep shadows === */
+        .tip-name {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 80px;
+            line-height: 0.9;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 1) 45%,
+                    rgba(255, 255, 255, 1) 55%,
+                    transparent 70%) 150% 0 / 150% 100% no-repeat,
+                linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 15%,
+                    #e0e0e0 30%, #b0b0b0 50%,
+                    #d0d0d0 65%, #ffffff 80%,
+                    #e8e8e8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.6);
+            paint-order: stroke fill;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            max-width: 100%;
+            position: relative;
+            animation: shine-name 6s infinite linear;
+        }
+
+        /* Only used for extreme overflow cases after auto-fit reaches min size */
+        .tip-name.ellipsis-mode {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Name shines first: left-to-right sweep at 0â€“15% of cycle */
+        @keyframes shine-name {
+            0% {
+                background-position: 150% 0, 0 0;
+            }
+
+            15% {
+                background-position: -150% 0, 0 0;
+            }
+
+            100% {
+                background-position: -150% 0, 0 0;
+            }
+        }
+
+        /* Amount shines second: left-to-right sweep at 15â€“30% of cycle */
+        @keyframes shine-amount {
+            0% {
+                background-position: 150% 0, 0 0;
+            }
+
+            15% {
+                background-position: 150% 0, 0 0;
+            }
+
+            30% {
+                background-position: -150% 0, 0 0;
+            }
+
+            100% {
+                background-position: -150% 0, 0 0;
+            }
+        }
+
+        /* Entry animation for new tips */
+        .tip-entry {
+            animation: tipFadeSlide 1s cubic-bezier(0.19, 1, 0.22, 1) forwards !important;
+            backface-visibility: hidden;
+            will-change: transform, opacity;
+        }
+
+        @keyframes tipFadeSlide {
+            0% {
+                transform: translateY(40px) scale(0.98);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+
+
+        /* === Right side: amount â€” same shine-sweep, delayed to follow the name === */
+        .tip-amount {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 68px;
+            line-height: 0.9;
+            letter-spacing: -1px;
+            padding-right: 20px;
+            background: linear-gradient(90deg,
+                    transparent 30%,
+                    rgba(255, 255, 255, 1) 45%,
+                    rgba(255, 255, 255, 1) 55%,
+                    transparent 70%) 150% 0 / 150% 100% no-repeat,
+                linear-gradient(180deg,
+                    #ffffff 0%, #ffffff 15%,
+                    #e8e8e8 30%, #b0b0b0 50%,
+                    #d0d0d0 65%, #ffffff 80%,
+                    #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.5);
+            paint-order: stroke fill;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.25));
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: auto;
+            /* Shines after the name â€” sequenced via keyframe timing */
+            animation: shine-amount 6s infinite linear;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+
+
+        /* === Subtle green accent line at bottom === */
+        .tip-bar::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.15) 0%,
+                    var(--accent-line) 50%,
+                    transparent 100%);
+            z-index: 20;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="main-canvas">
+        <canvas id="sparks-canvas"></canvas>
+        <div class="tip-bar" id="tip-bar">
+            <!-- Black fill -->
+            <div class="inner-fill">
+                <div class="glass-overlay"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="content-layer">
+                <div class="name-tab">
+                    <div class="tip-left">
+                        <div class="tip-name" id="tip-name">â€”</div>
+                    </div>
+                    <img class="tip-logo" src="../Logo/Logo 2.png" alt="Logo" />
+                </div>
+
+                <div class="tip-amount" id="tip-amount">$0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const POLL_INTERVAL = 300;
+        let lastTipId = '';
+        let rapidFireUntil = 0;
+        const BULLET_STREAM_MS = 1800;
+        const EMITTER_OFFSET = 30;
+
+        const nameEl = document.getElementById('tip-name');
+        const amountEl = document.getElementById('tip-amount');
+        const tipBarEl = document.getElementById('tip-bar');
+        const nameTabEl = document.querySelector('.name-tab');
+        const sparksCanvas = document.getElementById('sparks-canvas');
+        const sparksCtx = sparksCanvas.getContext('2d');
+        let sparksW = 0;
+        let sparksH = 0;
+        let casings = [];
+        let lastFallbackSignature = '';
+
+        function resizeSparksCanvas() {
+            const rect = sparksCanvas.getBoundingClientRect();
+            sparksW = Math.max(1, Math.round(rect.width));
+            sparksH = Math.max(1, Math.round(rect.height));
+            sparksCanvas.width = sparksW;
+            sparksCanvas.height = sparksH;
+        }
+
+        class Casing {
+            constructor(isBurst = false) {
+                this.reset(isBurst);
+            }
+
+            reset(isBurst = false) {
+                const barRect = tipBarEl.getBoundingClientRect();
+                const cRect = sparksCanvas.getBoundingClientRect();
+                const baseCenterX = (barRect.left + barRect.width * 0.5) - cRect.left;
+                const emitterSide = Math.random() > 0.5 ? 1 : -1;
+                const spawnX = baseCenterX + (emitterSide * EMITTER_OFFSET) + (Math.random() * 10 - 5);
+                const spawnY = (barRect.top - cRect.top) + 14;
+
+                const dir = Math.random() > 0.5 ? 1 : -1;
+                this.x = spawnX;
+                this.y = spawnY;
+                this.vx = (Math.random() * (isBurst ? 9 : 6) + (isBurst ? 5 : 3)) * dir;
+                this.vy = -(Math.random() * (isBurst ? 14 : 10) + (isBurst ? 14 : 10));
+                this.gravity = 0.38;
+                this.life = isBurst ? 180 : 150;
+                this.angle = Math.random() * Math.PI;
+                this.vAngle = (Math.random() * 0.2 + 0.06) * dir;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.angle += this.vAngle;
+                this.life--;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                const gradient = ctx.createLinearGradient(-18, 0, 18, 0);
+                gradient.addColorStop(0, '#b8860b');
+                gradient.addColorStop(0.5, '#f0e68c');
+                gradient.addColorStop(1, '#daa520');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-18, -48, 36, 96);
+
+                ctx.fillStyle = '#8b4500';
+                ctx.fillRect(-22, 38, 44, 10);
+                ctx.restore();
+            }
+        }
+
+        function explodeCasings(count) {
+            for (let i = 0; i < count; i++) {
+                casings.push(new Casing(true));
+            }
+        }
+
+        function triggerTipBullets() {
+            rapidFireUntil = Date.now() + BULLET_STREAM_MS;
+            explodeCasings(4);
+        }
+
+        function animateCasings() {
+            sparksCtx.clearRect(0, 0, sparksW, sparksH);
+
+            const now = Date.now();
+            if (now < rapidFireUntil && Math.random() > 0.988) {
+                casings.push(new Casing(false));
+            }
+
+            for (let i = casings.length - 1; i >= 0; i--) {
+                const b = casings[i];
+                if (b.life <= -60 || b.y > sparksH + 60) {
+                    casings.splice(i, 1);
+                } else {
+                    b.update();
+                    b.draw(sparksCtx);
+                }
+            }
+
+            requestAnimationFrame(animateCasings);
+        }
+
+        function updateAmountRimAnchor() {
+            if (!tipBarEl) return;
+            const barRect = tipBarEl.getBoundingClientRect();
+            if (!barRect.width) return;
+
+            let splitX = null;
+            if (nameTabEl) {
+                const nameTabRect = nameTabEl.getBoundingClientRect();
+                splitX = nameTabRect.right - barRect.left;
+            } else if (amountEl) {
+                const amountRect = amountEl.getBoundingClientRect();
+                splitX = amountRect.left - barRect.left;
+            } else {
+                splitX = barRect.width - 320;
+            }
+
+            // Extend over concave join so the dark panel starts where the right container actually begins.
+            const start = Math.max(0, Math.min(Math.round(splitX - 34), Math.round(barRect.width - 120)));
+            document.documentElement.style.setProperty('--amount-rim-start', `${start}px`);
+        }
+
+        function fitAmountText() {
+            if (!amountEl) return;
+            const MAX_FONT = 68;
+            const MIN_FONT = 40;
+            const sidePadding = 58; // keep right-side breathing room
+            const barWidth = tipBarEl ? tipBarEl.clientWidth : 0;
+            const nameWidth = nameTabEl ? nameTabEl.getBoundingClientRect().width : 0;
+            const available = Math.max(120, barWidth - nameWidth - sidePadding);
+
+            let fontSize = MAX_FONT;
+            amountEl.style.fontSize = fontSize + 'px';
+            while (amountEl.scrollWidth > available && fontSize > MIN_FONT) {
+                fontSize -= 2;
+                amountEl.style.fontSize = fontSize + 'px';
+            }
+
+            const strokeWidth = Math.max(0.8, 1.2 * (fontSize / 68));
+            amountEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.5)';
+        }
+
+        function showTip(name, amount, id, opts = {}) {
+            if (!name) return;
+            const isFallback = !!opts.isFallback;
+
+            if (isFallback) {
+                const signature = `${name}|${amount}`;
+                if (signature === lastFallbackSignature) {
+                    updateAmountRimAnchor();
+                    return;
+                }
+                lastFallbackSignature = signature;
+                lastTipId = '';
+            } else {
+                lastFallbackSignature = '';
+                // Use unique ID to allow repeat tips from same person
+                if (id && id === lastTipId) return;
+                lastTipId = id;
+                triggerTipBullets();
+            }
+
+            // Trigger entry animation
+            const container = document.querySelector('.content-layer');
+            container.style.animation = 'none';
+            container.classList.remove('tip-entry');
+            void container.offsetWidth;
+            container.style.animation = '';
+            container.classList.add('tip-entry');
+
+            // Update name (for very long 3+ word names, keep first two words)
+            const cleanedName = String(name || '').replace(/\s+/g, ' ').trim();
+            const parts = cleanedName ? cleanedName.split(' ') : [];
+            const displayName = (parts.length >= 3 && cleanedName.length >= 20)
+                ? parts.slice(0, 2).join(' ')
+                : cleanedName;
+            nameEl.textContent = displayName;
+
+            // Auto-fit font size: start at max and shrink until it fits
+            const MAX_FONT = 80;
+            const MIN_FONT = 56;
+            const EXTREME_OVERFLOW_PX = 24;
+            const ELLIPSIS_EARLY_BUFFER_PX = 8;
+            const ELLIPSIS_MICRO_BUFFER_PX = 0;
+            const nameContainer = nameEl.parentElement;  // .tip-left
+            let fontSize = MAX_FONT;
+            nameEl.style.fontSize = fontSize + 'px';
+            nameEl.classList.remove('ellipsis-mode');
+
+            // Shrink until text fits the available width (accounting for logo)
+            while (nameEl.scrollWidth > nameContainer.clientWidth && fontSize > MIN_FONT) {
+                fontSize -= 2;
+                nameEl.style.fontSize = fontSize + 'px';
+            }
+
+            // Enable ellipsis only in extreme cases (still overflowing after min-size fit).
+            const overflowPx = nameEl.scrollWidth - nameContainer.clientWidth;
+            const microOverflowAtMin = overflowPx > 4 && fontSize <= MIN_FONT;
+            if (overflowPx > EXTREME_OVERFLOW_PX || microOverflowAtMin) {
+                // Trim slightly early so edge-cases don't collide with logo/curve.
+                const buffer = overflowPx > EXTREME_OVERFLOW_PX ? ELLIPSIS_EARLY_BUFFER_PX : ELLIPSIS_MICRO_BUFFER_PX;
+                nameEl.style.maxWidth = Math.max(40, nameContainer.clientWidth - buffer) + 'px';
+                nameEl.classList.add('ellipsis-mode');
+            } else {
+                nameEl.style.maxWidth = '100%';
+                nameEl.classList.remove('ellipsis-mode');
+            }
+
+            // Scale stroke proportionally
+            const strokeWidth = Math.max(0.8, 1.5 * (fontSize / 80));
+            nameEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.6)';
+
+            // Update amount
+            if (amount !== undefined && amount !== null) {
+                const raw = String(amount).trim();
+                if (isFallback) {
+                    // No-tip state: show fallback value exactly as configured (no currency prefix).
+                    amountEl.textContent = raw || '0';
+                } else {
+                    const looksLikeAccount = /^\d{9,}$/.test(raw);
+                    if (looksLikeAccount) {
+                        // If long numeric value arrives from integrations, keep it literal.
+                        amountEl.textContent = raw;
+                    } else {
+                        const normalized = raw.replace(/[^0-9.\-]/g, '');
+                        const parsed = parseFloat(normalized);
+                        amountEl.textContent = '$' + (isNaN(parsed) ? '0.00' : parsed.toFixed(2));
+                    }
+                }
+            }
+
+            fitAmountText();
+            updateAmountRimAnchor();
+        }
+
+        /* Hook for data file: window.updateTips("username", "amount", "uniqueId") */
+        window.updateTips = function (name, amount, id) {
+            const fallbackName = (window.TIP_FALLBACK_NAME && String(window.TIP_FALLBACK_NAME).trim()) || 'SadaPay';
+            const fallbackValue = (window.TIP_FALLBACK_VALUE && String(window.TIP_FALLBACK_VALUE).trim()) || '0';
+            const rawName = name ? String(name).trim() : '';
+            const rawAmount = amount !== undefined && amount !== null ? String(amount).trim() : '';
+            const isReset = id === 'reset' || rawName === '' || rawName.toLowerCase() === 'no tips';
+            const normalizedAmount = rawAmount.replace(/[^0-9.\-]/g, '');
+            const parsedAmount = parseFloat(normalizedAmount);
+            const isZeroishAmount = rawAmount === '' || Number.isNaN(parsedAmount) ? (rawAmount === '' || rawAmount === '$0') : parsedAmount === 0;
+
+            const resolvedName = isReset ? fallbackName : rawName;
+            const resolvedAmount = isReset && isZeroishAmount
+                ? fallbackValue
+                : (rawAmount || '0');
+            showTip(resolvedName, resolvedAmount, id || (resolvedName + resolvedAmount), { isFallback: isReset });
+        };
+
+        // Poll data_tips.js
+        function injectScript(filename, id) {
+            const old = document.getElementById(id);
+            if (old) old.remove();
+            const s = document.createElement('script');
+            s.src = filename + '?t=' + Date.now();
+            s.id = id;
+            document.body.appendChild(s);
+        }
+
+        function pollAll() {
+            injectScript('../Data/data_tips.js', 'script-tips');
+        }
+
+        setInterval(pollAll, POLL_INTERVAL);
+        pollAll();
+        window.addEventListener('resize', updateAmountRimAnchor);
+        window.addEventListener('resize', resizeSparksCanvas);
+        resizeSparksCanvas();
+        requestAnimationFrame(animateCasings);
+        requestAnimationFrame(updateAmountRimAnchor);
+    </script>
+
+    <!-- Color Settings Loader -->
+    <script>
+        (function () {
+            // â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+            // â•‘              EMBEDDED SMOOTH HUE ENGINE                         â•‘
+            // â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+            // Define Base Colors locally to avoid dependency issues
+            const BASE_COLORS = {
+                '--gradient-start': 'rgba(0, 177, 137, 0.95)',
+                '--gradient-end': 'rgba(83, 252, 24, 0.95)',
+                '--accent-line': 'rgba(10, 255, 10, 0.3)'
+            };
+
+            const State = {
+                currentHue: 0,
+                targetHue: 0,
+                animationFrame: null
+            };
+
+            // Easing function for smooth animation
+            function lerp(start, end, factor) {
+                return start + (end - start) * factor;
+            }
+
+            function animate() {
+                const diff = State.targetHue - State.currentHue;
+
+                // If diff is large (e.g. crossing 0/360 boundary), handle it?
+                // For now, simple lerp is sufficient for slider usage.
+
+                if (Math.abs(diff) > 0.05) {
+                    State.currentHue = lerp(State.currentHue, State.targetHue, 0.08); // 8% smoothing
+                    updateColors();
+                    State.animationFrame = requestAnimationFrame(animate);
+                } else if (Math.abs(diff) > 0) {
+                    State.currentHue = State.targetHue;
+                    updateColors();
+                    State.animationFrame = null;
+                } else {
+                    State.animationFrame = null; // Stop loop if settled
+                }
+            }
+
+            function updateColors() {
+                if (!window.adjustHue) return;
+                const style = document.documentElement.style;
+
+                // 1. Core Theme Colors
+                const themeHue = State.currentHue;
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
+                for (const key in BASE_COLORS) {
+                    const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
+                    const oldSat = window.GLOBAL_COLOR_SATURATION;
+                    window.GLOBAL_COLOR_BRIGHTNESS = themeShade;
+                    window.GLOBAL_COLOR_SATURATION = themeSat;
+                    style.setProperty(key, window.adjustHue(BASE_COLORS[key], themeHue));
+                    window.GLOBAL_COLOR_BRIGHTNESS = oldShade;
+                    window.GLOBAL_COLOR_SATURATION = oldSat;
+                }
+            }
+
+            function loadSettings() {
+                // Remove old script to prevent accumulation
+                const old = document.getElementById('settings-script');
+                if (old) old.remove();
+
+                const s = document.createElement('script');
+                s.src = '../Settings/settings.js?t=' + Date.now();
+                s.id = 'settings-script';
+                s.onload = function () {
+                    // When settings load, update the target
+                    const newTarget = window.GLOBAL_HUE_OFFSET || 0;
+                    if (newTarget !== State.targetHue) {
+                        State.targetHue = newTarget;
+                        // Start animation loop if not running
+                        if (!State.animationFrame) {
+                            animate();
+                        }
+                    }
+
+                    applyFilters();
+                    updateColors();
+                };
+                document.head.appendChild(s);
+            }
+
+            function applyFilters() {
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+                const glossMapped = gloss >= 1
+                    ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+                    : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+
+                document.documentElement.style.filter = `brightness(${bright})`;
+                document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
+            }
+
+            // Start Polling
+            loadSettings();
+            setInterval(loadSettings, 300); // Check every second for updates
+        })();
+    </script>
+</body>
+
+</html>
+

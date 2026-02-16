@@ -405,7 +405,7 @@
 
         .numbers {
             font-family: 'Anton', sans-serif;
-            font-size: 38px;
+            font-size: 44px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -443,15 +443,23 @@
         .target-val {
             /* Metallic gradient applied directly to spans for animation stability */
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 20%,
-                    #e0e0e0 40%, #a0a0a0 55%,
-                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+                    #ffffff 0%,
+                    #ffffff 18%,
+                    #f7f7f7 36%,
+                    #e8e8e8 50%,
+                    #c8c8c8 64%,
+                    #efefef 78%,
+                    #ffffff 90%,
+                    #f2f2f2 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
-            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+            -webkit-text-stroke: 1.75px rgba(255, 255, 255, 0.62);
+            filter:
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
+                drop-shadow(0 0 14px rgba(255, 255, 255, 0.34))
+                drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
             display: inline-block;
             will-change: transform, filter;
         }
@@ -470,8 +478,8 @@
         }
 
         .target-val {
-            opacity: 0.8;
-            font-size: 30px;
+            opacity: 1;
+            font-size: inherit;
         }
 
         /* High Intensity Visual Pop — Spam Friendly */
@@ -489,9 +497,12 @@
             }
 
             100% {
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+                filter:
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
+                    drop-shadow(0 0 14px rgba(255, 255, 255, 0.34))
+                    drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
                 transform: scale(1);
-                -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
+                -webkit-text-stroke: 1.75px rgba(255, 255, 255, 0.62);
             }
         }
 
@@ -625,6 +636,18 @@
         let TARGET_GOAL = 50;
         const POLL_INTERVAL = 300; // Faster polling for better "gift" responsiveness
 
+        function getGoalDigitWidth() {
+            const safeGoal = Math.max(1, parseInt(TARGET_GOAL, 10) || 1);
+            return String(safeGoal).length;
+        }
+
+        function formatCurrentByGoal(value) {
+            const n = Math.max(0, parseInt(value, 10) || 0);
+            const width = getGoalDigitWidth();
+            if (width <= 1) return String(n);
+            return String(n).padStart(width, '0');
+        }
+
         function updateProgressBar(current) {
             const fill = document.getElementById('progress-fill');
             const wrapper = document.getElementById('content-wrapper');
@@ -669,7 +692,7 @@
 
             if (isNewCount || isNewEvent) {
                 const el = document.getElementById('current-val');
-                el.textContent = current.toLocaleString('en-US', { minimumIntegerDigits: 2 });
+                el.textContent = formatCurrentByGoal(current);
 
                 // Trigger pop for any update after initial load
                 if (lastCount !== -1) {
@@ -682,7 +705,8 @@
             }
         };
 
-        document.getElementById('target-val').textContent = TARGET_GOAL;
+        document.getElementById('target-val').textContent = TARGET_GOAL.toLocaleString('en-US');
+        document.getElementById('current-val').textContent = formatCurrentByGoal(0);
 
         function injectScript(filename, id) {
             const old = document.getElementById(id);
@@ -818,8 +842,9 @@
                     // Update target goal from settings
                     if (window.SUB_GOAL_CONFIG) {
                         TARGET_GOAL = window.SUB_GOAL_CONFIG;
-                        document.getElementById('target-val').textContent = TARGET_GOAL;
-                        updateProgressBar(lastCount);
+                        document.getElementById('target-val').textContent = TARGET_GOAL.toLocaleString('en-US');
+                        document.getElementById('current-val').textContent = formatCurrentByGoal(Math.max(0, lastCount));
+                        updateProgressBar(Math.max(0, lastCount));
                     }
 
                     const newTarget = window.GLOBAL_HUE_OFFSET || 0;

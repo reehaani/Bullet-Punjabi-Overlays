@@ -4,7 +4,7 @@ import re
 import os
 import time
 import tempfile
-from PIL import Image
+from PIL import Image, ImageFilter, ImageOps
 
 # CONFIG
 LOGO_REL_PATH = os.path.join("Logo", "Logo.png")
@@ -17,6 +17,17 @@ def get_settings_path():
     return os.path.join(base_dir, "Settings", "settings.js")
 
 SETTINGS_PATH = get_settings_path()
+
+
+def get_data_followers_path():
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, "Data", "data_followers.js")
+
+
+DATA_FOLLOWERS_PATH = get_data_followers_path()
 
 
 def resolve_logo_path():
@@ -44,9 +55,9 @@ def resolve_logo_path():
     return None
 
 # THEME COLORS
-COLOR_BG = "#000000"       # Pitch Black
-COLOR_SURFACE = "#0b0b0b"  # Premium darker cards
-COLOR_SURFACE_BORDER = "#2a2a2a"
+COLOR_BG = "#05070a"
+COLOR_SURFACE = "#11161b"
+COLOR_SURFACE_BORDER = "#3a444f"
 COLOR_ACCENT = "#FFFFFF"   # White text
 COLOR_SLIDER = "#0aff0a"   # Neon Green (Signature)
 COLOR_TEXT = "#F5F5F5"
@@ -77,6 +88,9 @@ DEFAULTS = {
     "SHOW_BORDER_SUB_DOCK": True,
     "SHOW_BORDER_KICK_RECT": True,
 }
+
+# Scroll tuning
+SCROLL_SPEED_MULTIPLIER = 4  # previous effective custom step was 2
 
 class HueControllerApp(ctk.CTk):
     def __init__(self):
@@ -120,6 +134,7 @@ class HueControllerApp(ctk.CTk):
         self.sub_goal_config = DEFAULTS["SUB_GOAL_CONFIG"]
         self.tip_fallback_name = DEFAULTS["TIP_FALLBACK_NAME"]
         self.tip_fallback_value = DEFAULTS["TIP_FALLBACK_VALUE"]
+        self.test_subs_current = 0
         
         self.last_write_time = 0
         self.write_delay = 0.12
@@ -127,25 +142,26 @@ class HueControllerApp(ctk.CTk):
         self.is_loading = True
         self.last_saved_payload = None
         self.resize_job = None
-        
+        self._last_bg_size = (0, 0)
+        self._scroll_canvas = None
+        self._wheel_bound = False
         # Layout Grid
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # === 0. Gradient Background ===
-        self.canvas_bg = ctk.CTkCanvas(self, highlightthickness=0)
+        # Background gradient + blurred logo (stable alternative to true transparency)
+        self.canvas_bg = ctk.CTkCanvas(self, highlightthickness=0, bd=0, bg=COLOR_BG)
         self.canvas_bg.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.bind("<Configure>", self.on_window_resize)
-
-        # === 0.5 Large Background Logo ===
         self.lbl_bg_logo = ctk.CTkLabel(self, text="", fg_color="transparent")
         self.lbl_bg_logo.place(relx=0.5, rely=0.5, anchor="center")
+        self.bind("<Configure>", self.on_window_resize)
 
         # Main Scrollable Frame - Grid for Two Columns
         self.scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
         self.scroll_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.scroll_frame.grid_columnconfigure(0, weight=1) 
         self.scroll_frame.grid_columnconfigure(1, weight=1) 
+        self.setup_scroll_tuning()
 
         # === 2. Logo Area ===
         self.logo_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
@@ -266,7 +282,31 @@ class HueControllerApp(ctk.CTk):
         ctk.CTkLabel(self.goal_frame, text="SUB GOAL TARGET", font=("Inter", 10), text_color=COLOR_TEXT).pack()
         self.slider_sub_goal = ctk.CTkSlider(self.goal_frame, from_=5, to=500, number_of_steps=99, width=380, command=self.on_sub_goal_change)
         self.slider_sub_goal.set(50)
-        self.slider_sub_goal.pack(pady=(5, 14))
+        self.slider_sub_goal.pack(pady=(5, 10))
+
+        # Test Sub Counter (+/-) for quick overlay validation
+        ctk.CTkLabel(self.goal_frame, text="TEST CURRENT SUBS", font=("Inter", 10), text_color=COLOR_TEXT).pack()
+        self.test_subs_row = ctk.CTkFrame(self.goal_frame, fg_color="transparent")
+        self.test_subs_row.pack(pady=(5, 12))
+        self.btn_subs_minus = ctk.CTkButton(
+            self.test_subs_row, text="-", width=36, height=30,
+            fg_color="#141414", border_width=1, border_color="#2f2f2f",
+            hover_color="#1e1e1e", text_color="white", font=("Inter", 18, "bold"),
+            command=lambda: self.adjust_test_subs(-1)
+        )
+        self.btn_subs_minus.pack(side="left")
+        self.lbl_test_subs = ctk.CTkLabel(
+            self.test_subs_row, text="0", width=58,
+            font=("Inter", 17, "bold"), text_color="white"
+        )
+        self.lbl_test_subs.pack(side="left", padx=8)
+        self.btn_subs_plus = ctk.CTkButton(
+            self.test_subs_row, text="+", width=36, height=30,
+            fg_color="#141414", border_width=1, border_color="#2f2f2f",
+            hover_color="#1e1e1e", text_color="white", font=("Inter", 18, "bold"),
+            command=lambda: self.adjust_test_subs(1)
+        )
+        self.btn_subs_plus.pack(side="left")
 
         # Tip Fallback (used for no-tip/reset state)
         ctk.CTkLabel(self.goal_frame, text="TIP FALLBACK NAME", font=("Inter", 10), text_color=COLOR_TEXT).pack()
@@ -364,11 +404,14 @@ class HueControllerApp(ctk.CTk):
         # Status Bar
         self.lbl_status = ctk.CTkLabel(
             self, text="READY", 
-            font=("Inter", 10), text_color=COLOR_TEXT
+            font=("Inter", 10), text_color=COLOR_TEXT, fg_color="transparent"
         )
         self.lbl_status.grid(row=1, column=0, pady=5, sticky="s")
         
         self.load_initial_hue()
+        self.load_test_subs_from_data()
+        self.refresh_test_subs_label()
+        self.draw_gradient()
         self.is_loading = False
 
     def style_card(self, frame):
@@ -388,18 +431,16 @@ class HueControllerApp(ctk.CTk):
             # 1. Set internal window icon (Title bar, Alt-Tab)
             pil_img = Image.open(logo_path).convert("RGBA")
             self.logo_img_ctk = ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=(160, 160))
-            
-            # Background Logo (large + transparent)
-            faded = pil_img.copy()
-            alpha = faded.split()[3].point(lambda p: int(p * 0.12))
+
+            # 1.5 Blurred background logo layer
+            faded = ImageOps.grayscale(pil_img).convert("RGBA")
+            alpha = faded.split()[3].point(lambda p: int(p * 0.15))
             faded.putalpha(alpha)
-            bg_logo_size = (1100, 1100)
-            self.bg_logo_ctk = ctk.CTkImage(light_image=faded, dark_image=faded, size=bg_logo_size)
+            faded = faded.filter(ImageFilter.GaussianBlur(22))
+            self.bg_logo_ctk = ctk.CTkImage(light_image=faded, dark_image=faded, size=(680, 680))
             self.lbl_bg_logo.configure(image=self.bg_logo_ctk)
-            self.lbl_bg_logo.lift(self.canvas_bg)
-            
-            # To simulate 3D/Opacity, we can blend the image with background if PIL is used
-            # For now, let's keep it simple with self.bg_logo_ctk and place it under
+            self.lbl_bg_logo.place(relx=0.50, rely=0.46, anchor="center")
+            self.lbl_bg_logo.lower(self.scroll_frame)
             
             # 2. Generate temp .ico for Taskbar
             temp_ico = os.path.join(os.getenv('TEMP'), "hue_ctrl_temp.ico")
@@ -417,26 +458,77 @@ class HueControllerApp(ctk.CTk):
             pass
 
     def on_window_resize(self, event):
+        new_size = (self.winfo_width(), self.winfo_height())
+        if new_size == self._last_bg_size:
+            return
+        self._last_bg_size = new_size
         if self.resize_job is not None:
             self.after_cancel(self.resize_job)
-        self.resize_job = self.after(33, self.draw_gradient)
-        # Update background logo position if needed (already anchored center)
+        self.resize_job = self.after(70, self.draw_gradient)
 
     def draw_gradient(self, event=None):
         self.resize_job = None
-        self.canvas_bg.delete("gradient")
-        w = self.winfo_width()
-        h = self.winfo_height()
-        
-        # Black to Dark Grey
-        limit = h
-        for i in range(limit):
-            # Calculate color from black (0,0,0) to dark grey (40,40,40)
-            rel = i / limit
-            c = int(40 * rel)
-            color = f"#{c:02x}{c:02x}{c:02x}"
-            # Draw from bottom up to invert (darker at bottom as requested)
-            self.canvas_bg.create_line(0, h-i, w, h-i, fill=color, tags="gradient")
+        self.canvas_bg.delete("bg")
+        w = max(1, self.winfo_width())
+        h = max(1, self.winfo_height())
+
+        # Vertical base gradient (chunked for smoother scrolling performance)
+        step = max(2, h // 180)
+        for i in range(0, h, step):
+            rel = i / max(1, h)
+            r = int(5 + 10 * rel)
+            g = int(7 + 14 * rel)
+            b = int(10 + 20 * rel)
+            color = f"#{r:02x}{g:02x}{b:02x}"
+            self.canvas_bg.create_rectangle(0, i, w, min(h, i + step), fill=color, outline="", tags="bg")
+
+        # Soft diagonal highlight/ray from top-left toward bottom-right
+        self.canvas_bg.create_polygon(
+            -int(w * 0.08), -int(h * 0.08),
+            int(w * 0.42), 0,
+            w, int(h * 0.66),
+            int(w * 0.50), h,
+            fill="#1a2a40",
+            outline="",
+            tags="bg"
+        )
+        self.canvas_bg.create_oval(
+            -int(w * 0.20), -int(h * 0.22),
+            int(w * 0.38), int(h * 0.32),
+            fill="#223954",
+            outline="",
+            tags="bg"
+        )
+
+    def setup_scroll_tuning(self):
+        if self._wheel_bound:
+            return
+        self._scroll_canvas = getattr(self.scroll_frame, "_parent_canvas", None)
+        if self._scroll_canvas is None:
+            return
+
+        def _on_mousewheel(event):
+            if not self.winfo_exists():
+                return "break"
+            # Windows/macOS delta path
+            steps = int(event.delta / 120) if getattr(event, "delta", 0) else 0
+            if steps == 0:
+                return "break"
+            self._scroll_canvas.yview_scroll(-steps * SCROLL_SPEED_MULTIPLIER, "units")
+            return "break"
+
+        def _on_linux_up(_event):
+            self._scroll_canvas.yview_scroll(-SCROLL_SPEED_MULTIPLIER, "units")
+            return "break"
+
+        def _on_linux_down(_event):
+            self._scroll_canvas.yview_scroll(SCROLL_SPEED_MULTIPLIER, "units")
+            return "break"
+
+        self._scroll_canvas.bind_all("<MouseWheel>", _on_mousewheel, add="+")
+        self._scroll_canvas.bind_all("<Button-4>", _on_linux_up, add="+")
+        self._scroll_canvas.bind_all("<Button-5>", _on_linux_down, add="+")
+        self._wheel_bound = True
 
     def center_window(self):
         self.update_idletasks()
@@ -625,6 +717,42 @@ class HueControllerApp(ctk.CTk):
         self.sub_goal_config = int(float(value))
         self.lbl_sub_goal.configure(text=f"{self.sub_goal_config}")
         self.debounce_write()
+
+    def refresh_test_subs_label(self):
+        self.lbl_test_subs.configure(text=str(max(0, int(self.test_subs_current))))
+
+    def load_test_subs_from_data(self):
+        try:
+            if not os.path.exists(DATA_FOLLOWERS_PATH):
+                self.test_subs_current = 0
+                return
+            with open(DATA_FOLLOWERS_PATH, "r", encoding="utf-8") as f:
+                content = f.read()
+            m = re.search(r'updateFollowers\(\s*"(-?\d+)"', content)
+            self.test_subs_current = max(0, int(m.group(1))) if m else 0
+        except Exception:
+            self.test_subs_current = 0
+
+    def write_test_subs_data(self):
+        try:
+            data_dir = os.path.dirname(DATA_FOLLOWERS_PATH)
+            os.makedirs(data_dir, exist_ok=True)
+            event_id = f"controller_{time.time_ns()}"
+            content = (
+                f'window.updateFollowers("{self.test_subs_current}", '
+                f'"Latest: subscriber_name", "{event_id}");'
+            )
+            with open(DATA_FOLLOWERS_PATH, "w", encoding="utf-8") as f:
+                f.write(content)
+            self.lbl_status.configure(text=f"TEST SUBS -> {self.test_subs_current}")
+        except Exception as e:
+            print(f"Write test subs error: {e}")
+            self.lbl_status.configure(text="ERROR WRITING DATA")
+
+    def adjust_test_subs(self, delta):
+        self.test_subs_current = max(0, int(self.test_subs_current) + int(delta))
+        self.refresh_test_subs_label()
+        self.write_test_subs_data()
 
     def on_tip_fallback_change(self, event=None):
         self.tip_fallback_name = self.entry_tip_fallback_name.get().strip() or DEFAULTS["TIP_FALLBACK_NAME"]

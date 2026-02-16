@@ -82,9 +82,9 @@
 
         .goal-container {
             position: relative;
-            width: 500px;
-            height: 70px;
-            border-radius: 35px;
+            width: 560px;
+            height: 60px;
+            border-radius: 30px;
             background: var(--track-bg);
             box-shadow:
                 0 0 28px rgba(0, 0, 0, 0.6);
@@ -94,7 +94,7 @@
         .star-border-wrapper {
             position: absolute;
             inset: 0;
-            border-radius: 35px;
+            border-radius: 30px;
             overflow: hidden;
             z-index: 1;
         }
@@ -147,7 +147,7 @@
         .rim-light-layer {
             position: absolute;
             inset: 0;
-            border-radius: 35px;
+            border-radius: 30px;
             z-index: 4;
             pointer-events: none;
             opacity: var(--rim-light-intensity, 1);
@@ -184,7 +184,7 @@
         .inner-bar-track {
             position: absolute;
             inset: 4px;
-            border-radius: 31px;
+            border-radius: 26px;
             background: rgb(20, 20, 20);
             z-index: 2;
             overflow: hidden;
@@ -366,7 +366,7 @@
 
         .numbers {
             font-family: 'Anton', sans-serif;
-            font-size: 34px;
+            font-size: 40px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -376,20 +376,28 @@
         .current-val,
         .target-val {
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 20%,
-                    #e0e0e0 40%, #a0a0a0 55%,
-                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+                    #ffffff 0%,
+                    #ffffff 18%,
+                    #f7f7f7 36%,
+                    #e8e8e8 50%,
+                    #c8c8c8 64%,
+                    #efefef 78%,
+                    #ffffff 90%,
+                    #f2f2f2 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.45);
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+            -webkit-text-stroke: 1.45px rgba(255, 255, 255, 0.62);
+            filter:
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
+                drop-shadow(0 0 12px rgba(255, 255, 255, 0.28))
+                drop-shadow(0 0 2px rgba(255, 255, 255, 0.46));
         }
 
         .target-val {
-            opacity: 0.84;
-            font-size: 28px;
+            opacity: 1;
+            font-size: inherit;
         }
 
         .divider {
@@ -431,7 +439,10 @@
             }
 
             100% {
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+                filter:
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
+                    drop-shadow(0 0 12px rgba(255, 255, 255, 0.28))
+                    drop-shadow(0 0 2px rgba(255, 255, 255, 0.46));
                 transform: scale(1);
             }
         }
@@ -482,8 +493,16 @@
         let lastCount = -1;
         let lastEventId = '';
 
+        function getGoalDigitWidth() {
+            const safeGoal = Math.max(1, parseInt(TARGET_GOAL, 10) || 1);
+            return String(safeGoal).length;
+        }
+
         function formatCount(value) {
-            return Number(value || 0).toLocaleString('en-US', { minimumIntegerDigits: 2 });
+            const n = Math.max(0, parseInt(value, 10) || 0);
+            const width = getGoalDigitWidth();
+            if (width <= 1) return String(n);
+            return String(n).padStart(width, '0');
         }
 
         function updateProgressBar(current) {
@@ -536,6 +555,7 @@
         function setTarget(value) {
             TARGET_GOAL = Math.max(1, parseInt(value, 10) || 50);
             document.getElementById('target-val').textContent = TARGET_GOAL.toLocaleString('en-US');
+            document.getElementById('current-val').textContent = formatCount(Math.max(0, lastCount));
             updateProgressBar(Math.max(0, lastCount));
         }
 
@@ -639,9 +659,7 @@
                     if (window.SUB_GOAL_CONFIG) {
                         const val = parseInt(window.SUB_GOAL_CONFIG, 10);
                         if (!Number.isNaN(val)) {
-                            TARGET_GOAL = Math.max(1, val);
-                            document.getElementById('target-val').textContent = TARGET_GOAL.toLocaleString('en-US');
-                            updateProgressBar(Math.max(0, lastCount));
+                            setTarget(val);
                         }
                     }
 
