@@ -45,6 +45,7 @@
             --fill-end: rgba(50, 220, 100, 0.95);
             --bar-fill-bg: linear-gradient(to right, var(--fill-start), var(--fill-mid) 40%, var(--fill-mid2) 75%, var(--fill-end));
             --fill-glow-color: rgba(56, 239, 125, 0.4);
+            --label-hue-glow: rgba(56, 239, 125, 0.18);
             --star-color: #0aff0a;
             --star-color-soft: rgba(10, 255, 10, 0.1);
             --star-color-secondary: rgba(31, 186, 255, 1);
@@ -323,19 +324,19 @@
         }
 
         .label {
-            font-family: 'Anton', sans-serif;
-            font-size: 31px;
+            font-size: 36px;
+            font-weight: 900;
             letter-spacing: 2px;
             text-transform: uppercase;
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 20%,
-                    #e0e0e0 40%, #a0a0a0 55%,
-                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
+                    #ffffff 0%, #ffffff 30%,
+                    #fbfbfb 46%, #dddddd 58%,
+                    #f6f6f6 74%, #ffffff 88%, #fafafa 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.45);
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.56);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--label-hue-glow));
         }
 
         .completed-tag {
@@ -366,11 +367,12 @@
 
         .numbers {
             font-family: 'Anton', sans-serif;
-            font-size: 40px;
+            font-size: 44px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             white-space: nowrap;
+            margin-top: -5px;
         }
 
         .current-val,
@@ -388,11 +390,17 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
-            -webkit-text-stroke: 1.45px rgba(255, 255, 255, 0.62);
+            -webkit-text-stroke: 1.75px rgba(255, 255, 255, 0.62);
             filter:
                 drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
-                drop-shadow(0 0 12px rgba(255, 255, 255, 0.28))
-                drop-shadow(0 0 2px rgba(255, 255, 255, 0.46));
+                drop-shadow(0 0 9px rgba(255, 255, 255, 0.22))
+                drop-shadow(0 0 1px rgba(255, 255, 255, 0.32));
+            display: inline-block;
+            will-change: transform, filter;
+        }
+
+        .current-val {
+            text-shadow: 0 0 7px rgba(255, 255, 255, 0.2);
         }
 
         .target-val {
@@ -401,12 +409,27 @@
         }
 
         .divider {
-            color: #dcdcdc;
+            font-size: 24px;
+            opacity: 0.6;
+            color: #fff;
+            -webkit-background-clip: initial;
+            background-clip: initial;
             -webkit-text-stroke: 0;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
         }
 
-        .content-wrapper.completed .label,
+        .content-wrapper.completed .label {
+            background: linear-gradient(180deg,
+                    #ffed8a 0%,
+                    #fcd04d 25%,
+                    #d4af37 50%,
+                    #8a6d3b 75%,
+                    #d4af37 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.4);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
+        }
+
         .content-wrapper.completed .current-val,
         .content-wrapper.completed .target-val {
             background: linear-gradient(180deg,
@@ -419,8 +442,8 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 230, 0, 0.35);
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(212, 175, 55, 0.75));
+            -webkit-text-stroke: 1px rgba(255, 230, 0, 0.4);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 15px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
         }
 
         .content-wrapper.completed {
@@ -441,8 +464,8 @@
             100% {
                 filter:
                     drop-shadow(0 2px 4px rgba(0, 0, 0, 1))
-                    drop-shadow(0 0 12px rgba(255, 255, 255, 0.28))
-                    drop-shadow(0 0 2px rgba(255, 255, 255, 0.46));
+                    drop-shadow(0 0 9px rgba(255, 255, 255, 0.22))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.32));
                 transform: scale(1);
             }
         }
@@ -585,7 +608,8 @@
                 '--fill-mid': 'rgba(10, 100, 80, 0.95)',
                 '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
                 '--fill-end': 'rgba(50, 220, 100, 0.95)',
-                '--fill-glow-color': 'rgba(56, 239, 125, 0.4)'
+                '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
+                '--label-hue-glow': 'rgba(56, 239, 125, 0.18)'
             };
 
             const State = { currentHue: 0, targetHue: 0, animationFrame: null };
@@ -700,10 +724,8 @@
                 const numbers = document.getElementById('number-group');
                 if (glow) {
                     if (label) label.classList.add('text-glow');
-                    if (numbers) numbers.classList.add('text-glow');
                 } else {
                     if (label) label.classList.remove('text-glow');
-                    if (numbers) numbers.classList.remove('text-glow');
                 }
             }
 

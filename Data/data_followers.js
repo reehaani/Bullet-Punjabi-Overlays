@@ -1,1 +1,1 @@
-window.updateFollowers("9", "Latest: subscriber_name", "controller_1771219839093559300");
+window.updateFollowers("0", "Latest: -");
