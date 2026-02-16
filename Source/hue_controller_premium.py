@@ -45,7 +45,8 @@ def resolve_logo_path():
 
 # THEME COLORS
 COLOR_BG = "#000000"       # Pitch Black
-COLOR_SURFACE = "#111111"  # Slightly lighter black for cards
+COLOR_SURFACE = "#0b0b0b"  # Premium darker cards
+COLOR_SURFACE_BORDER = "#2a2a2a"
 COLOR_ACCENT = "#FFFFFF"   # White text
 COLOR_SLIDER = "#0aff0a"   # Neon Green (Signature)
 COLOR_TEXT = "#F5F5F5"
@@ -84,9 +85,11 @@ class HueControllerApp(ctk.CTk):
         # Window Setup
         self.title("Color Controller")
         self.geometry("950x900") # Wider for two columns
+        self.minsize(950, 900)
+        self.resizable(True, True)
         self.configure(fg_color=COLOR_BG)
-        # Frameless Mode: This guarantees no OS title bar
-        self.overrideredirect(True) 
+        # Keep native window chrome so maximize + drag-resize work normally.
+        self.overrideredirect(False)
 
         # 1. High DPI Awareness
         try:
@@ -95,8 +98,7 @@ class HueControllerApp(ctk.CTk):
         except:
             pass
             
-        # 2. Force Taskbar Icon (The specific hack for overrideredirect)
-        self.after(10, lambda: self.set_app_window())
+        # With native window chrome, the taskbar icon hack is not required.
 
         # Center Window
         self.center_window()
@@ -128,7 +130,7 @@ class HueControllerApp(ctk.CTk):
         
         # Layout Grid
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1) 
+        self.grid_rowconfigure(0, weight=1)
 
         # === 0. Gradient Background ===
         self.canvas_bg = ctk.CTkCanvas(self, highlightthickness=0)
@@ -139,41 +141,9 @@ class HueControllerApp(ctk.CTk):
         self.lbl_bg_logo = ctk.CTkLabel(self, text="", fg_color="transparent")
         self.lbl_bg_logo.place(relx=0.5, rely=0.5, anchor="center")
 
-        # === 1. Custom Title Bar ===
-        self.title_bar = ctk.CTkFrame(self, height=40, fg_color="transparent", corner_radius=0)
-        self.title_bar.grid(row=0, column=0, sticky="ew")
-        self.title_bar.bind("<Button-1>", self.start_move)
-        self.title_bar.bind("<B1-Motion>", self.do_move)
-
-        # Close Button
-        self.btn_close = ctk.CTkButton(
-            self.title_bar, text="X", width=40, height=40,
-            fg_color="transparent", hover_color="#330000",
-            text_color="white", font=("Arial", 20),
-            command=self.close_app
-        )
-        self.btn_close.pack(side="right")
-        
-        # Minimize Button
-        self.btn_min = ctk.CTkButton(
-            self.title_bar, text="-", width=40, height=40,
-            fg_color="transparent", hover_color="#222222",
-            text_color="white", font=("Arial", 20),
-            command=self.minimize_app
-        )
-        self.btn_min.pack(side="right")
-
-        # Title Label
-        self.lbl_title = ctk.CTkLabel(
-            self.title_bar, text="BULLET PUNJABI CONTROLLER", 
-            font=("Inter", 12, "bold"), text_color=COLOR_TEXT
-        )
-        self.lbl_title.pack(side="left", padx=15)
-        self.lbl_title.bind("<Button-1>", self.start_move)
-
         # Main Scrollable Frame - Grid for Two Columns
         self.scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
-        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        self.scroll_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.scroll_frame.grid_columnconfigure(0, weight=1) 
         self.scroll_frame.grid_columnconfigure(1, weight=1) 
 
@@ -196,6 +166,7 @@ class HueControllerApp(ctk.CTk):
         # === 3. Theme Controls Card (Left) ===
         self.theme_frame = ctk.CTkFrame(self.left_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.theme_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.theme_frame)
 
         ctk.CTkLabel(self.theme_frame, text="CORE THEME", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
 
@@ -229,6 +200,7 @@ class HueControllerApp(ctk.CTk):
         # === 4. Accent Controls Card (Left) ===
         self.accent_frame = ctk.CTkFrame(self.left_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.accent_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.accent_frame)
 
         ctk.CTkLabel(self.accent_frame, text="STAR BORDER & ACCENTS", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
 
@@ -276,6 +248,7 @@ class HueControllerApp(ctk.CTk):
         # === 6. Goal Settings Card (Left) ===
         self.goal_frame = ctk.CTkFrame(self.left_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.goal_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.goal_frame)
 
         ctk.CTkLabel(self.goal_frame, text="GOAL CONFIGURATION", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
 
@@ -313,6 +286,7 @@ class HueControllerApp(ctk.CTk):
         # GLOW CONTROLS CARD
         self.glow_frame = ctk.CTkFrame(self.right_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.glow_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.glow_frame)
         
         ctk.CTkLabel(self.glow_frame, text="GLOW EFFECTS", font=("Inter", 14, "bold"), text_color=COLOR_TEXT).pack(pady=(20, 15))
         
@@ -333,6 +307,7 @@ class HueControllerApp(ctk.CTk):
         # === BORDER OUTLINES CARD ===
         self.border_frame = ctk.CTkFrame(self.right_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.border_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.border_frame)
         
         ctk.CTkLabel(self.border_frame, text="BORDER OUTLINES", font=("Inter", 14, "bold"), text_color=COLOR_TEXT).pack(pady=(20, 15))
         
@@ -350,6 +325,7 @@ class HueControllerApp(ctk.CTk):
         # VISUAL EFFECTS CARD (Right)
         self.effect_frame = ctk.CTkFrame(self.right_col, fg_color=COLOR_SURFACE, corner_radius=20)
         self.effect_frame.pack(fill="x", padx=10, pady=10)
+        self.style_card(self.effect_frame)
 
         ctk.CTkLabel(self.effect_frame, text="EXTRA EFFECTS", font=("Inter", 12, "bold"), text_color=COLOR_TEXT).pack(pady=(15, 0))
         # Gloss
@@ -390,34 +366,18 @@ class HueControllerApp(ctk.CTk):
             self, text="READY", 
             font=("Inter", 10), text_color=COLOR_TEXT
         )
-        self.lbl_status.grid(row=2, column=0, pady=5, sticky="s")
+        self.lbl_status.grid(row=1, column=0, pady=5, sticky="s")
         
         self.load_initial_hue()
         self.is_loading = False
 
+    def style_card(self, frame):
+        frame.configure(
+            fg_color=COLOR_SURFACE,
+            border_width=1,
+            border_color=COLOR_SURFACE_BORDER
+        )
 
-    def set_app_window(self):
-        try:
-            import ctypes
-            GWL_EXSTYLE = -20
-            WS_EX_APPWINDOW = 0x00040000
-            WS_EX_TOOLWINDOW = 0x00000080
-            
-            hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            
-            # Remove ToolWindow (default for overrideredirect), Add AppWindow
-            style = style & ~WS_EX_TOOLWINDOW
-            style = style | WS_EX_APPWINDOW
-            
-            ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-            
-            # Force redraw/update of style
-            ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x27)
-            self.wm_withdraw()
-            self.after(10, lambda: self.wm_deiconify())
-        except:
-            pass
 
     def setup_icon(self):
         try:
@@ -485,27 +445,6 @@ class HueControllerApp(ctk.CTk):
         x = (self.winfo_screenwidth() // 2) - (width // 2)
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry(f'{width}x{height}+{x}+{y}')
-
-    def start_move(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def do_move(self, event):
-        deltax = event.x - self.x
-        deltay = event.y - self.y
-        x = self.winfo_x() + deltax
-        y = self.winfo_y() + deltay
-        self.geometry(f"+{x}+{y}")
-
-    def close_app(self):
-        self.destroy()
-
-    def minimize_app(self):
-        # Because we messed with styles, standard iconify might need help
-        self.update_idletasks()
-        self.overrideredirect(False)
-        self.iconify()
-        self.overrideredirect(True)
 
     def load_initial_hue(self):
         try:

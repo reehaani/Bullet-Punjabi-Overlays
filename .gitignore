@@ -33,3 +33,10 @@ env/
 # Build output
 dist/
 build/
+
+# Local runtime test install target
+BulletPunjabi-Runtime/
+
+# PyInstaller auto-generated root specs
+ColorControllerNew.spec
+ColorControllerNew_next.spec
