@@ -1,0 +1,48 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+public class CPHInline
+{
+    private static string JsEscape(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
+    }
+
+    public bool Execute()
+    {
+        // 1. Get Path Dynamically
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath)) {
+            CPH.LogWarn("!!! [TIPS] 'overlayPath' global var missing.");
+            return false;
+        }
+        
+        // 2. Define Dynamic Path (uses Data folder)
+        string fullPath = Path.Combine(folderPath, "Data", "data_tips.js");
+        // 3. Capture Variables from StreamElements/Streamer.bot
+        string user = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string amount = args.ContainsKey("amount") ? args["amount"].ToString() : "0";
+        // Also checks 'tipUsername' and 'tipAmount' if StreamElements sends those
+        if (args.ContainsKey("tipUsername")) user = args["tipUsername"].ToString();
+        if (args.ContainsKey("tipAmount")) amount = args["tipAmount"].ToString();
+        // Unique ID generation for animation triggers
+        string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
+        string timestamp = args.ContainsKey("actionQueuedAt") ? args["actionQueuedAt"].ToString() : DateTime.Now.Ticks.ToString();
+        string uniqueId = triggerId + "_" + timestamp;
+        try {
+            // Write to file dynamically without hardcoding path
+            string content = "window.updateTips(\"" + JsEscape(user) + "\", \"" + JsEscape(amount) + "\", \"" + JsEscape(uniqueId) + "\");";
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            File.WriteAllText(fullPath, content);
+            CPH.LogInfo($"[TIPS] Updated: {user} via {fullPath}");
+        } catch (Exception ex) {
+            CPH.LogWarn("Error writing data_tips.js: " + ex.Message);
+        }
+        return true;
+    }
+}

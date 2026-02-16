@@ -1,0 +1,53 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+public class CPHInline
+{
+    private static string JsEscape(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
+    }
+
+    private static int ParsePositiveInt(Dictionary<string, object> args, int fallback, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!args.ContainsKey(key) || args[key] == null) continue;
+            if (int.TryParse(args[key].ToString(), out int parsed) && parsed > 0) return parsed;
+        }
+        return fallback;
+    }
+
+    public bool Execute()
+    {
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath)) return false;
+        // PATH UPDATE ONLY: Added "Data" folder. Name remains "data_kicks.js".
+        string fullPath = Path.Combine(folderPath, "Data", "data_kicks.js");
+        string user = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
+        string timestamp = args.ContainsKey("actionQueuedAt") ? args["actionQueuedAt"].ToString() : DateTime.Now.Ticks.ToString();
+        string uniqueId = triggerId + "_" + timestamp;
+        int addAmount = ParsePositiveInt(args, 1, "kicks.amount", "amount", "qty");
+        
+        CPH.LogInfo("SUCCESS! Adding Kicks: " + addAmount);
+        int count = 0;
+        count = CPH.GetGlobalVar<int>("dailyKicksCount", true);
+        
+        count += addAmount;
+        CPH.SetGlobalVar("dailyKicksCount", count, true);
+        try {
+            string content = "window.updateKicks(\"" + count.ToString() + "\", \"Top: " + JsEscape(user) + "\", \"" + JsEscape(uniqueId) + "\");";
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            File.WriteAllText(fullPath, content);
+        } catch (Exception ex) {
+            CPH.LogWarn("Error writing data_kicks.js: " + ex.Message);
+        }
+        return true;
+    }
+}

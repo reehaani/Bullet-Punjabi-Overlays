@@ -41,7 +41,6 @@
         .main-canvas {
             width: min(1080px, 100vw);
             height: 100vh;
-            max-height: 1080px;
             position: relative;
             background: transparent;
             overflow: visible;
@@ -431,6 +430,7 @@
         let sparksW = 0;
         let sparksH = 0;
         let casings = [];
+        let lastFallbackSignature = '';
 
         function resizeSparksCanvas() {
             const rect = sparksCanvas.getBoundingClientRect();
@@ -544,13 +544,45 @@
             document.documentElement.style.setProperty('--amount-rim-start', `${start}px`);
         }
 
-        function showTip(name, amount, id) {
-            if (!name) return;
+        function fitAmountText() {
+            if (!amountEl) return;
+            const MAX_FONT = 68;
+            const MIN_FONT = 40;
+            const sidePadding = 58; // keep right-side breathing room
+            const barWidth = tipBarEl ? tipBarEl.clientWidth : 0;
+            const nameWidth = nameTabEl ? nameTabEl.getBoundingClientRect().width : 0;
+            const available = Math.max(120, barWidth - nameWidth - sidePadding);
 
-            // Use unique ID to allow repeat tips from same person
-            if (id && id === lastTipId) return;
-            lastTipId = id;
-            triggerTipBullets();
+            let fontSize = MAX_FONT;
+            amountEl.style.fontSize = fontSize + 'px';
+            while (amountEl.scrollWidth > available && fontSize > MIN_FONT) {
+                fontSize -= 2;
+                amountEl.style.fontSize = fontSize + 'px';
+            }
+
+            const strokeWidth = Math.max(0.8, 1.2 * (fontSize / 68));
+            amountEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.5)';
+        }
+
+        function showTip(name, amount, id, opts = {}) {
+            if (!name) return;
+            const isFallback = !!opts.isFallback;
+
+            if (isFallback) {
+                const signature = `${name}|${amount}`;
+                if (signature === lastFallbackSignature) {
+                    updateAmountRimAnchor();
+                    return;
+                }
+                lastFallbackSignature = signature;
+                lastTipId = '';
+            } else {
+                lastFallbackSignature = '';
+                // Use unique ID to allow repeat tips from same person
+                if (id && id === lastTipId) return;
+                lastTipId = id;
+                triggerTipBullets();
+            }
 
             // Trigger entry animation
             const container = document.querySelector('.content-layer');
@@ -581,16 +613,44 @@
             nameEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.6)';
 
             // Update amount
-            if (amount) {
-                amountEl.textContent = '$' + parseFloat(amount).toFixed(2);
+            if (amount !== undefined && amount !== null) {
+                const raw = String(amount).trim();
+                if (isFallback) {
+                    // No-tip state: show fallback value exactly as configured (no currency prefix).
+                    amountEl.textContent = raw || '0';
+                } else {
+                    const looksLikeAccount = /^\d{9,}$/.test(raw);
+                    if (looksLikeAccount) {
+                        // If long numeric value arrives from integrations, keep it literal.
+                        amountEl.textContent = raw;
+                    } else {
+                        const normalized = raw.replace(/[^0-9.\-]/g, '');
+                        const parsed = parseFloat(normalized);
+                        amountEl.textContent = '$' + (isNaN(parsed) ? '0.00' : parsed.toFixed(2));
+                    }
+                }
             }
 
+            fitAmountText();
             updateAmountRimAnchor();
         }
 
         /* Hook for data file: window.updateTips("username", "amount", "uniqueId") */
         window.updateTips = function (name, amount, id) {
-            if (name) showTip(name, amount || '0', id || name + amount);
+            const fallbackName = (window.TIP_FALLBACK_NAME && String(window.TIP_FALLBACK_NAME).trim()) || 'SadaPay';
+            const fallbackValue = (window.TIP_FALLBACK_VALUE && String(window.TIP_FALLBACK_VALUE).trim()) || '0';
+            const rawName = name ? String(name).trim() : '';
+            const rawAmount = amount !== undefined && amount !== null ? String(amount).trim() : '';
+            const isReset = id === 'reset' || rawName === '' || rawName.toLowerCase() === 'no tips';
+            const normalizedAmount = rawAmount.replace(/[^0-9.\-]/g, '');
+            const parsedAmount = parseFloat(normalizedAmount);
+            const isZeroishAmount = rawAmount === '' || Number.isNaN(parsedAmount) ? (rawAmount === '' || rawAmount === '$0') : parsedAmount === 0;
+
+            const resolvedName = isReset ? fallbackName : rawName;
+            const resolvedAmount = isReset && isZeroishAmount
+                ? fallbackValue
+                : (rawAmount || '0');
+            showTip(resolvedName, resolvedAmount, id || (resolvedName + resolvedAmount), { isFallback: isReset });
         };
 
         // Poll data_tips.js

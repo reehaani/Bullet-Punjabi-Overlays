@@ -1,0 +1,43 @@
+using System;
+using System.IO;
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath))
+        {
+            CPH.LogInfo("!!! ERROR: 'overlayPath' missing.");
+            return false;
+        }
+
+        // 1. Reset Internal Counters (Global Vars)
+        CPH.SetGlobalVar("dailyChattersCount", 0, true);
+        CPH.SetGlobalVar("dailyFollowersCount", 0, true);
+        CPH.SetGlobalVar("dailyKicksCount", 0, true);
+        string dataFolder = Path.Combine(folderPath, "Data");
+        // 2. Reset the Files
+        try 
+        {
+            Directory.CreateDirectory(dataFolder);
+            // Reset Chatters
+            File.WriteAllText(Path.Combine(dataFolder, "data_chatters.js"), 
+                "window.updateChatters(\"0\", \"Top: -\");");
+            // Reset Followers
+            File.WriteAllText(Path.Combine(dataFolder, "data_followers.js"), 
+                "window.updateFollowers(\"0\", \"Latest: -\");");
+            // Reset Kicks
+            File.WriteAllText(Path.Combine(dataFolder, "data_kicks.js"), 
+                "window.updateKicks(\"0\", \"Top: -\");");
+            // Reset Tips -> overlay will resolve fallback from controller settings
+            File.WriteAllText(Path.Combine(dataFolder, "data_tips.js"), 
+                "window.updateTips(\"\", \"\", \"reset\");");
+            CPH.LogInfo("SUCCESS: All counters reset to 0.");
+        }
+        catch (Exception ex)
+        {
+            CPH.LogInfo("!!! Reset Error: " + ex.Message);
+        }
+        return true;
+    }
+}

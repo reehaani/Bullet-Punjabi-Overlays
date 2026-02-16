@@ -1,0 +1,56 @@
+using System;
+using System.IO;
+public class CPHInline
+{
+    private static string JsEscape(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
+    }
+
+    public bool Execute()
+    {
+        // 1. CONFIGURATION
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath)) return false;
+        // PATH UPDATE ONLY: Added "Data" folder. Name remains "data_chatters.js".
+        string fileName = "data_chatters.js";
+        string fullPath = Path.Combine(folderPath, "Data", fileName);
+        // 2. GET CURRENT COUNT
+        int count = 0;
+        
+        // A. Try Memory First
+        object stored = CPH.GetGlobalVar<int>("dailyChattersCount", true);
+        if (stored != null) count = (int)stored;
+        // B. Recover from File (Recursive Fallback)
+        if (count == 0 && File.Exists(fullPath)) 
+        {
+            try {
+                string content = File.ReadAllText(fullPath);
+                string[] parts = content.Split('"'); 
+                if (parts.Length > 1) {
+                    int.TryParse(parts[1], out count);
+                    CPH.LogInfo("Recovered Count from File: " + count);
+                }
+            } catch (Exception ex) {
+                CPH.LogInfo("File Read Error: " + ex.Message);
+            }
+        }
+        // 3. INCREMENT
+        count++;
+        // 4. SAVE (Persist)
+        CPH.SetGlobalVar("dailyChattersCount", count, true);
+        // 5. WRITE
+        try {
+            string jsCode = "window.updateChatters(\"" + count.ToString() + "\", \"" + JsEscape("Total Chatters") + "\");";
+            // Check Directory
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            File.WriteAllText(fullPath, jsCode);
+        } catch { }
+        return true;
+    }
+}

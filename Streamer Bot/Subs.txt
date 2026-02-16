@@ -1,0 +1,58 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+public class CPHInline
+{
+    private static string JsEscape(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
+    }
+
+    private static int ParsePositiveInt(Dictionary<string, object> args, int fallback, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!args.ContainsKey(key) || args[key] == null) continue;
+            if (int.TryParse(args[key].ToString(), out int parsed) && parsed > 0) return parsed;
+        }
+        return fallback;
+    }
+
+    public bool Execute()
+    {
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath)) {
+            CPH.LogWarn("!!! [SUB FIX] 'overlayPath' global variable is NOT set.");
+            return false;
+        }
+        // PATH UPDATE ONLY: Added "Data" folder. Name remains "data_followers.js".
+        string fullPath = Path.Combine(folderPath, "Data", "data_followers.js");
+        string user = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
+        string timestamp = DateTime.Now.Ticks.ToString();
+        string uniqueId = triggerId + "_" + timestamp;
+        int addAmount = ParsePositiveInt(args, 1,
+            "sub_gift_count", "gift_amount", "amount", "qty", "count", "subscription.count", "gifts.count");
+        int currentCount = 0;
+        object stored = CPH.GetGlobalVar<int>("dailyFollowersCount", true);
+        if (stored != null) currentCount = (int)stored;
+        
+        currentCount += addAmount;
+        CPH.SetGlobalVar("dailyFollowersCount", currentCount, true);
+        try {
+            string content = "window.updateFollowers(\"" + currentCount.ToString() + "\", \"Latest: " + JsEscape(user) + "\", \"" + JsEscape(uniqueId) + "\");";
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            File.WriteAllText(fullPath, content);
+            CPH.LogInfo($"[SUB FIX] Updated goal to {currentCount} | Gifter: {user} | UniqueID: {uniqueId}");
+        } catch (Exception ex) {
+            CPH.LogWarn("[SUB FIX] Error writing to data_followers.js: " + ex.Message);
+        }
+        
+        return true;
+    }
+}

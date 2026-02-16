@@ -66,6 +66,8 @@ DEFAULTS = {
     "RIM_LIGHT_INTENSITY": 1.0,
     "DAILY_KICKS_GOAL": 10000,
     "SUB_GOAL_CONFIG": 50,
+    "TIP_FALLBACK_NAME": "SadaPay",
+    "TIP_FALLBACK_VALUE": "0",
     "GLOW_KICK_DOCK": True,
     "GLOW_SUB_DOCK": True,
     "GLOW_KICK_RECT": True,
@@ -114,6 +116,8 @@ class HueControllerApp(ctk.CTk):
         self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
         self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
         self.sub_goal_config = DEFAULTS["SUB_GOAL_CONFIG"]
+        self.tip_fallback_name = DEFAULTS["TIP_FALLBACK_NAME"]
+        self.tip_fallback_value = DEFAULTS["TIP_FALLBACK_VALUE"]
         
         self.last_write_time = 0
         self.write_delay = 0.12
@@ -289,7 +293,20 @@ class HueControllerApp(ctk.CTk):
         ctk.CTkLabel(self.goal_frame, text="SUB GOAL TARGET", font=("Inter", 10), text_color=COLOR_TEXT).pack()
         self.slider_sub_goal = ctk.CTkSlider(self.goal_frame, from_=5, to=500, number_of_steps=99, width=380, command=self.on_sub_goal_change)
         self.slider_sub_goal.set(50)
-        self.slider_sub_goal.pack(pady=(5, 30))
+        self.slider_sub_goal.pack(pady=(5, 14))
+
+        # Tip Fallback (used for no-tip/reset state)
+        ctk.CTkLabel(self.goal_frame, text="TIP FALLBACK NAME", font=("Inter", 10), text_color=COLOR_TEXT).pack()
+        self.entry_tip_fallback_name = ctk.CTkEntry(self.goal_frame, width=380)
+        self.entry_tip_fallback_name.pack(pady=(5, 8))
+        self.entry_tip_fallback_name.insert(0, self.tip_fallback_name)
+        self.entry_tip_fallback_name.bind("<KeyRelease>", self.on_tip_fallback_change)
+
+        ctk.CTkLabel(self.goal_frame, text="TIP FALLBACK VALUE", font=("Inter", 10), text_color=COLOR_TEXT).pack()
+        self.entry_tip_fallback_value = ctk.CTkEntry(self.goal_frame, width=380)
+        self.entry_tip_fallback_value.pack(pady=(5, 30))
+        self.entry_tip_fallback_value.insert(0, self.tip_fallback_value)
+        self.entry_tip_fallback_value.bind("<KeyRelease>", self.on_tip_fallback_change)
 
         # === Right Column Section ===
         
@@ -514,6 +531,10 @@ class HueControllerApp(ctk.CTk):
                 self.rim_light_intensity = float(re.search(r'RIM_LIGHT_INTENSITY\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'RIM_LIGHT_INTENSITY\s*=\s*([\d\.]+)', content) else 1.0
                 self.daily_kicks_goal = int(re.search(r'DAILY_KICKS_GOAL\s*=\s*(\d+)', content).group(1)) if re.search(r'DAILY_KICKS_GOAL\s*=\s*(\d+)', content) else 10000
                 self.sub_goal_config = int(re.search(r'SUB_GOAL_CONFIG\s*=\s*(\d+)', content).group(1)) if re.search(r'SUB_GOAL_CONFIG\s*=\s*(\d+)', content) else 50
+                tip_name_match = re.search(r'TIP_FALLBACK_NAME\s*=\s*"([^"]*)"', content)
+                tip_value_match = re.search(r'TIP_FALLBACK_VALUE\s*=\s*"([^"]*)"', content)
+                self.tip_fallback_name = tip_name_match.group(1) if tip_name_match else DEFAULTS["TIP_FALLBACK_NAME"]
+                self.tip_fallback_value = tip_value_match.group(1) if tip_value_match else DEFAULTS["TIP_FALLBACK_VALUE"]
                 
                 # Glows
                 m1 = re.search(r'GLOW_KICK_DOCK\s*=\s*(true|false)', content)
@@ -559,6 +580,10 @@ class HueControllerApp(ctk.CTk):
                 self.slider_rim.set(self.rim_light_intensity)
                 self.slider_kicks_goal.set(self.daily_kicks_goal)
                 self.slider_sub_goal.set(self.sub_goal_config)
+                self.entry_tip_fallback_name.delete(0, "end")
+                self.entry_tip_fallback_name.insert(0, self.tip_fallback_name)
+                self.entry_tip_fallback_value.delete(0, "end")
+                self.entry_tip_fallback_value.insert(0, self.tip_fallback_value)
 
                 self.lbl_value.configure(text=f"{self.current_hue} deg")
                 self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
@@ -588,6 +613,8 @@ class HueControllerApp(ctk.CTk):
             self.star_spin_speed = DEFAULTS["STAR_SPIN_SPEED"]
             self.gloss_intensity = DEFAULTS["GLOSSY_INTENSITY"]
             self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
+            self.tip_fallback_name = DEFAULTS["TIP_FALLBACK_NAME"]
+            self.tip_fallback_value = DEFAULTS["TIP_FALLBACK_VALUE"]
 
     def on_slider_change(self, value):
         self.current_hue = int(float(value))
@@ -660,6 +687,11 @@ class HueControllerApp(ctk.CTk):
         self.lbl_sub_goal.configure(text=f"{self.sub_goal_config}")
         self.debounce_write()
 
+    def on_tip_fallback_change(self, event=None):
+        self.tip_fallback_name = self.entry_tip_fallback_name.get().strip() or DEFAULTS["TIP_FALLBACK_NAME"]
+        self.tip_fallback_value = self.entry_tip_fallback_value.get().strip() or DEFAULTS["TIP_FALLBACK_VALUE"]
+        self.debounce_write()
+
     def on_toggle_change(self):
         if self.pending_write_job is not None:
             self.after_cancel(self.pending_write_job)
@@ -686,6 +718,12 @@ class HueControllerApp(ctk.CTk):
             new_content += f"{suffix}window.{key} = {value};\n"
         return new_content
 
+    def _js_quote(self, value):
+        if value is None:
+            return "\"\""
+        safe = str(value).replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", " ").replace("\n", " ")
+        return f"\"{safe}\""
+
     def write_settings(self, is_default=False):
         try:
             with open(SETTINGS_PATH, 'r', encoding='utf-8') as f:
@@ -705,6 +743,8 @@ class HueControllerApp(ctk.CTk):
                 "RIM_LIGHT_INTENSITY": f"{self.rim_light_intensity:.2f}",
                 "DAILY_KICKS_GOAL": str(self.daily_kicks_goal),
                 "SUB_GOAL_CONFIG": str(self.sub_goal_config),
+                "TIP_FALLBACK_NAME": self._js_quote(self.tip_fallback_name),
+                "TIP_FALLBACK_VALUE": self._js_quote(self.tip_fallback_value),
                 "GLOW_KICK_DOCK": "true" if self.sw_glow_kick_dock.get() else "false",
                 "GLOW_SUB_DOCK": "true" if self.sw_glow_sub_dock.get() else "false",
                 "GLOW_KICK_RECT": "true" if self.sw_glow_kick_rect.get() else "false",
@@ -755,6 +795,8 @@ class HueControllerApp(ctk.CTk):
             self.rim_light_intensity = DEFAULTS["RIM_LIGHT_INTENSITY"]
             self.daily_kicks_goal = DEFAULTS["DAILY_KICKS_GOAL"]
             self.sub_goal_config = DEFAULTS["SUB_GOAL_CONFIG"]
+            self.tip_fallback_name = DEFAULTS["TIP_FALLBACK_NAME"]
+            self.tip_fallback_value = DEFAULTS["TIP_FALLBACK_VALUE"]
 
             self.slider.set(self.current_hue)
             self.slider_bright.set(self.current_brightness)
@@ -770,6 +812,10 @@ class HueControllerApp(ctk.CTk):
             self.slider_rim.set(self.rim_light_intensity)
             self.slider_kicks_goal.set(self.daily_kicks_goal)
             self.slider_sub_goal.set(self.sub_goal_config)
+            self.entry_tip_fallback_name.delete(0, "end")
+            self.entry_tip_fallback_name.insert(0, self.tip_fallback_name)
+            self.entry_tip_fallback_value.delete(0, "end")
+            self.entry_tip_fallback_value.insert(0, self.tip_fallback_value)
 
             self.lbl_value.configure(text=f"{self.current_hue} deg")
             self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")

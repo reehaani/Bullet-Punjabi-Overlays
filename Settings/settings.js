@@ -12,7 +12,7 @@ window.ENABLE_BULLETS_RECT = true;
 // ╚══════════════════════════════════════════════════════════════════╝
 
 window.GLOBAL_HUE_OFFSET = 38; // Degrees (0-360)
-window.GLOBAL_HUE_DEFAULT = 0; // Baseline for resets
+window.GLOBAL_HUE_DEFAULT = 38; // Baseline for resets
 window.GLOBAL_BRIGHTNESS = 1.00; // Brightness Multiplier (0.0 - 2.0)
 window.GLOBAL_COLOR_BRIGHTNESS = 0.20; // Color Shade Multiplier (0.2 - 2.0)
 window.GLOBAL_COLOR_SATURATION = 0.00; // Color Saturation (0.0 - 2.0)
@@ -34,6 +34,8 @@ window.RIM_LIGHT_INTENSITY = 1.00; // 0.0 to 3.0 (100% baseline)
 // === GOAL CONFIGURATION ===
 window.DAILY_KICKS_GOAL = 14000;
 window.SUB_GOAL_CONFIG = 5;
+window.TIP_FALLBACK_NAME = "SadaPay";
+window.TIP_FALLBACK_VALUE = "03026314169";
 
 // === GLOW TOGGLES ===
 window.GLOW_KICK_DOCK = true;
