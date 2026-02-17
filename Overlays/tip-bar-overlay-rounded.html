@@ -32,7 +32,7 @@
             overflow: hidden;
             font-family: 'Inter', sans-serif;
             display: flex;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: flex-end;
             /* Pin to bottom */
         }
@@ -79,15 +79,14 @@
             position: absolute;
             inset: 0;
             border-radius: 40px;
-            background: linear-gradient(135deg,
-                    rgba(15, 15, 15, 0.98) 0%,
-                    rgba(25, 25, 25, 0.96) 50%,
-                    rgba(15, 15, 15, 0.98) 100%);
+            background: linear-gradient(90deg,
+                    rgba(3, 3, 3, 0.95) 0%,
+                    rgba(3, 3, 3, 0.95) 38%,
+                    rgba(2, 2, 2, 0.96) 100%);
             z-index: 2;
             overflow: hidden;
             /* Rim Light */
             box-shadow:
-                inset 0 1px 1px rgba(255, 255, 255, calc(0.16 * var(--gloss-intensity, 1))),
                 inset 0 -1px 2px rgba(0, 0, 0, 0.3),
                 inset 1px 0 0 rgba(255, 255, 255, 0.025),
                 inset 0 2px 8px rgba(255, 255, 255, 0.025),
@@ -103,8 +102,9 @@
             left: var(--amount-rim-start);
             right: 0;
             background: linear-gradient(90deg,
-                    rgba(3, 3, 3, 0.96) 0%,
-                    rgba(3, 3, 3, 0.96) 100%);
+                    rgba(3, 3, 3, 0.95) 0%,
+                    rgba(3, 3, 3, 0.95) 38%,
+                    rgba(2, 2, 2, 0.96) 100%);
             border-radius: 40px;
             z-index: 3;
             pointer-events: none;
@@ -115,25 +115,21 @@
             content: '';
             position: absolute;
             top: 0;
-            left: calc(var(--amount-rim-start) + 10px);
+            left: calc(var(--amount-rim-start) + 34px);
             right: 8px;
             height: 2px;
-            background:
-                linear-gradient(104deg,
+            background: linear-gradient(104deg,
                     rgba(255, 255, 255, 0) 0%,
-                    rgba(255, 255, 255, 0.22) 18%,
-                    rgba(255, 255, 255, 0.82) 58%,
-                    rgba(255, 255, 255, 0.92) 82%,
-                    rgba(255, 255, 255, 0.58) 100%),
-                radial-gradient(150% 210% at 100% 0%,
-                    rgba(255, 255, 255, 0.95) 0%,
-                    rgba(255, 255, 255, 0.45) 30%,
-                    rgba(255, 255, 255, 0.08) 65%,
-                    transparent 100%);
+                    rgba(255, 255, 255, 0) 24%,
+                    rgba(255, 255, 255, 0.22) 40%,
+                    rgba(255, 255, 255, 0.82) 68%,
+                    rgba(255, 255, 255, 0.92) 86%,
+                    rgba(255, 255, 255, 0.58) 100%);
+            border-top-left-radius: 16px;
             border-top-right-radius: 40px;
-            filter: blur(0.28px) drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
-            opacity: 0.95;
-            z-index: 18;
+            filter: blur(0.16px);
+            opacity: 0.82;
+            z-index: 8;
             pointer-events: none;
         }
 
@@ -182,7 +178,7 @@
         .content-layer {
             position: absolute;
             inset: 0;
-            z-index: 10;
+            z-index: 25;
             display: flex;
             flex-direction: row;
             align-items: stretch;
@@ -208,10 +204,12 @@
             flex: 0 1 auto;
             z-index: 12;
             position: relative;
-            /* Outward cast toward amount side so the tab pops up */
-            filter:
-                drop-shadow(10px 1px 10px rgba(0, 0, 0, 0.42))
-                drop-shadow(18px 2px 16px rgba(0, 0, 0, 0.26));
+            overflow: hidden;
+            /* Keep depth without any outside spill around rounded corners */
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+                inset 10px 0 14px rgba(0, 0, 0, 0.16);
         }
 
         /* Inverted rounded edge (concave) at bottom-right */
@@ -365,17 +363,18 @@
         .tip-bar::before {
             content: '';
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
+            bottom: 1px;
+            left: calc(var(--amount-rim-start) + 2px);
+            right: 1px;
             height: 2px;
             background: linear-gradient(90deg,
                     rgba(255, 255, 255, 0.15) 0%,
                     var(--accent-line) 50%,
                     transparent 100%);
-            z-index: 20;
-            border-bottom-left-radius: 40px;
+            z-index: 8;
+            border-bottom-left-radius: 16px;
             border-bottom-right-radius: 40px;
+            pointer-events: none;
         }
 
     </style>
