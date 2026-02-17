@@ -1,0 +1,104 @@
+using System;
+using System.IO;
+using System.Threading;
+
+public class CPHInline
+{
+    private static string JsEscape(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", " ")
+            .Replace("\n", " ");
+    }
+
+    private static int RecoverCountFromFollowersFile(string fullPath)
+    {
+        if (!File.Exists(fullPath)) return 0;
+        try
+        {
+            string content = File.ReadAllText(fullPath);
+            string[] parts = content.Split('"');
+            if (parts.Length > 1 && int.TryParse(parts[1], out int parsed) && parsed >= 0)
+                return parsed;
+        }
+        catch { }
+        return 0;
+    }
+
+    public bool Execute()
+    {
+        string folderPath = CPH.GetGlobalVar<string>("overlayPath");
+        if (string.IsNullOrEmpty(folderPath))
+        {
+            CPH.LogWarn("[SUB NORMAL] overlayPath global variable is not set.");
+            return false;
+        }
+
+        string triggerName = args.ContainsKey("triggerName") ? args["triggerName"].ToString() : "";
+        if (!string.IsNullOrEmpty(triggerName) &&
+            (triggerName.IndexOf("Mass", StringComparison.OrdinalIgnoreCase) >= 0 ||
+             triggerName.IndexOf("Gift", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+            CPH.LogInfo($"[SUB NORMAL] Ignored trigger '{triggerName}' (gift/mass flow handled by separate action).");
+            return true;
+        }
+
+        string fullPath = Path.Combine(folderPath, "Data", "data_followers.js");
+        string user = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
+        string uniqueId = triggerId + "_" + DateTime.Now.Ticks;
+        const int addAmount = 1;
+
+        CPH.LogInfo($"[SUB NORMAL] Trigger={triggerName} User={user} AddAmount=1");
+
+        using (var mutex = new Mutex(false, @"Global\BulletPunjabi_SubCounter"))
+        {
+            bool lockTaken = false;
+            try
+            {
+                lockTaken = mutex.WaitOne(TimeSpan.FromSeconds(5));
+                if (!lockTaken)
+                {
+                    CPH.LogWarn("[SUB NORMAL] Could not acquire counter lock in 5s.");
+                    return false;
+                }
+
+                int fileCount = RecoverCountFromFollowersFile(fullPath);
+                int memoryCount = 0;
+                object stored = CPH.GetGlobalVar<int>("dailyFollowersCount", true);
+                if (stored != null) memoryCount = (int)stored;
+
+                int baseline = fileCount;
+                if (baseline <= 0 && memoryCount > 0) baseline = memoryCount;
+                if (fileCount != memoryCount)
+                    CPH.LogInfo($"[SUB NORMAL] Baseline mismatch file={fileCount} memory={memoryCount} used={baseline}");
+
+                int currentCount = baseline + addAmount;
+                CPH.SetGlobalVar("dailyFollowersCount", currentCount, true);
+
+                string content = "window.updateFollowers(\"" + currentCount + "\", \"Latest: " + JsEscape(user) + "\", \"" + JsEscape(uniqueId) + "\");";
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+                File.WriteAllText(fullPath, content);
+
+                int verifyFileCount = RecoverCountFromFollowersFile(fullPath);
+                CPH.LogInfo($"[SUB NORMAL] Updated={currentCount} | +1 | VerifyFile={verifyFileCount} | User={user} | ID={uniqueId}");
+            }
+            catch (Exception ex)
+            {
+                CPH.LogWarn("[SUB NORMAL] Error updating data_followers.js: " + ex.Message);
+            }
+            finally
+            {
+                if (lockTaken)
+                {
+                    try { mutex.ReleaseMutex(); } catch { }
+                }
+            }
+        }
+
+        return true;
+    }
+}

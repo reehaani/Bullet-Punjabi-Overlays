@@ -734,14 +734,12 @@
             const anchor = document.querySelector('.dock-anchor');
             anchor.style.transform = 'translateX(-50%) scale(' + scale + ')';
             anchor.style.transformOrigin = 'bottom center';
-            window.addEventListener('resize', adjustScale);
         }
         window.addEventListener('resize', adjustScale);
         adjustScale();
     </script>
 
     <script src="../Settings/settings.js"></script>
-    <script src="../Data/data_subs.js"></script>
 
     <!-- Color Settings Loader -->
     <script>
