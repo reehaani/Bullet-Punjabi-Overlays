@@ -12,7 +12,7 @@ set "GITHUB_REPO=Bullet-Punjabi-Overlays"
 set "GITHUB_BRANCH=master"
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
-set "TARGET_DIR=%SCRIPT_DIR%\Runtime"
+set "TARGET_DIR=%SCRIPT_DIR%\BulletPunjabi-Runtime"
 set "TEMP_DIR=%TEMP%\bp_runtime_install_%RANDOM%_%RANDOM%"
 
 echo.
