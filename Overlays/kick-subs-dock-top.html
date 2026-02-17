@@ -492,6 +492,10 @@
             animation: current-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
         }
 
+        .content-wrapper.completed .current-flash {
+            animation: current-pop-gold 0.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+        }
+
         @keyframes current-pop {
             0% {
                 /* Avoid brightness(5) as it often breaks background-clip: text in Chrome */
@@ -508,6 +512,23 @@
                     drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
                 transform: scale(1);
                 -webkit-text-stroke: 1.75px rgba(255, 255, 255, 0.62);
+            }
+        }
+
+        @keyframes current-pop-gold {
+            0% {
+                filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 40px rgba(255, 185, 0, 0.9));
+                transform: scale(1.15);
+                -webkit-text-stroke: 2px rgba(255, 225, 120, 0.98);
+            }
+
+            100% {
+                filter:
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))
+                    drop-shadow(0 0 15px rgba(212, 175, 55, 0.8))
+                    drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+                transform: scale(1);
+                -webkit-text-stroke: 1px rgba(255, 230, 0, 0.4);
             }
         }
 
