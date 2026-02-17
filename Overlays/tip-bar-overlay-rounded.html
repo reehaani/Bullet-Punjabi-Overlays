@@ -205,7 +205,7 @@
             align-items: center;
             border-radius: 40px;
             min-width: 0;
-            max-width: calc(100% - 220px);
+            max-width: 100%;
             flex: 0 1 auto;
             z-index: 12;
             position: relative;
@@ -226,7 +226,7 @@
             min-width: 0;
             height: 100%;
             flex: 1 1 auto;
-            overflow: hidden;
+            overflow: visible;
             padding-left: 4px;
         }
 
@@ -540,9 +540,9 @@
             const MAX_FONT = 68;
             const MIN_FONT = 40;
             const sidePadding = 58; // keep right-side breathing room
+            const minNameReservation = 260; // reserve left space to avoid width feedback loop
             const barWidth = tipBarEl ? tipBarEl.clientWidth : 0;
-            const nameWidth = nameTabEl ? nameTabEl.getBoundingClientRect().width : 0;
-            const available = Math.max(120, barWidth - nameWidth - sidePadding);
+            const available = Math.max(120, barWidth - minNameReservation - sidePadding);
 
             let fontSize = MAX_FONT;
             amountEl.style.fontSize = fontSize + 'px';
@@ -553,6 +553,15 @@
 
             const strokeWidth = Math.max(0.8, 1.2 * (fontSize / 68));
             amountEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.5)';
+        }
+
+        function updateNameTabLimit() {
+            if (!tipBarEl || !nameTabEl || !amountEl) return;
+            const barWidth = tipBarEl.clientWidth || 0;
+            const amountWidth = Math.ceil(amountEl.getBoundingClientRect().width || 0);
+            const reserveForAmount = amountWidth + 28; // amount width + right breathing room
+            const dynamicMax = Math.max(140, barWidth - reserveForAmount);
+            nameTabEl.style.maxWidth = dynamicMax + 'px';
         }
 
         function showTip(name, amount, id, opts = {}) {
@@ -600,16 +609,6 @@
             nameEl.style.overflow = 'visible';
             nameEl.style.textOverflow = 'clip';
 
-            // Shrink until text fits the available width (accounting for logo)
-            while (nameEl.scrollWidth > nameContainer.clientWidth && fontSize > MIN_FONT) {
-                fontSize -= 2;
-                nameEl.style.fontSize = fontSize + 'px';
-            }
-
-            // Scale stroke proportionally
-            const strokeWidth = Math.max(0.8, 1.5 * (fontSize / 80));
-            nameEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.6)';
-
             // Update amount
             if (amount !== undefined && amount !== null) {
                 const raw = String(amount).trim();
@@ -630,6 +629,18 @@
             }
 
             fitAmountText();
+            updateNameTabLimit();
+
+            // Shrink until text fits the available width (accounting for logo)
+            while (nameEl.scrollWidth > nameContainer.clientWidth && fontSize > MIN_FONT) {
+                fontSize -= 2;
+                nameEl.style.fontSize = fontSize + 'px';
+            }
+
+            // Scale stroke proportionally
+            const strokeWidth = Math.max(0.8, 1.5 * (fontSize / 80));
+            nameEl.style.webkitTextStroke = strokeWidth + 'px rgba(255, 255, 255, 0.6)';
+
             updateAmountRimAnchor();
         }
 
@@ -667,7 +678,11 @@
 
         setInterval(pollAll, POLL_INTERVAL);
         pollAll();
-        window.addEventListener('resize', updateAmountRimAnchor);
+        window.addEventListener('resize', () => {
+            fitAmountText();
+            updateNameTabLimit();
+            updateAmountRimAnchor();
+        });
         window.addEventListener('resize', resizeSparksCanvas);
         resizeSparksCanvas();
         requestAnimationFrame(animateCasings);
