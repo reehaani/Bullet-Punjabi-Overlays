@@ -282,12 +282,6 @@
             animation: shine-name 6s infinite linear;
         }
 
-        /* Only used for extreme overflow cases after auto-fit reaches min size */
-        .tip-name.ellipsis-mode {
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         /* Name shines first: left-to-right sweep at 0–15% of cycle */
         @keyframes shine-name {
             0% {
@@ -598,42 +592,27 @@
             container.style.animation = '';
             container.classList.add('tip-entry');
 
-            // Update name (for very long 3+ word names, keep first two words)
+            // Update name: keep full value so third-word emoji/content is preserved.
             const cleanedName = String(name || '').replace(/\s+/g, ' ').trim();
-            const parts = cleanedName ? cleanedName.split(' ') : [];
-            const displayName = (parts.length >= 3 && cleanedName.length >= 20)
-                ? parts.slice(0, 2).join(' ')
-                : cleanedName;
-            nameEl.textContent = displayName;
+            nameEl.textContent = cleanedName;
 
-            // Auto-fit font size: start at max and shrink until it fits
+            // Auto-fit font size: use length-based starting size, then pixel-fit down.
             const MAX_FONT = 80;
-            const MIN_FONT = 56;
-            const EXTREME_OVERFLOW_PX = 24;
-            const ELLIPSIS_EARLY_BUFFER_PX = 8;
-            const ELLIPSIS_MICRO_BUFFER_PX = 0;
+            const MIN_FONT = 34;
+            const nameLength = cleanedName.length;
+            const lengthPenalty = Math.max(0, nameLength - 14) * 1.25;
+            const START_FONT = Math.max(MIN_FONT, Math.min(MAX_FONT, MAX_FONT - lengthPenalty));
             const nameContainer = nameEl.parentElement;  // .tip-left
-            let fontSize = MAX_FONT;
+            let fontSize = START_FONT;
             nameEl.style.fontSize = fontSize + 'px';
-            nameEl.classList.remove('ellipsis-mode');
+            nameEl.style.maxWidth = '100%';
+            nameEl.style.overflow = 'visible';
+            nameEl.style.textOverflow = 'clip';
 
             // Shrink until text fits the available width (accounting for logo)
             while (nameEl.scrollWidth > nameContainer.clientWidth && fontSize > MIN_FONT) {
                 fontSize -= 2;
                 nameEl.style.fontSize = fontSize + 'px';
-            }
-
-            // Enable ellipsis only in extreme cases (still overflowing after min-size fit).
-            const overflowPx = nameEl.scrollWidth - nameContainer.clientWidth;
-            const microOverflowAtMin = overflowPx > 4 && fontSize <= MIN_FONT;
-            if (overflowPx > EXTREME_OVERFLOW_PX || microOverflowAtMin) {
-                // Trim slightly early so edge-cases don't collide with logo/curve.
-                const buffer = overflowPx > EXTREME_OVERFLOW_PX ? ELLIPSIS_EARLY_BUFFER_PX : ELLIPSIS_MICRO_BUFFER_PX;
-                nameEl.style.maxWidth = Math.max(40, nameContainer.clientWidth - buffer) + 'px';
-                nameEl.classList.add('ellipsis-mode');
-            } else {
-                nameEl.style.maxWidth = '100%';
-                nameEl.classList.remove('ellipsis-mode');
             }
 
             // Scale stroke proportionally
