@@ -485,19 +485,63 @@
             document.body.appendChild(s);
         }
 
-        function pollSettings() {
-            const st = document.createElement("script");
-            st.src = "../Settings/settings.js?t=" + Date.now();
-            st.id = 'settings-script';
-            st.onload = () => {
-                if (window.DAILY_KICKS_GOAL) {
-                    TARGET_GOAL = parseInt(window.DAILY_KICKS_GOAL, 10) || TARGET_GOAL;
-                }
-                applyFilters();
-                applyGoalState(Math.max(0, lastCount));
-                st.remove();
-            };
-            document.body.appendChild(st);
+        const ThemeState = { curHue: 0, tgtHue: 0, raf: null };
+        const BASE_COLORS = { '--inner-bg': 'rgba(20, 20, 20, 0.95)' };
+
+        function updateThemeColors() {
+            if (!window.adjustHue) return;
+            const s = document.documentElement.style;
+            const h = ThemeState.curHue;
+            const shade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+            const sat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+
+            for (const k in BASE_COLORS) {
+                const os = window.GLOBAL_COLOR_BRIGHTNESS;
+                const osa = window.GLOBAL_COLOR_SATURATION;
+                window.GLOBAL_COLOR_BRIGHTNESS = shade;
+                window.GLOBAL_COLOR_SATURATION = sat;
+                s.setProperty(k, window.adjustHue(BASE_COLORS[k], h));
+                window.GLOBAL_COLOR_BRIGHTNESS = os;
+                window.GLOBAL_COLOR_SATURATION = osa;
+            }
+
+            const sh = window.STAR_HUE_OFFSET || 0;
+            const ssh = window.STAR_COLOR_BRIGHTNESS || 1.0;
+            const ssa = window.STAR_COLOR_SATURATION || 1.0;
+            const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);
+            const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
+            const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
+            const so2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+            const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
+
+            const os = window.GLOBAL_COLOR_BRIGHTNESS;
+            const osa = window.GLOBAL_COLOR_SATURATION;
+            window.GLOBAL_COLOR_BRIGHTNESS = ssh;
+            window.GLOBAL_COLOR_SATURATION = ssa;
+            s.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', sh));
+            s.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', sh));
+            window.GLOBAL_COLOR_BRIGHTNESS = ssh2;
+            window.GLOBAL_COLOR_SATURATION = ssa2;
+            s.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', sh2));
+            s.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', sh2));
+            s.setProperty('--star-secondary-offset', `${so2}deg`);
+            s.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
+            s.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.18)', h));
+            window.GLOBAL_COLOR_BRIGHTNESS = os;
+            window.GLOBAL_COLOR_SATURATION = osa;
+        }
+
+        function animateThemeHue() {
+            const diff = ThemeState.tgtHue - ThemeState.curHue;
+            if (Math.abs(diff) > 0.05) {
+                ThemeState.curHue += diff * 0.08;
+                updateThemeColors();
+                ThemeState.raf = requestAnimationFrame(animateThemeHue);
+            } else {
+                ThemeState.curHue = ThemeState.tgtHue;
+                updateThemeColors();
+                ThemeState.raf = null;
+            }
         }
 
         function applyFilters() {
@@ -511,13 +555,44 @@
                 ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
                 : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
             const glow = window.GLOW_KICK_RECT !== false;
+            const border = window.SHOW_BORDER_KICK_RECT !== false;
             document.documentElement.style.filter = `brightness(${bright})`;
             document.documentElement.style.setProperty('--gloss-intensity', glossMapped);
             document.documentElement.style.setProperty('--rim-light-intensity', rimIntensity);
             const sw = document.querySelector('.star-border-wrapper');
             const rim = document.querySelector('.rim-light-layer');
+            const inner = document.querySelector('.inner-content');
             if (sw) sw.style.opacity = glow ? '1' : '0';
-            if (rim) rim.style.opacity = glow ? String(rimIntensity) : '0';
+            if (rim) rim.style.opacity = (glow && border) ? String(rimIntensity) : '0';
+            if (inner) {
+                inner.style.inset = border ? '6px' : '0';
+                inner.style.borderRadius = border ? '20px' : '24px';
+            }
+        }
+
+        function pollSettings() {
+            const st = document.createElement("script");
+            st.src = "../Settings/settings.js?t=" + Date.now();
+            st.id = 'settings-script';
+            st.onload = () => {
+                if (window.DAILY_KICKS_GOAL) {
+                    TARGET_GOAL = parseInt(window.DAILY_KICKS_GOAL, 10) || TARGET_GOAL;
+                }
+
+                const nextHue = window.GLOBAL_HUE_OFFSET || 0;
+                if (nextHue !== ThemeState.tgtHue) {
+                    ThemeState.tgtHue = nextHue;
+                    if (!ThemeState.raf) animateThemeHue();
+                } else {
+                    // Apply non-hue setting changes immediately (star hues, saturation, spin, border, glow).
+                    updateThemeColors();
+                }
+
+                applyFilters();
+                applyGoalState(Math.max(0, lastCount));
+                st.remove();
+            };
+            document.body.appendChild(st);
         }
 
         setInterval(pollData, POLL_INTERVAL);
@@ -526,45 +601,6 @@
         pollSettings();
     </script>
 
-    <!-- Embedded Color Engine -->
-    <script>
-        (function () {
-            const BASE_COLORS = { '--inner-bg': 'rgba(20, 20, 20, 0.95)' };
-            const State = { curHue: 0, tgtHue: 0, raf: null };
-            function update() {
-                if (!window.adjustHue) return;
-                const s = document.documentElement.style, h = State.curHue;
-                const shade = window.GLOBAL_COLOR_BRIGHTNESS || 1.0, sat = window.GLOBAL_COLOR_SATURATION || 1.0;
-                const sh = window.STAR_HUE_OFFSET || 0, ssh = window.STAR_COLOR_BRIGHTNESS || 1.0, ssa = window.STAR_COLOR_SATURATION || 1.0;
-                const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);
-                const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
-                const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;
-                const so2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
-                const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
-
-                const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
-                window.GLOBAL_COLOR_BRIGHTNESS = ssh; window.GLOBAL_COLOR_SATURATION = ssa;
-                s.setProperty('--star-color', window.adjustHue('rgb(10, 255, 10)', sh));
-                s.setProperty('--star-color-soft', window.adjustHue('rgba(10, 255, 10, 0.1)', sh));
-                window.GLOBAL_COLOR_BRIGHTNESS = ssh2; window.GLOBAL_COLOR_SATURATION = ssa2;
-                s.setProperty('--star-color-secondary', window.adjustHue('rgb(10, 255, 10)', sh2));
-                s.setProperty('--star-color-secondary-soft', window.adjustHue('rgba(10, 255, 10, 0.14)', sh2));
-                s.setProperty('--star-secondary-offset', `${so2}deg`);
-                s.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
-                s.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.18)', h));
-                window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
-            }
-            function anim() {
-                const d = State.tgtHue - State.curHue;
-                if (Math.abs(d) > 0.05) { State.curHue += d * 0.08; update(); State.raf = requestAnimationFrame(anim); }
-                else { State.curHue = State.tgtHue; update(); State.raf = null; }
-            }
-            setInterval(() => {
-                const nt = window.GLOBAL_HUE_OFFSET || 0;
-                if (nt !== State.tgtHue) { State.tgtHue = nt; if (!State.raf) anim(); }
-            }, 300);
-        })();
-    </script>
 </body>
 
 </html>

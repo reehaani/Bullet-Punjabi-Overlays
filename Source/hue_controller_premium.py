@@ -145,6 +145,7 @@ class HueControllerApp(ctk.CTk):
         self._last_bg_size = (0, 0)
         self._scroll_canvas = None
         self._wheel_bound = False
+        self._cleanup_stale_settings_tmp_files()
         # Layout Grid
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -407,7 +408,8 @@ class HueControllerApp(ctk.CTk):
             font=("Inter", 10), text_color=COLOR_TEXT, fg_color="transparent"
         )
         self.lbl_status.grid(row=1, column=0, pady=5, sticky="s")
-        
+
+        self._bind_slider_release_commits()
         self.load_initial_hue()
         self.load_test_subs_from_data()
         self.refresh_test_subs_label()
@@ -718,6 +720,42 @@ class HueControllerApp(ctk.CTk):
         self.lbl_sub_goal.configure(text=f"{self.sub_goal_config}")
         self.debounce_write()
 
+    def _commit_slider_value(self, slider, handler):
+        if self.is_loading:
+            return
+        try:
+            handler(slider.get())
+            if self.pending_write_job is not None:
+                self.after_cancel(self.pending_write_job)
+                self.pending_write_job = None
+            self.write_settings()
+        except Exception as e:
+            print(f"Slider commit error: {e}")
+
+    def _bind_slider_release_commits(self):
+        bindings = [
+            (self.slider, self.on_slider_change),
+            (self.slider_bright, self.on_brightness_change),
+            (self.slider_shade, self.on_shade_change),
+            (self.slider_sat, self.on_saturation_change),
+            (self.slider_star_hue, self.on_star_hue_change),
+            (self.slider_star_shade, self.on_star_shade_change),
+            (self.slider_star_hue_2, self.on_star_hue_2_change),
+            (self.slider_star_shade_2, self.on_star_shade_2_change),
+            (self.slider_star_offset_2, self.on_star_offset_2_change),
+            (self.slider_star_speed, self.on_star_speed_change),
+            (self.slider_gloss, self.on_gloss_change),
+            (self.slider_rim, self.on_rim_change),
+            (self.slider_kicks_goal, self.on_kicks_goal_change),
+            (self.slider_sub_goal, self.on_sub_goal_change),
+        ]
+        for slider, handler in bindings:
+            slider.bind(
+                "<ButtonRelease-1>",
+                lambda _e, s=slider, h=handler: self._commit_slider_value(s, h),
+                add="+"
+            )
+
     def refresh_test_subs_label(self):
         self.lbl_test_subs.configure(text=str(max(0, int(self.test_subs_current))))
 
@@ -733,14 +771,37 @@ class HueControllerApp(ctk.CTk):
         except Exception:
             self.test_subs_current = 0
 
+    def _read_current_latest_label(self):
+        try:
+            if not os.path.exists(DATA_FOLLOWERS_PATH):
+                return "Latest: -"
+            with open(DATA_FOLLOWERS_PATH, "r", encoding="utf-8") as f:
+                content = f.read()
+            m = re.search(r'updateFollowers\(\s*"[^"]*"\s*,\s*"((?:[^"\\]|\\.)*)"', content)
+            if not m:
+                return "Latest: -"
+            # Preserve the existing label text while decoding common JS string escapes.
+            raw = m.group(1)
+            return bytes(raw, "utf-8").decode("unicode_escape")
+        except Exception:
+            return "Latest: -"
+
     def write_test_subs_data(self):
         try:
             data_dir = os.path.dirname(DATA_FOLLOWERS_PATH)
             os.makedirs(data_dir, exist_ok=True)
             event_id = f"controller_{time.time_ns()}"
+            latest_label = self._read_current_latest_label()
+            safe_label = (
+                str(latest_label)
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", " ")
+                .replace("\n", " ")
+            )
             content = (
                 f'window.updateFollowers("{self.test_subs_current}", '
-                f'"Latest: subscriber_name", "{event_id}");'
+                f'"{safe_label}", "{event_id}");'
             )
             with open(DATA_FOLLOWERS_PATH, "w", encoding="utf-8") as f:
                 f.write(content)
@@ -750,6 +811,8 @@ class HueControllerApp(ctk.CTk):
             self.lbl_status.configure(text="ERROR WRITING DATA")
 
     def adjust_test_subs(self, delta):
+        # Always start from live file value so manual +/- tracks external updates without app restart.
+        self.load_test_subs_from_data()
         self.test_subs_current = max(0, int(self.test_subs_current) + int(delta))
         self.refresh_test_subs_label()
         self.write_test_subs_data()
@@ -791,7 +854,25 @@ class HueControllerApp(ctk.CTk):
         safe = str(value).replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", " ").replace("\n", " ")
         return f"\"{safe}\""
 
+    def _cleanup_stale_settings_tmp_files(self):
+        settings_dir = os.path.dirname(SETTINGS_PATH)
+        try:
+            if not settings_dir or not os.path.isdir(settings_dir):
+                return
+            for name in os.listdir(settings_dir):
+                if not (name.startswith("tmp") and name.endswith(".tmp")):
+                    continue
+                tmp_path = os.path.join(settings_dir, name)
+                if os.path.isfile(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
+        except Exception:
+            pass
+
     def write_settings(self, is_default=False):
+        temp_path = None
         try:
             with open(SETTINGS_PATH, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -835,11 +916,18 @@ class HueControllerApp(ctk.CTk):
                 tf.write(content)
                 temp_path = tf.name
             os.replace(temp_path, SETTINGS_PATH)
+            temp_path = None
             self.last_saved_payload = payload
             self.lbl_status.configure(text="SETTINGS PERSISTED" if is_default else "SYNCING...")
         except Exception as e:
             print(f"Write Settings error: {e}")
             self.lbl_status.configure(text="ERROR WRITING FILE")
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
 
     def save_defaults(self):
         self.write_settings(is_default=True)

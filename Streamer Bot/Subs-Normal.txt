@@ -1,9 +1,36 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Threading;
 
 public class CPHInline
 {
+    private static string ResolveDisplayNameFromArgs(Dictionary<string, object> args)
+    {
+        if (args != null)
+        {
+            if (args.ContainsKey("userName") && args["userName"] != null)
+            {
+                string v = args["userName"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+
+            if (args.ContainsKey("displayName") && args["displayName"] != null)
+            {
+                string v = args["displayName"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+
+            if (args.ContainsKey("user") && args["user"] != null)
+            {
+                string v = args["user"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+        }
+
+        return "Someone";
+    }
+
     private static string JsEscape(string input)
     {
         if (string.IsNullOrEmpty(input)) return "";
@@ -47,7 +74,7 @@ public class CPHInline
         }
 
         string fullPath = Path.Combine(folderPath, "Data", "data_followers.js");
-        string user = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string user = ResolveDisplayNameFromArgs(args);
         string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
         string uniqueId = triggerId + "_" + DateTime.Now.Ticks;
         const int addAmount = 1;

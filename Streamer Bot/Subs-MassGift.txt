@@ -7,6 +7,32 @@ using System.Threading;
 
 public class CPHInline
 {
+    private static string ResolveDisplayNameFromArgs(Dictionary<string, object> args)
+    {
+        if (args != null)
+        {
+            if (args.ContainsKey("userName") && args["userName"] != null)
+            {
+                string v = args["userName"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+
+            if (args.ContainsKey("displayName") && args["displayName"] != null)
+            {
+                string v = args["displayName"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+
+            if (args.ContainsKey("user") && args["user"] != null)
+            {
+                string v = args["user"].ToString().Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+        }
+
+        return "Someone";
+    }
+
     private static string JsEscape(string input)
     {
         if (string.IsNullOrEmpty(input)) return "";
@@ -67,6 +93,30 @@ public class CPHInline
         return 0;
     }
 
+    private static int TryCountIndexedRecipients(Dictionary<string, object> args, out string trace)
+    {
+        var indexes = new List<int>();
+        const string prefix = "recipient.";
+
+        foreach (var key in args.Keys)
+        {
+            if (string.IsNullOrEmpty(key) || !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            int start = prefix.Length;
+            int dot = key.IndexOf('.', start);
+            if (dot <= start) continue;
+
+            string indexPart = key.Substring(start, dot - start);
+            if (int.TryParse(indexPart, out int idx) && idx >= 0 && !indexes.Contains(idx))
+                indexes.Add(idx);
+        }
+
+        int count = indexes.Count;
+        trace = "indexedRecipients.count=" + count;
+        return count;
+    }
+
     private static int ResolveMassAddAmount(Dictionary<string, object> args, out string selectedKey, out string trace)
     {
         // Kick mass gift variable first, then common fallbacks.
@@ -102,6 +152,15 @@ public class CPHInline
             selectedKey = "recipients";
             trace = string.Join(" | ", parts);
             return recipientsCount;
+        }
+
+        int indexedRecipientsCount = TryCountIndexedRecipients(args, out string indexedRecipientsTrace);
+        parts.Add(indexedRecipientsTrace);
+        if (indexedRecipientsCount > 0)
+        {
+            selectedKey = "indexed_recipients";
+            trace = string.Join(" | ", parts);
+            return indexedRecipientsCount;
         }
 
         selectedKey = "fallback";
@@ -143,10 +202,10 @@ public class CPHInline
         string triggerId = args.ContainsKey("triggerId") ? args["triggerId"].ToString() : "manual";
         string uniqueId = triggerId + "_" + DateTime.Now.Ticks;
 
-        string gifter = args.ContainsKey("user") ? args["user"].ToString() : "Someone";
+        string gifter = ResolveDisplayNameFromArgs(args);
         string recipientUser = args.ContainsKey("recipientUser") ? args["recipientUser"].ToString() :
             (args.ContainsKey("recipient.userName") ? args["recipient.userName"].ToString() : "");
-        string displayUser = !string.IsNullOrWhiteSpace(recipientUser) ? recipientUser : gifter;
+        string displayUser = gifter;
 
         int addAmount = ResolveMassAddAmount(args, out string selectedKey, out string parseTrace);
         string argKeys = args != null ? string.Join(", ", args.Keys) : "(none)";

@@ -40,3 +40,6 @@ BulletPunjabi-Runtime/
 # PyInstaller auto-generated root specs
 ColorControllerNew.spec
 ColorControllerNew_next.spec
+
+# Local logs
+LOGS/
