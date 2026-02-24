@@ -66,10 +66,9 @@
             border-bottom: 1px solid rgba(0, 0, 0, 0.4);
             overflow: hidden;
 
-            /* Always visible */
             transform: translateX(0);
             opacity: 1;
-            transition: opacity 0.25s ease;
+            transition: transform 0.28s ease, opacity 0.25s ease;
             z-index: 100;
         }
 
@@ -109,7 +108,7 @@
         }
 
         .kicker-container.slide-out {
-            transform: translateX(110%);
+            transform: translateX(-110%);
             opacity: 0;
             transition: transform 0.28s ease, opacity 0.25s ease;
         }
@@ -371,6 +370,24 @@
         let ashW = 0;
         let ashH = 0;
 
+        function hasValidName(name) {
+            const normalized = (name || '').trim();
+            if (!normalized) return false;
+            const lowered = normalized.toLowerCase();
+            return normalized !== '-' &&
+                normalized !== '0' &&
+                lowered !== 'none' &&
+                lowered !== 'null' &&
+                lowered !== 'n/a' &&
+                lowered !== 'na';
+        }
+
+        function setKickerVisibility(visible) {
+            isVisible = visible;
+            container.classList.toggle('slide-in', visible);
+            container.classList.toggle('slide-out', !visible);
+        }
+
         function parseColorToRgb(input) {
             const m = (input || '').trim().match(/rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/i);
             if (!m) return { r: 255, g: 255, b: 255 };
@@ -493,7 +510,7 @@
 
             // Re-apply text animation
             nameEl.classList.add('kicker-flash');
-            isVisible = true;
+            setKickerVisibility(true);
         }
 
         // CSS for the flash (added via script for portability)
@@ -509,7 +526,12 @@
 
         // Called by data_kicks.js: window.updateKicks("126", "Top: subscriber_name", "uniqueId")
         window.updateKickerName = function (name, id) {
-            if (name) showKicker(name, id || (name + Date.now()));
+            if (hasValidName(name)) {
+                showKicker(name, id || (name + Date.now()));
+                return;
+            }
+            nameEl.textContent = '';
+            setKickerVisibility(false);
         };
 
         const origUpdateKicks = window.updateKicks;
@@ -529,17 +551,29 @@
             lastKickCount = current;
             applyGoalState(current);
 
+            if (current <= 0) {
+                nameEl.textContent = '';
+                setKickerVisibility(false);
+            }
+
             if (extra) {
                 const parts = extra.split(':');
                 if (parts.length >= 2) {
                     const name = parts.slice(1).join(':').trim();
-                    if (name) showKicker(name, id || (name + val + extra + Date.now()));
+                    if (hasValidName(name) && current > 0) {
+                        showKicker(name, id || (name + val + extra + Date.now()));
+                    } else {
+                        nameEl.textContent = '';
+                        setKickerVisibility(false);
+                    }
                 }
             }
             if (typeof origUpdateKicks === 'function') {
                 origUpdateKicks(val, extra, id);
             }
         };
+
+        setKickerVisibility(false);
 
         function injectScript(filename, id) {
             const old = document.getElementById(id);

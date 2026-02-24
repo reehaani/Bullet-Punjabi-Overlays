@@ -695,6 +695,24 @@
         let ashAnimFrame = null;
         let ashLastTs = 0;
 
+        function hasValidName(name) {
+            const normalized = (name || '').trim();
+            if (!normalized) return false;
+            const lowered = normalized.toLowerCase();
+            return normalized !== '-' &&
+                normalized !== '0' &&
+                lowered !== 'none' &&
+                lowered !== 'null' &&
+                lowered !== 'n/a' &&
+                lowered !== 'na';
+        }
+
+        function setBannerVisibility(visible) {
+            if (isBannerVisible === visible) return;
+            isBannerVisible = visible;
+            container.hidden = !visible;
+        }
+
         function parseColorToRgb(input) {
             const m = (input || '').trim().match(/rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/i);
             if (!m) return { r: 255, g: 255, b: 255 };
@@ -834,6 +852,7 @@
             if (id && id === lastGifterId) return;
             lastGifterId = id;
             lastShownName = name;
+            setBannerVisibility(true);
             nameEl.classList.remove('gifter-flash');
             void container.offsetWidth;
             nameEl.textContent = name;
@@ -853,14 +872,27 @@
 
         window.updateFollowers = function (val, extra, id) {
             // extra format: "Latest: Username"
+            const parsedCount = parseInt(val, 10);
+            if (!Number.isNaN(parsedCount) && parsedCount <= 0) {
+                lastShownName = '';
+                nameEl.textContent = '';
+                setBannerVisibility(false);
+                return;
+            }
+
             let name = extra;
             if (extra && extra.includes(':')) {
                 name = extra.split(':')[1].trim();
             }
-            if (name && name !== '-') {
+            if (hasValidName(name)) {
                 showGifter(name, id);
                 container.classList.remove('gold-applied');
+                return;
             }
+
+            lastShownName = '';
+            nameEl.textContent = '';
+            setBannerVisibility(false);
         };
 
         function schedulePoll(ms) {
@@ -924,9 +956,10 @@
         });
 
         window.addEventListener('resize', () => {
-            if (lastShownName) updateAnchorWidth();
+        if (isBannerVisible && lastShownName) updateAnchorWidth();
         });
         requestAnimationFrame(updateAnchorWidth);
+        setBannerVisibility(false);
 
         resetMotionState();
         applyRenderMode();
