@@ -46,11 +46,11 @@
             --star-color-secondary: rgba(31, 186, 255, 1);
             --star-color-secondary-soft: rgba(31, 186, 255, 0.14);
             --star-secondary-offset: 120deg;
-            --fill-goal-start: rgba(17, 153, 142, 0.9);
-            --fill-goal-end: rgba(56, 239, 125, 0.9);
-            --wave-1: rgb(17, 153, 142);
-            --wave-2: rgb(37, 196, 134);
-            --wave-3: rgb(56, 239, 125);
+            --fill-goal-start: rgba(0, 177, 137, 0.9);
+            --fill-goal-end: rgba(83, 252, 24, 0.9);
+            --wave-1: rgb(0, 177, 137);
+            --wave-2: rgb(52, 232, 62);
+            --wave-3: rgb(83, 252, 24);
             --inner-bg: rgb(12, 12, 12);
             --inner-bg-top: rgba(18, 18, 18, 0.985);
             --inner-bg-mid: rgba(10, 10, 10, 0.97);
@@ -344,12 +344,11 @@
             font-size: 25px;
             font-weight: 700;
             letter-spacing: 4px;
-            background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 20%, #e0e0e0 40%,
-                    #a0a0a0 55%, #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            background: none;
+            -webkit-background-clip: border-box;
+            background-clip: border-box;
+            color: #ffffff;
+            -webkit-text-fill-color: #ffffff;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
             margin-bottom: 5px;
         }
@@ -975,16 +974,16 @@
                 '--label-glow': 'rgba(10, 255, 10, 0.3)',
                 '--neon-green-soft': 'rgba(10, 255, 10, 0.1)',
                 '--neon-green-accent': 'rgba(10, 255, 10, 0.3)',
-                '--fill-start': 'rgba(5, 60, 50, 0.95)',
-                '--fill-mid': 'rgba(10, 100, 80, 0.95)',
-                '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
-                '--fill-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-start': 'rgba(0, 177, 137, 0.95)',
+                '--fill-mid': 'rgba(20, 205, 105, 0.95)',
+                '--fill-mid2': 'rgba(52, 232, 62, 0.95)',
+                '--fill-end': 'rgba(83, 252, 24, 0.95)',
                 '--fill-glow-color': 'rgba(56, 239, 125, 0.6)',
-                '--fill-goal-start': 'rgba(17, 153, 142, 0.9)',
-                '--fill-goal-end': 'rgba(56, 239, 125, 0.9)',
-                '--wave-1': 'rgb(17, 153, 142)',
-                '--wave-2': 'rgb(37, 196, 134)',
-                '--wave-3': 'rgb(56, 239, 125)'
+                '--fill-goal-start': 'rgba(0, 177, 137, 0.9)',
+                '--fill-goal-end': 'rgba(83, 252, 24, 0.9)',
+                '--wave-1': 'rgb(0, 177, 137)',
+                '--wave-2': 'rgb(52, 232, 62)',
+                '--wave-3': 'rgb(83, 252, 24)'
             };
 
             const State = {
@@ -1032,7 +1031,7 @@
                 }
 
                 // 2. Star Border Individualism
-                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : themeHue;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
                 const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
                 const starHue2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (starHue + 205);

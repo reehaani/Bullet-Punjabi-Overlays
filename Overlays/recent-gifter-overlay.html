@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -207,7 +207,7 @@
             flex-direction: row;
             align-items: center;
             gap: 20px;
-            padding: 0 8px 0 25px;
+            padding: 0 18px 0 25px;
             pointer-events: none;
             animation: content-parallax 6.2s ease-in-out infinite;
             transform-origin: center center;
@@ -302,11 +302,21 @@
             will-change: transform;
         }
 
+        .ash-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0.85;
+            mix-blend-mode: screen;
+        }
+
         .gifter-label {
             font-family: 'Anton', sans-serif;
             font-size: 24px;
             letter-spacing: 2px;
-            color: transparent;
+            color: #ffffff;
+            -webkit-text-fill-color: #ffffff;
             /* Brighter Premium Metallic */
             background: linear-gradient(180deg,
                     #ffffff 0%,
@@ -332,24 +342,18 @@
             line-height: 1;
             letter-spacing: 1px;
             text-transform: uppercase;
-            /* Brighter Premium Metallic */
-            background: linear-gradient(180deg,
-                    #ffffff 0%,
-                    #ffffff 30%,
-                    #f8f8f8 45%,
-                    #f0f0f0 50%,
-                    #f8f8f8 55%,
-                    #ffffff 70%,
-                    #ffffff 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.5);
+            background: none;
+            -webkit-background-clip: border-box;
+            background-clip: border-box;
+            color: var(--neon-green);
+            -webkit-text-fill-color: var(--neon-green);
+            -webkit-text-stroke: 0.8px rgba(255, 255, 255, 0.25);
             filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
             white-space: nowrap;
             overflow: visible;
             text-overflow: clip;
             max-width: none;
+            padding-right: 12px;
             transition: all 0.5s ease;
             animation: name-drift 4.2s ease-in-out infinite;
             will-change: transform, filter;
@@ -646,6 +650,7 @@
             <div class="poly-sheen"></div>
             <div class="rim-light"></div>
             <div class="micro-noise"></div>
+            <canvas class="ash-layer" id="ash-canvas"></canvas>
 
             <div class="content-layer">
                 <!-- Gift Icon (SVG) -->
@@ -670,6 +675,8 @@
         const surfaceEl = document.getElementById('wave-container');
         const nameEl = document.getElementById('gifter-name');
         const textGroupEl = document.querySelector('.gifter-text-group');
+        const ashCanvas = document.getElementById('ash-canvas');
+        const ashCtx = ashCanvas.getContext('2d', { alpha: true });
         const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         let isBannerVisible = true;
         let pollIntervalMs = BASE_POLL_INTERVAL;
@@ -679,7 +686,112 @@
 
         const MIN_ANCHOR_WIDTH = 420;
         const HORIZONTAL_GUTTER = 40;
-        const FIXED_CHROME_WIDTH = 25 + 8 + 60 + 20 + 8; // left padding + right padding + icon + gap + small safety
+        const FIXED_CHROME_WIDTH = 25 + 18 + 60 + 20 + 8; // left padding + right padding + icon + gap + small safety
+        const ashes = [];
+        const ASH_COUNT = 15;
+        let ashColor = { r: 255, g: 255, b: 255 };
+        let ashW = 0;
+        let ashH = 0;
+        let ashAnimFrame = null;
+        let ashLastTs = 0;
+
+        function parseColorToRgb(input) {
+            const m = (input || '').trim().match(/rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/i);
+            if (!m) return { r: 255, g: 255, b: 255 };
+            return {
+                r: Math.max(0, Math.min(255, Math.round(parseFloat(m[1])))),
+                g: Math.max(0, Math.min(255, Math.round(parseFloat(m[2])))),
+                b: Math.max(0, Math.min(255, Math.round(parseFloat(m[3]))))
+            };
+        }
+
+        function refreshAshColor() {
+            const cssColor =
+                getComputedStyle(document.documentElement).getPropertyValue('--neon-green') ||
+                getComputedStyle(document.documentElement).getPropertyValue('--label-glow') ||
+                'rgba(255,255,255,0.45)';
+            ashColor = parseColorToRgb(cssColor);
+        }
+
+        function resizeAshCanvas() {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            const rect = surfaceEl.getBoundingClientRect();
+            ashW = Math.max(1, Math.floor(rect.width));
+            ashH = Math.max(1, Math.floor(rect.height));
+            ashCanvas.width = Math.floor(ashW * dpr);
+            ashCanvas.height = Math.floor(ashH * dpr);
+            ashCanvas.style.width = ashW + 'px';
+            ashCanvas.style.height = ashH + 'px';
+            ashCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function resetAsh(p) {
+            p.x = -40 - Math.random() * 60;
+            p.y = ashH + Math.random() * 28;
+            p.vx = 0.7 + Math.random() * 0.9;
+            p.vy = 0.35 + Math.random() * 0.55;
+            p.size = 3.2 + Math.random() * 8.0;
+            p.rot = Math.random() * Math.PI * 2;
+            p.vrot = (Math.random() - 0.5) * 0.07;
+            p.alpha = 0.18 + Math.random() * 0.42;
+            p.ttl = 420 + Math.random() * 260;
+            p.age = 0;
+            p.seed = Math.random() * Math.PI * 2;
+        }
+
+        function initAsh() {
+            ashes.length = 0;
+            for (let i = 0; i < ASH_COUNT; i++) {
+                const p = {};
+                resetAsh(p);
+                p.x += Math.random() * ashW;
+                p.y -= Math.random() * ashH;
+                ashes.push(p);
+            }
+        }
+
+        function drawAsh(timestamp) {
+            ashCtx.clearRect(0, 0, ashW, ashH);
+            if (!ashLastTs) ashLastTs = timestamp || performance.now();
+            const rawDt = ((timestamp || performance.now()) - ashLastTs) / 16.6667;
+            const dt = Math.max(0.5, Math.min(1.75, rawDt));
+            ashLastTs = (timestamp || performance.now());
+            const glowEnabled = window.GLOW_KICK_RECT !== false;
+            const opacityMul = glowEnabled ? 1 : 0.35;
+
+            for (let i = 0; i < ashes.length; i++) {
+                const p = ashes[i];
+                p.age += dt;
+                p.x += (p.vx + Math.sin((p.age * 0.05) + p.seed) * 0.18) * dt;
+                p.y -= (p.vy + Math.cos((p.age * 0.04) + p.seed) * 0.08) * dt;
+                p.rot += p.vrot * dt;
+
+                if (p.x > ashW + 28 || p.y < -24 || p.age > p.ttl) {
+                    resetAsh(p);
+                }
+
+                const lifeFade = 1 - (p.age / p.ttl);
+                const a = Math.max(0, p.alpha * lifeFade * opacityMul);
+                if (a <= 0.01) continue;
+
+                ashCtx.save();
+                ashCtx.translate(p.x, p.y);
+                ashCtx.rotate(p.rot);
+                ashCtx.fillStyle = `rgba(${ashColor.r}, ${ashColor.g}, ${ashColor.b}, ${a.toFixed(3)})`;
+                const w = p.size * (0.85 + Math.random() * 0.8);
+                const h = p.size * (0.35 + Math.random() * 0.5);
+                ashCtx.beginPath();
+                ashCtx.moveTo(-w * 0.6, -h * 0.2);
+                ashCtx.lineTo(w * 0.65, -h * 0.45);
+                ashCtx.lineTo(w * 0.38, h * 0.55);
+                ashCtx.lineTo(-w * 0.72, h * 0.35);
+                ashCtx.closePath();
+                ashCtx.fill();
+                ashCtx.restore();
+            }
+
+            ashAnimFrame = requestAnimationFrame(drawAsh);
+        }
 
         function clamp(val, min, max) {
             return Math.min(max, Math.max(min, val));
@@ -818,6 +930,17 @@
 
         resetMotionState();
         applyRenderMode();
+
+        refreshAshColor();
+        resizeAshCanvas();
+        initAsh();
+        if (!ashAnimFrame) ashAnimFrame = requestAnimationFrame(drawAsh);
+        window.addEventListener('resize', resizeAshCanvas);
+        if (window.ResizeObserver) {
+            const ashResizeObserver = new ResizeObserver(resizeAshCanvas);
+            ashResizeObserver.observe(surfaceEl);
+        }
+
         pollAll();
     </script>
 
@@ -892,15 +1015,16 @@
                     document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS || 1.0})`;
 
                     const glow = window.GLOW_KICK_RECT !== false; // Reuse rect glow for consistency in top area
-                    const label = document.querySelector('.gifter-label');
+                    const name = document.querySelector('.gifter-name');
 
                     if (glow) {
-                        if (label) label.classList.add('label-glow');
+                        if (name) name.classList.add('text-glow');
                     } else {
-                        if (label) label.classList.remove('label-glow');
+                        if (name) name.classList.remove('text-glow');
                     }
 
                     updateColors();
+                    refreshAshColor();
                 };
                 document.head.appendChild(s);
             }
@@ -917,3 +1041,6 @@
 </body>
 
 </html>
+
+
+

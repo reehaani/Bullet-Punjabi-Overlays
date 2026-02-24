@@ -41,12 +41,12 @@
 
         :root {
             /* === Color Group 3: Progress Bar Fill === */
-            --fill-start: rgba(5, 60, 50, 0.95);
-            --fill-mid: rgba(10, 100, 80, 0.95);
-            --fill-mid2: rgba(30, 170, 80, 0.95);
-            --fill-end: rgba(50, 220, 100, 0.95);
+            --fill-start: rgba(0, 177, 137, 0.95);
+            --fill-mid: rgba(20, 205, 105, 0.95);
+            --fill-mid2: rgba(52, 232, 62, 0.95);
+            --fill-end: rgba(83, 252, 24, 0.95);
             --label-hue-glow: rgba(56, 239, 125, 0.18);
-            --bar-fill-bg: linear-gradient(to right, var(--fill-start), var(--fill-mid) 40%, var(--fill-mid2) 75%, var(--fill-end));
+            --bar-fill-bg: linear-gradient(to right, var(--fill-start) 0%, var(--fill-mid) 20%, var(--fill-mid2) 30%, var(--fill-end) 100%);
 
             /* === Color Group 2: Accent / Star Border === */
             --star-color: #0aff0a;
@@ -772,10 +772,10 @@
             const BASE_COLORS = {
                 '--border-glow-color': 'rgba(10, 255, 10, 0.4)',
                 '--label-glow': 'rgba(10, 255, 10, 0.3)',
-                '--fill-start': 'rgba(5, 60, 50, 0.95)',
-                '--fill-mid': 'rgba(10, 100, 80, 0.95)',
-                '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
-                '--fill-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-start': 'rgba(0, 177, 137, 0.95)',
+                '--fill-mid': 'rgba(20, 205, 105, 0.95)',
+                '--fill-mid2': 'rgba(52, 232, 62, 0.95)',
+                '--fill-end': 'rgba(83, 252, 24, 0.95)',
                 '--label-hue-glow': 'rgba(56, 239, 125, 0.18)',
                 '--fill-glow-color': 'rgba(56, 239, 125, 0.4)'
             };
@@ -825,7 +825,7 @@
                 }
 
                 // 2. Star Border Individualism
-                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : themeHue;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
                 const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
                 const starHue2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (starHue + 205);
@@ -918,3 +918,5 @@
 </body>
 
 </html>
+
+

@@ -41,10 +41,10 @@
 
         :root {
             /* === Color Group 3: Progress Bar Fill === */
-            --fill-goal-start: rgba(5, 60, 50, 0.95);
-            --fill-goal-mid: rgba(10, 100, 80, 0.95);
-            --fill-goal-mid2: rgba(30, 170, 80, 0.95);
-            --fill-goal-end: rgba(50, 220, 100, 0.95);
+            --fill-goal-start: rgba(0, 177, 137, 0.95);
+            --fill-goal-mid: rgba(20, 205, 105, 0.95);
+            --fill-goal-mid2: rgba(52, 232, 62, 0.95);
+            --fill-goal-end: rgba(83, 252, 24, 0.95);
             --fill-glow-color: rgba(56, 239, 125, 0.4);
             --bar-fill-bg: linear-gradient(to right, var(--fill-goal-start), var(--fill-goal-mid) 40%, var(--fill-goal-mid2) 75%, var(--fill-goal-end));
             --gloss-intensity: 1;
@@ -694,10 +694,10 @@
     <script>
         (function () {
             const BASE_COLORS = {
-                '--fill-goal-start': 'rgba(5, 60, 50, 0.95)',
-                '--fill-goal-mid': 'rgba(10, 100, 80, 0.95)',
-                '--fill-goal-mid2': 'rgba(30, 170, 80, 0.95)',
-                '--fill-goal-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-goal-start': 'rgba(0, 177, 137, 0.95)',
+                '--fill-goal-mid': 'rgba(20, 205, 105, 0.95)',
+                '--fill-goal-mid2': 'rgba(52, 232, 62, 0.95)',
+                '--fill-goal-end': 'rgba(83, 252, 24, 0.95)',
                 '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
                 '--star-color': '#0aff0a',
                 '--star-color-soft': 'rgba(10, 255, 10, 0.1)'
@@ -724,7 +724,7 @@
                     s.setProperty(k, window.adjustHue(BASE_COLORS[k], h));
                     window.GLOBAL_COLOR_BRIGHTNESS = os; window.GLOBAL_COLOR_SATURATION = osa;
                 }
-                const sh = window.STAR_HUE_OFFSET || 0, ssh = window.STAR_COLOR_BRIGHTNESS || 1.0, ssa = window.STAR_COLOR_SATURATION || 1.0;
+                const sh = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : h, ssh = window.STAR_COLOR_BRIGHTNESS || 1.0, ssa = window.STAR_COLOR_SATURATION || 1.0;
                 const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);
                 const ssh2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : 1.6;
                 const ssa2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : 1.0;

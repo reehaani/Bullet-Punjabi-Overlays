@@ -41,12 +41,12 @@
 
         :root {
             /* === Color Group 3: Progress Bar Fill === */
-            --fill-start: rgba(5, 60, 50, 0.95);
-            --fill-mid: rgba(10, 100, 80, 0.95);
-            --fill-mid2: rgba(30, 170, 80, 0.95);
-            --fill-end: rgba(50, 220, 100, 0.95);
+            --fill-start: rgba(0, 177, 137, 0.95);
+            --fill-mid: rgba(20, 205, 105, 0.95);
+            --fill-mid2: rgba(52, 232, 62, 0.95);
+            --fill-end: rgba(83, 252, 24, 0.95);
             --label-hue-glow: rgba(56, 239, 125, 0.18);
-            --bar-fill-bg: linear-gradient(to right, var(--fill-start), var(--fill-mid) 40%, var(--fill-mid2) 75%, var(--fill-end));
+            --bar-fill-bg: linear-gradient(to right, var(--fill-start) 0%, var(--fill-mid) 20%, var(--fill-mid2) 30%, var(--fill-end) 100%);
 
             /* === Color Group 2: Accent / Star Border === */
             --star-color: #0aff0a;
@@ -326,7 +326,7 @@
 
         .content-wrapper.completed {
             justify-content: center;
-            gap: 24px;
+            gap: 20px;
             padding: 0;
             /* Remove padding to allow true mathematical center */
             /* Removed translateY to keep labels on the midline */
@@ -347,13 +347,13 @@
             text-transform: uppercase;
             /* Keep silver metallic with subtle hue tint */
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 30%,
-                    #fbfbfb 46%, #dddddd 58%,
-                    #f6f6f6 74%, #ffffff 88%, #fafafa 100%);
+                    #ffffff 0%, #ffffff 20%,
+                    #e0e0e0 40%, #a0a0a0 55%,
+                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.56);
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
             filter:
                 drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--label-hue-glow));
             transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -779,10 +779,10 @@
             const BASE_COLORS = {
                 '--border-glow-color': 'rgba(10, 255, 10, 0.4)',
                 '--label-glow': 'rgba(10, 255, 10, 0.3)',
-                '--fill-start': 'rgba(5, 60, 50, 0.95)',
-                '--fill-mid': 'rgba(10, 100, 80, 0.95)',
-                '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
-                '--fill-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-start': 'rgba(0, 177, 137, 0.95)',
+                '--fill-mid': 'rgba(20, 205, 105, 0.95)',
+                '--fill-mid2': 'rgba(52, 232, 62, 0.95)',
+                '--fill-end': 'rgba(83, 252, 24, 0.95)',
                 '--label-hue-glow': 'rgba(56, 239, 125, 0.18)',
                 '--fill-glow-color': 'rgba(56, 239, 125, 0.4)'
             };
@@ -832,7 +832,7 @@
                 }
 
                 // 2. Star Border Individualism
-                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : themeHue;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
                 const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
                 const starHue2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (starHue + 205);
@@ -925,3 +925,5 @@
 </body>
 
 </html>
+
+

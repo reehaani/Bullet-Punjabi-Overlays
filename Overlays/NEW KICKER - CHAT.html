@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kick OPS Daily Overlay</title>
+  <style>
+    /* === Modern Square Design === */
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;900&display=swap');
+
+    /* ... */
+
+    /* === Typography === */
+    .value {
+      font-family: 'Anton', sans-serif;
+      font-size: 130px;
+      /* Slightly adjusted to balance with Bold Title */
+      line-height: 0.9;
+      color: #fff;
+      margin-top: -15px;
+      /* Visibility Boost: Stroke + Glow */
+      -webkit-text-stroke: 3px rgba(0, 0, 0, 0.5);
+      text-shadow:
+        0 0 20px currentColor,
+        4px 4px 0px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Text Colors per panel */
+    /* We MUST keep color transparent for Metallic Gradient to Work */
+    #panel-chatters .value {
+      color: transparent;
+      /* Darker Glow for better visibility */
+      text-shadow: 0 0 20px #0099ff;
+    }
+    #panel-kicks .value {
+      color: transparent;
+      text-shadow: 0 0 30px var(--neon-red);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      margin-top: 25px;
+      /* Increased from 10px to 25px */
+    }
+
+    .label-daily {
+      font-family: 'Inter', sans-serif;
+      font-size: 25px;
+      /* Increased from 20px */
+      font-weight: 700;
+      letter-spacing: 4px;
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f2f2f2 35%,
+          #b2b2b2 58%,
+          #ededed 78%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-stroke: 0.7px rgba(255, 255, 255, 0.35);
+      margin-bottom: 5px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95));
+    }
+
+    .label-type {
+      font-family: 'Inter', sans-serif;
+      font-size: 80px;
+      /* Increased from 80px */
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f4f4f4 28%,
+          #b5b5b5 50%,
+          #ebebeb 72%,
+          #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-transform: uppercase;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1));
+    }
+
+    @property --chatters-bg-start {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(0, 85, 255, 0.9);
+    }
+
+    @property --chatters-bg-end {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(138, 43, 226, 0.9);
+    }
+    @property --kicks-bg-start {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(0, 177, 137, 0.9);
+    }
+
+    @property --kicks-bg-end {
+      syntax: '<color>';
+      inherits: true;
+      initial-value: rgba(83, 252, 24, 0.9);
+    }
+
+    :root {
+      /* Brighter Cyberpunk Gradients (Inner Backgrounds) */
+      /* Chatters: HIGH ENERGY Electric Blue to Cyber Purple */
+      --chatters-bg-start: rgba(0, 85, 255, 0.9);
+      --chatters-bg-end: rgba(138, 43, 226, 0.9);
+      /* Followers: Neon Green to Teal */
+      /* Kicks: Hot Pink to Orange */
+      --kicks-bg-start: rgba(0, 177, 137, 0.9);
+      --kicks-bg-end: rgba(83, 252, 24, 0.9);
+
+      /* Neon Accent Colors for Border */
+      --neon-blue: #00f2ff;
+      --neon-green: #0aff0a;
+      --neon-red: #ff9900;
+      --spin-speed: 10s;
+      --rim-light-core: rgba(255, 255, 255, 0.92);
+      --rim-light-soft: rgba(255, 255, 255, 0.5);
+      --rim-light-tail: rgba(255, 255, 255, 0.08);
+      --gloss-intensity: 1;
+      --rim-light-intensity: 1;
+      
+      --daily-kicker-color: #0aff0a;
+      --star-hue-primary: 190deg;
+      --star-shade-primary: 1;
+      --star-sat-primary: 1;
+      --star-hue-secondary: 205deg;
+      --star-shade-secondary: 1.6;
+      --star-sat-secondary: 1;
+      --star-secondary-offset: 120deg;
+      transition:
+        --chatters-bg-start 320ms linear,
+        --chatters-bg-end 320ms linear,        --kicks-bg-start 320ms linear,
+        --kicks-bg-end 320ms linear;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      padding: 50px;
+      /* Added Padding for "Breathing Room" */
+      box-sizing: border-box;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      /* Keeps it centered, adjust in OBS positioning */
+      align-items: center;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Container for the rotator */
+    .container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      /* Ensure glow doesn't get cut off */
+    }
+
+    /* === The Panel Structure === */
+    .panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 1s ease, transform 1s ease;
+      z-index: 0;
+
+      /* Base background for the glow to sit on */
+      background: rgba(0, 0, 0, 0.8);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+      /* Drop shadow */
+      overflow: hidden;
+    }
+
+    .panel.active {
+      opacity: 1;
+      transform: scale(1);
+      z-index: 10;
+    }
+
+    /* === The "Star Border" Animation === */
+    /* We create a spinning gradient behind the content, then mask it */
+    .star-border {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg,
+          transparent 0deg,
+          var(--border-color-soft, rgba(255, 255, 255, 0.12)) 8deg,
+          var(--border-color) 30deg,
+          var(--border-color-soft, rgba(255, 255, 255, 0.12)) 52deg,
+          transparent 62deg,
+          transparent 360deg);
+      animation: spin var(--spin-speed) linear infinite;
+      z-index: 1;
+      will-change: transform, filter;
+      filter: hue-rotate(var(--star-hue-primary, 190deg)) saturate(var(--star-sat-primary, 1)) brightness(var(--star-shade-primary, 1));
+      transition: filter 320ms linear;
+      -webkit-mask-image: radial-gradient(circle, transparent 22px, black 28px);
+      mask-image: radial-gradient(circle, transparent 22px, black 28px);
+    }
+
+    /* Secondary star layer controlled by STAR_SECONDARY_* settings */
+    .star-border::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: conic-gradient(from 0deg,
+          transparent 0deg,
+          var(--border-color-secondary-soft, rgba(255, 255, 255, 0.1)) 8deg,
+          var(--border-color-secondary, rgba(255, 255, 255, 0.95)) 30deg,
+          var(--border-color-secondary-soft, rgba(255, 255, 255, 0.1)) 52deg,
+          transparent 62deg,
+          transparent 360deg);
+      opacity: 0.75;
+      transform: rotate(var(--star-secondary-offset, 120deg));
+      will-change: transform, filter;
+      filter: hue-rotate(var(--star-hue-secondary, 205deg)) saturate(var(--star-sat-secondary, 1)) brightness(var(--star-shade-secondary, 1));
+      transition: filter 320ms linear, transform 320ms ease;
+    }
+
+    /* Extra bloom tail */
+    .star-border::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: inherit;
+      filter: blur(20px);
+      opacity: 0.65;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* The Inner Content (Sits on top of the spinning border) */
+    .inner-content {
+      position: absolute;
+      inset: 6px;
+      /* Increased border thickness for visibility */
+      border-radius: 20px;
+      /* Slightly tighter radius than container */
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      /* Backgrounds applied here */
+      overflow: hidden;
+      /* Clips logo */
+    }
+
+    .rim-light-layer {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      z-index: 9;
+      pointer-events: none;
+      opacity: var(--rim-light-intensity, 1);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 0%, #000 64%, transparent 88%, transparent 100%);
+    }
+
+    .rim-light-layer::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 16px;
+      right: 16px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+          var(--rim-light-tail) 0%,
+          var(--rim-light-core) 40%,
+          var(--rim-light-soft) 78%,
+          rgba(255, 255, 255, 0.06) 100%);
+      filter: blur(0.3px) drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+    }
+
+    /* Panel Specific Styles */
+    #panel-chatters .star-border {
+      --border-color: var(--neon-blue);
+      --border-color-soft: rgba(0, 242, 255, 0.16);
+      --border-color-secondary: #60a8ff;
+      --border-color-secondary-soft: rgba(96, 168, 255, 0.18);
+    }
+
+    #panel-chatters .inner-content {
+      background: linear-gradient(135deg, var(--chatters-bg-start), var(--chatters-bg-end));
+    }
+    #panel-kicks .star-border {
+      --border-color: var(--neon-red);
+      --border-color-soft: rgba(255, 153, 0, 0.18);
+      --border-color-secondary: #ff4db8;
+      --border-color-secondary-soft: rgba(255, 77, 184, 0.18);
+    }
+
+    #panel-kicks .inner-content {
+      background: linear-gradient(135deg, var(--kicks-bg-start), var(--kicks-bg-end));
+    }
+
+    #panel-chatters .inner-content,
+    #panel-kicks .inner-content {
+      transition: background 320ms linear;
+    }
+
+
+    /* === NOISE REMOVED === */
+    .noise-overlay {
+      display: none;
+    }
+
+    /* === Typography === */
+    .value {
+      /* Super Clear Rendering */
+      font-family: 'Anton', sans-serif;
+      font-size: 130px;
+      line-height: 0.9;
+      margin-top: -15px;
+
+      /* === SMOOTH POLISHED METAL (No Horizon Line) === */
+      background: linear-gradient(180deg,
+          #ffffff 10%,
+          #e0e0e0 40%,
+          #b0b0b0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+
+      /* Subtle Rim Light */
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+
+      /* Strong Black Barrier + Subtle Glow */
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 8px var(--text-hue-glow));
+
+      /* Padding */
+      padding-top: 20px;
+      padding-bottom: 20px;
+
+      position: relative;
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      /* Removed Stroke */
+      -webkit-text-stroke: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 5px var(--text-hue-glow);
+      z-index: 10;
+      position: relative;
+    }
+
+    .watermark-logo {
+      position: absolute;
+      bottom: -40px;
+      right: -10px;
+      /* Moved left (was -30px) */
+      width: 240px;
+      /* Increased size (was 180px) */
+      height: auto;
+      opacity: 0.35;
+      z-index: 1;
+      pointer-events: none;
+
+      /* 3D Tilt & Rotation */
+      transform: rotate(15deg) perspective(800px) rotateY(-25deg) rotateX(10deg);
+      transform-origin: bottom right;
+
+      /* Gradient Opacity Mask */
+      -webkit-mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+      mask-image: linear-gradient(to top left, rgba(0, 0, 0, 1) 20%, rgba(0, 0, 0, 0) 80%);
+    }
+
+    /* Ensure Text is ABOVE plasma */
+    /* === 2. CHROMATIC ABERRATION (Refined - Less Boxy, More Scanline) === */
+    @keyframes glitch-skew {
+      0% {
+        transform: skew(0deg);
+      }
+
+      10% {
+        transform: skew(-4deg);
+      }
+
+      20% {
+        transform: skew(3deg);
+      }
+
+      30% {
+        transform: skew(-2deg);
+      }
+
+      40% {
+        transform: skew(4deg);
+      }
+
+      50% {
+        transform: skew(-1deg);
+      }
+
+      100% {
+        transform: skew(0deg);
+      }
+    }
+
+    .value.glitch-active {
+      animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+      color: #fff;
+      position: relative;
+    }
+
+    .value.glitch-active::before,
+    .value.glitch-active::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+      background: transparent;
+      /* No background to avoid boxy look */
+    }
+
+    .value.glitch-active::before {
+      color: #0ff;
+      z-index: -1;
+      animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+      text-shadow: 2px 0 #0ff;
+    }
+
+    .value.glitch-active::after {
+      color: #f0f;
+      z-index: -2;
+      animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
+      text-shadow: -2px 0 #f0f;
+    }
+
+    /* Thinner slices (Scanlines) to fix "Boxy" look */
+    /* AMPLIFIED GLITCH: Bigger offsets (12px instead of 4px) */
+    @keyframes glitch-anim-1 {
+      0% {
+        clip-path: inset(20% 0 79% 0);
+        transform: translate(-12px, 0);
+      }
+
+      20% {
+        clip-path: inset(60% 0 38% 0);
+        transform: translate(12px, 0);
+      }
+
+      40% {
+        clip-path: inset(40% 0 58% 0);
+        transform: translate(-12px, 0);
+      }
+
+      60% {
+        clip-path: inset(80% 0 18% 0);
+        transform: translate(12px, 0);
+      }
+
+      80% {
+        clip-path: inset(10% 0 88% 0);
+        transform: translate(-12px, 0);
+      }
+
+      100% {
+        clip-path: inset(30% 0 68% 0);
+        transform: translate(12px, 0);
+      }
+    }
+
+    @keyframes glitch-anim-2 {
+      0% {
+        clip-path: inset(10% 0 88% 0);
+        transform: translate(12px, 0);
+      }
+
+      20% {
+        clip-path: inset(30% 0 68% 0);
+        transform: translate(-12px, 0);
+      }
+
+      40% {
+        clip-path: inset(15% 0 82% 0);
+        transform: translate(12px, 0);
+      }
+
+      60% {
+        clip-path: inset(55% 0 42% 0);
+        transform: translate(-12px, 0);
+      }
+
+      80% {
+        clip-path: inset(40% 0 58% 0);
+        transform: translate(12px, 0);
+      }
+
+      100% {
+        clip-path: inset(70% 0 28% 0);
+        transform: translate(-12px, 0);
+      }
+    }
+
+    /* === 3. SPARKS (Canvas) === */
+    #sparks-canvas {
+      position: fixed;
+      /* Fixed relative to window (OBS Source) */
+      top: -1000px;
+      left: -1000px;
+      width: 4000px;
+      height: 4000px;
+      pointer-events: none;
+      z-index: 5;
+      /* On top of border but below active panel if z-index is super high? No, sparks fly outwardly */
+    }
+
+    .subtitle {
+      display: none;
+    }
+
+    /* Hidden as requested "clean look" */
+
+    /* Debug */
+    .debug {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: #0f0;
+      background: #000;
+      padding: 5px;
+      opacity: 0;
+    }
+
+    .debug.show {
+      opacity: 1;
+    }
+
+    /* === Legend/OPS Text Theme Upgrade === */
+    .silver-metallic {
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #fdfdfd 20%,
+          #ececec 42%,
+          #d6d6d6 56%,
+          #efefef 72%,
+          #ffffff 86%,
+          #f3f3f3 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.55);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.3)) drop-shadow(0 0 10px var(--text-hue-glow));
+      display: inline-block;
+      background-repeat: no-repeat;
+    }
+
+    .gold-metallic {
+      background: linear-gradient(180deg,
+          #ffed8a 0%,
+          #fcd04d 25%,
+          #d4af37 50%,
+          #8a6d3b 75%,
+          #d4af37 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      -webkit-text-stroke: 1.5px rgba(255, 230, 0, 0.4);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 38px rgba(255, 215, 0, 0.35));
+      display: inline-block;
+      background-repeat: no-repeat;
+    }
+
+    .value {
+      font-size: 114px !important;
+      line-height: 0.9 !important;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35) !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    .label-daily {
+      font-size: 20px !important;
+      letter-spacing: 3.5px !important;
+      color: #ffffff !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      -webkit-text-stroke: 0 !important;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.92)) !important;
+    }
+
+    .label-type {
+      font-size: 70px !important;
+      letter-spacing: 0.8px !important;
+    }
+
+    /* Slightly larger title labels for Chat/Subs panels only */
+    #panel-chatters .label-daily {
+      font-size: 24px !important;
+      letter-spacing: 3.8px !important;
+    }
+
+    #panel-chatters .label-type {
+      font-size: 78px !important;
+      letter-spacing: 1px !important;
+    }
+    /* OBS-safe fallback for alphabet labels (prevents black letters) */
+    .label-type.silver-metallic,
+    .label-daily.silver-metallic {
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      background-clip: border-box !important;
+      color: #f2f2f2 !important;
+      -webkit-text-fill-color: #f2f2f2 !important;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.38) !important;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px var(--text-hue-glow)) !important;
+    }
+
+    #panel-kicks .label-daily {
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+
+    #panel-chatters .value,
+    #panel-kicks .value {
+      text-shadow: none !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+      .silver-metallic,
+      .gold-metallic {
+        color: #f5f5f5 !important;
+        -webkit-text-fill-color: #f5f5f5 !important;
+        background: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <canvas id="sparks-canvas"></canvas>
+
+    <!-- SVG Filter for Plasma Storm -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+      <defs>
+        <filter id="plasma-noise">
+          <feTurbulence id="turbulence-layer" type="fractalNoise" baseFrequency="0.65" numOctaves="3" seed="0" />
+          <feDisplacementMap in="SourceGraphic" scale="20" />
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- Chatters -->
+    <div id="panel-chatters" class="panel active">
+      <div class="star-border"></div>
+      <div class="inner-content">
+        <div class="noise-overlay"></div>
+        <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        <div id="chatters-value" class="value silver-metallic" data-text="0">0</div>
+        <div class="title">
+          <span class="label-daily">DAILY</span>
+          <span class="label-type silver-metallic">CHAT</span>
+        </div>
+        <div class="rim-light-layer"></div>
+      </div>
+    </div>
+
+    <!-- Kicks -->
+    <div id="panel-kicks" class="panel">
+      <div class="star-border"></div>
+      <div class="inner-content">
+        <div class="noise-overlay"></div>
+        <img src="../Logo/Logo.png" class="watermark-logo" alt="logo">
+        <div id="kicks-value" class="value silver-metallic" data-text="0">0</div>
+        <div class="title">
+          <span class="label-daily">DAILY</span>
+          <span class="label-type silver-metallic">KICKS</span>
+        </div>
+        <div class="rim-light-layer"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="debug" class="debug"></div>
+
+  <script>
+    // === CONFIG ===
+    const ROTATE_MS = 15000;
+    const POLL_INTERVAL = 120;
+    // Default fallback
+    window.ENABLE_BULLETS = true;
+
+    // === ROTATION LOGIC (Defined First) ===
+    let currentIndex = 0;
+    const panels = [
+      document.getElementById("panel-chatters"),
+            document.getElementById("panel-kicks")
+    ];
+
+    function nextPanel() {
+      // Fade out current
+      panels[currentIndex].classList.remove("active");
+
+      // Advance
+      currentIndex = (currentIndex + 1) % panels.length;
+
+      // Fade in next
+      panels[currentIndex].classList.add("active");
+    }
+
+    setInterval(nextPanel, ROTATE_MS);
+
+    // === BULLET CASING PARTICLES ===
+    const canvas = document.getElementById('sparks-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let bullets = [];
+
+    function resize() {
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Casing {
+      constructor(isBurst = false) {
+        this.reset(isBurst);
+      }
+      reset(isBurst = false) {
+        // Find the container position to spawn relative to it
+        const container = document.querySelector('.container');
+        const cRect = container.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // Calculate center of container relative to canvas
+        // Canvas is offset (-1000, -1000), so we subtract canvasRect.left
+        const spawnX = (cRect.left + cRect.width / 2) - canvasRect.left;
+        const spawnY = cRect.top - canvasRect.top; // Top of container
+
+        // Eject slightly above center
+        this.x = spawnX + (Math.random() * 40 - 20);
+        this.y = spawnY + 20; // Slightly inside the top edge
+
+        // Physics: Eject outwards (random L or R)
+        const dir = Math.random() > 0.5 ? 1 : -1;
+
+        if (isBurst) {
+          // BURST MODE: Go Higher!
+          this.vx = (Math.random() * 8 + 4) * dir;
+          this.vy = -(Math.random() * 15 + 20); // SUPER HIGH
+          this.life = 200;
+        } else {
+          // Standard Stream
+          this.vx = (Math.random() * 6 + 4) * dir;
+          this.vy = -(Math.random() * 10 + 15); // MUCH HIGHER STREAM
+          this.life = 150;
+        }
+
+        this.gravity = 0.4;
+
+        this.angle = Math.random() * Math.PI;
+        this.vAngle = (Math.random() * 0.2 + 0.05) * dir;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity; // Gravity
+        this.angle += this.vAngle;
+
+        this.life--;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        // Draw Brass Casing (HUGE -> 36x96)
+        // Main Body
+        const gradient = ctx.createLinearGradient(-18, 0, 18, 0);
+        gradient.addColorStop(0, '#b8860b');
+        gradient.addColorStop(0.5, '#f0e68c');
+        gradient.addColorStop(1, '#daa520');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(-18, -48, 36, 96);
+
+        // Rim at bottom
+        ctx.fillStyle = '#8b4500';
+        ctx.fillRect(-22, 38, 44, 10);
+
+        ctx.restore();
+      }
+    }
+
+    // === RAPID FIRE LOGIC ===
+    let rapidFireUntil = 0; // Timestamp
+
+    // Spawn a new casing every few frames
+    function animateBullets() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Check global setting (SQUARE)
+      if (typeof window.ENABLE_BULLETS_SQUARE !== 'undefined' && window.ENABLE_BULLETS_SQUARE === false) {
+        requestAnimationFrame(animateBullets);
+        return;
+      }
+
+      const now = Date.now();
+      const isRapidFire = now < rapidFireUntil;
+
+      // Spawn "Stream" only if active event
+      const threshold = 0.98; // Very sparse (approx 1-2 per sec)
+
+      if (isRapidFire && Math.random() > threshold) {
+        bullets.push(new Casing(false)); // False = Standard stream bullet
+      }
+
+      // Cleanup dead bullets (Optimized: Backwards loop to avoid allocation)
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        if (b.y >= height + 50 || b.life <= -50) {
+          bullets.splice(i, 1); // Remove in-place
+        } else {
+          b.update();
+          b.draw();
+        }
+      }
+
+      requestAnimationFrame(animateBullets);
+    }
+    animateBullets();
+
+    // === EXPLOSION LOGIC ===
+    function explodeBullets(count) {
+      for (let i = 0; i < count; i++) {
+        bullets.push(new Casing(true)); // Pass true for 'burst' mode if needed, or just standard
+      }
+    }
+
+    // === HEARTBEAT GLITCH SYSTEM ===
+    function triggerHeartbeatGlitch() {
+      const activePanel = panels[currentIndex];
+      if (!activePanel) return;
+
+      const valueEl = activePanel.querySelector('.value');
+      if (!valueEl) return;
+
+      if (!valueEl.getAttribute('data-text')) {
+        valueEl.setAttribute('data-text', valueEl.textContent);
+      }
+
+      valueEl.classList.remove("glitch-active");
+      void valueEl.offsetWidth;
+      valueEl.classList.add("glitch-active");
+
+      setTimeout(() => valueEl.classList.remove("glitch-active"), 400);
+    }
+    setInterval(triggerHeartbeatGlitch, 1500);
+
+    // === COUNTER ANIMATION WITH GLITCH ===
+    function setAnimatedText(id, newValue) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const numVal = parseInt(newValue) || 0;
+
+      // Check against last known TARGET, not current displayed text
+      const lastTarget = parseInt(el.getAttribute("data-target"));
+
+      // If we are already aiming for this number, ignore.
+      if (lastTarget === numVal) return;
+
+      // Update Target
+      el.setAttribute("data-target", numVal);
+      el.setAttribute("data-text", newValue); // For glitch
+
+      const oldVal = parseInt(el.textContent.replace(/,/g, '')) || 0;
+
+      // Update Rapid Fire Timer (15 Seconds)
+      if (numVal > oldVal) {
+        // ONLY TRIGGER BULLETS FOR SUBS (Followers) AND KICKS
+        if (id !== 'chatters-value') {
+          rapidFireUntil = Date.now() + 5000; // 5 Seconds Stream
+          // No Burst.
+        }
+      }
+
+      // Update padding validation
+      if (isNaN(numVal)) {
+        el.textContent = newValue;
+        return;
+      }
+
+      const isChange = numVal !== oldVal;
+
+      if (isChange) {
+        // Trigger Glitch & BURST
+        el.classList.remove("glitch-active");
+        void el.offsetWidth;
+        el.classList.add("glitch-active");
+        setTimeout(() => el.classList.remove("glitch-active"), 400);
+
+        // REMOVED MASSIVE BURST
+        /*
+        if (numVal > oldVal && id !== 'chatters-value') {
+          explodeBullets(120);
+        }
+        */
+      }
+
+      const duration = Math.max(180, Math.min(480, 140 + Math.abs(numVal - oldVal) * 0.015));
+      animateValue(el, oldVal, numVal, duration);
+    }
+
+    function updateFontSize(obj, text) {
+      const digits = String(text).replace(/\D/g, '').length;
+      let size = 114;
+      obj.style.letterSpacing = "normal";
+
+      if (digits <= 2) size = 114;
+      else if (digits === 3) size = 108;
+      else if (digits === 4) size = 98;
+      else if (digits === 5) size = 86;
+      else if (digits === 6) size = 76;
+      else if (digits === 7) {
+        size = 68;
+        obj.style.letterSpacing = "-0.5px";
+      } else {
+        size = 62;
+        obj.style.letterSpacing = "-1px";
+      }
+
+      obj.style.fontSize = size + "px";
+    }
+
+    function animateValue(obj, start, end, duration) {
+      let startTimestamp = null;
+      if (obj._animFrame) cancelAnimationFrame(obj._animFrame);
+      obj._isAnimating = true;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(progress * (end - start) + start).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
+
+        obj.textContent = current;
+        obj.setAttribute("data-text", current);
+        updateFontSize(obj, current); // Scale on every frame
+
+        if (progress < 1) {
+          obj._animFrame = window.requestAnimationFrame(step);
+        } else {
+          const finalVal = end.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: true });
+          obj.textContent = finalVal;
+          obj.setAttribute("data-text", finalVal);
+          updateFontSize(obj, finalVal);
+          obj._animFrame = null;
+          obj._isAnimating = false;
+        }
+      };
+      obj._animFrame = window.requestAnimationFrame(step);
+    }
+
+    function setText(id, value) {
+      if (id.includes("-value")) {
+        setAnimatedText(id, value);
+      } else {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+    }
+
+    // === DATA POLLING (Multi-File) ===
+    window.updateChatters = function (val, sub) { setText("chatters-value", val); };
+    window.updateKicks = function (val, sub) { setText("kicks-value", val); };
+
+    function injectScript(filename, id) {
+      const old = document.getElementById(id);
+      if (old) old.remove();
+      const s = document.createElement("script");
+      s.src = filename + "?t=" + new Date().getTime();
+      s.id = id;
+      document.body.appendChild(s);
+    }
+
+    // === SETTINGS APPLY ===
+    window.applySettings = function (settings) {
+      if (settings.hue) {
+        document.documentElement.style.setProperty('--hue-rotate', settings.hue + 'deg');
+      }
+      if (window.GLOBAL_BRIGHTNESS !== undefined) {
+        document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS})`;
+      }
+    };
+
+    function pollAll() {
+      injectScript("../Data/data_chatters.js", "script-chatters");
+      injectScript("../Data/data_kicks.js", "script-kicks");
+    }
+    // === BOOT SEQUENCE ===
+    setInterval(pollAll, POLL_INTERVAL);
+    pollAll();
+
+  </script>
+
+  <script>
+    (function () {
+      function applyThemeSync() {
+        if (!window.adjustHue) return;
+        const style = document.documentElement.style;
+
+        const gh = window.GLOBAL_HUE_OFFSET || 0;
+        const gShade = window.GLOBAL_COLOR_BRIGHTNESS || 1.0;
+        const gSat = window.GLOBAL_COLOR_SATURATION || 1.0;
+
+        const os = window.GLOBAL_COLOR_BRIGHTNESS, osa = window.GLOBAL_COLOR_SATURATION;
+        window.GLOBAL_COLOR_BRIGHTNESS = gShade;
+        window.GLOBAL_COLOR_SATURATION = gSat;
+        style.setProperty('--text-hue-glow', window.adjustHue('rgba(10, 255, 10, 0.14)', gh));
+        style.setProperty('--daily-kicker-color', window.adjustHue('#0aff0a', gh));
+        style.setProperty('--chatters-bg-start', window.adjustHue('rgba(0, 85, 255, 0.9)', gh));
+        style.setProperty('--chatters-bg-end', window.adjustHue('rgba(138, 43, 226, 0.9)', gh));
+        style.setProperty('--kicks-bg-start', window.adjustHue('rgba(0, 177, 137, 0.9)', gh));
+        style.setProperty('--kicks-bg-end', window.adjustHue('rgba(83, 252, 24, 0.9)', gh));
+        window.GLOBAL_COLOR_BRIGHTNESS = os;
+        window.GLOBAL_COLOR_SATURATION = osa;
+
+        const sh = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : gh;
+        const sShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
+        const sSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
+        const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : ((sh + 120) % 360);
+        const sShade2 = window.STAR_SECONDARY_COLOR_BRIGHTNESS !== undefined ? window.STAR_SECONDARY_COLOR_BRIGHTNESS : sShade;
+        const sSat2 = window.STAR_SECONDARY_COLOR_SATURATION !== undefined ? window.STAR_SECONDARY_COLOR_SATURATION : sSat;
+        const sOff2 = window.STAR_SECONDARY_OFFSET_DEG !== undefined ? window.STAR_SECONDARY_OFFSET_DEG : 120;
+        const spin = window.STAR_SPIN_SPEED !== undefined ? window.STAR_SPIN_SPEED : 10.0;
+        window.GLOBAL_COLOR_BRIGHTNESS = sShade;
+        window.GLOBAL_COLOR_SATURATION = sSat;
+        style.setProperty('--neon-blue', window.adjustHue('#00f2ff', sh));
+        style.setProperty('--neon-green', window.adjustHue('#0aff0a', sh));
+        style.setProperty('--neon-red', window.adjustHue('#ff9900', sh));
+        window.GLOBAL_COLOR_BRIGHTNESS = os;
+        window.GLOBAL_COLOR_SATURATION = osa;
+        style.setProperty('--star-hue-primary', `${sh}deg`);
+        style.setProperty('--star-shade-primary', `${sShade}`);
+        style.setProperty('--star-sat-primary', `${sSat}`);
+        style.setProperty('--star-hue-secondary', `${sh2}deg`);
+        style.setProperty('--star-shade-secondary', `${sShade2}`);
+        style.setProperty('--star-sat-secondary', `${sSat2}`);
+        style.setProperty('--star-secondary-offset', `${sOff2}deg`);
+        style.setProperty('--spin-speed', `${Math.max(2, spin)}s`);
+
+        const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+        const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
+        const glossMapped = gloss >= 1
+          ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
+          : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
+        const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
+        const rimIntensity = rimValue >= 1
+          ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+          : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
+        document.documentElement.style.filter = `brightness(${bright})`;
+        style.setProperty('--gloss-intensity', glossMapped);
+        style.setProperty('--rim-light-intensity', rimIntensity);
+      }
+
+      function loadSettings() {
+        const old = document.getElementById('ops-theme-settings');
+        if (old) old.remove();
+        const s = document.createElement('script');
+        s.src = '../Settings/settings.js?t=' + Date.now();
+        s.id = 'ops-theme-settings';
+        s.onload = applyThemeSync;
+        document.body.appendChild(s);
+      }
+
+      loadSettings();
+      setInterval(loadSettings, 120);
+    })();
+  </script>
+</body>
+
+</html>
+
+
+
+
+
+

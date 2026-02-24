@@ -505,7 +505,7 @@
                 window.GLOBAL_COLOR_SATURATION = osa;
             }
 
-            const sh = window.STAR_HUE_OFFSET || 0;
+            const sh = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : h;
             const ssh = window.STAR_COLOR_BRIGHTNESS || 1.0;
             const ssa = window.STAR_COLOR_SATURATION || 1.0;
             const sh2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (sh + 205);

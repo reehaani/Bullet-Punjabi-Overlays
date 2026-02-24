@@ -39,11 +39,11 @@
         }
 
         :root {
-            --fill-start: rgba(5, 60, 50, 0.95);
-            --fill-mid: rgba(10, 100, 80, 0.95);
-            --fill-mid2: rgba(30, 170, 80, 0.95);
-            --fill-end: rgba(50, 220, 100, 0.95);
-            --bar-fill-bg: linear-gradient(to right, var(--fill-start), var(--fill-mid) 40%, var(--fill-mid2) 75%, var(--fill-end));
+            --fill-start: rgba(0, 177, 137, 0.95);
+            --fill-mid: rgba(20, 205, 105, 0.95);
+            --fill-mid2: rgba(52, 232, 62, 0.95);
+            --fill-end: rgba(83, 252, 24, 0.95);
+            --bar-fill-bg: linear-gradient(to right, var(--fill-start) 0%, var(--fill-mid) 20%, var(--fill-mid2) 30%, var(--fill-end) 100%);
             --fill-glow-color: rgba(56, 239, 125, 0.4);
             --label-hue-glow: rgba(56, 239, 125, 0.18);
             --star-color: #0aff0a;
@@ -328,29 +328,34 @@
             font-weight: 900;
             letter-spacing: 2px;
             text-transform: uppercase;
+            /* Keep silver metallic with subtle hue tint */
             background: linear-gradient(180deg,
-                    #ffffff 0%, #ffffff 30%,
-                    #fbfbfb 46%, #dddddd 58%,
-                    #f6f6f6 74%, #ffffff 88%, #fafafa 100%);
+                    #ffffff 0%, #ffffff 20%,
+                    #e0e0e0 40%, #a0a0a0 55%,
+                    #c8c8c8 70%, #ffffff 85%, #e0e0e0 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.56);
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--label-hue-glow));
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
         }
 
         .completed-tag {
             font-family: 'Anton', sans-serif;
-            font-size: 18px;
+            font-size: 36px;
             color: #000;
             background: linear-gradient(135deg, #ffed8a, #d4af37, #8a6d3b);
-            padding: 2px 10px;
-            border-radius: 6px;
+            padding: 2px 15px;
+            border-radius: 8px;
             text-transform: uppercase;
             display: none;
             animation: tag-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-            box-shadow: 0 0 16px rgba(212, 175, 55, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow:
+                0 0 20px rgba(212, 175, 55, 0.8),
+                0 0 40px rgba(255, 230, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         @keyframes tag-pop {
@@ -430,8 +435,7 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
         }
 
-        .content-wrapper.completed .current-val,
-        .content-wrapper.completed .target-val {
+        .content-wrapper.completed .numbers span {
             background: linear-gradient(180deg,
                     #ffed8a 0%,
                     #fcd04d 25%,
@@ -448,7 +452,7 @@
 
         .content-wrapper.completed {
             justify-content: center;
-            gap: 16px;
+            gap: 20px;
         }
 
         .current-flash {
@@ -470,9 +474,6 @@
             }
         }
 
-        .text-glow {
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 1)) drop-shadow(0 0 10px var(--fill-glow-color)) !important;
-        }
     </style>
 </head>
 
@@ -604,10 +605,10 @@
     <script>
         (function () {
             const BASE_COLORS = {
-                '--fill-start': 'rgba(5, 60, 50, 0.95)',
-                '--fill-mid': 'rgba(10, 100, 80, 0.95)',
-                '--fill-mid2': 'rgba(30, 170, 80, 0.95)',
-                '--fill-end': 'rgba(50, 220, 100, 0.95)',
+                '--fill-start': 'rgba(0, 177, 137, 0.95)',
+                '--fill-mid': 'rgba(20, 205, 105, 0.95)',
+                '--fill-mid2': 'rgba(52, 232, 62, 0.95)',
+                '--fill-end': 'rgba(83, 252, 24, 0.95)',
                 '--fill-glow-color': 'rgba(56, 239, 125, 0.4)',
                 '--label-hue-glow': 'rgba(56, 239, 125, 0.18)'
             };
@@ -648,7 +649,7 @@
                     window.GLOBAL_COLOR_SATURATION = oldSat;
                 }
 
-                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : 0;
+                const starHue = window.STAR_HUE_OFFSET !== undefined ? window.STAR_HUE_OFFSET : hue;
                 const starShade = window.STAR_COLOR_BRIGHTNESS !== undefined ? window.STAR_COLOR_BRIGHTNESS : 1.0;
                 const starSat = window.STAR_COLOR_SATURATION !== undefined ? window.STAR_COLOR_SATURATION : 1.0;
                 const starHue2 = window.STAR_SECONDARY_HUE_OFFSET !== undefined ? window.STAR_SECONDARY_HUE_OFFSET : (starHue + 205);
@@ -720,13 +721,6 @@
                 if (starWrap) starWrap.style.opacity = glow ? '1' : '0';
                 if (rim) rim.style.opacity = glow ? String(rimIntensity) : '0';
 
-                const label = document.getElementById('subgoal-label');
-                const numbers = document.getElementById('number-group');
-                if (glow) {
-                    if (label) label.classList.add('text-glow');
-                } else {
-                    if (label) label.classList.remove('text-glow');
-                }
             }
 
             loadSettings();
