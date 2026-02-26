@@ -44,9 +44,9 @@
             left: 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 6px;
             padding: 10px 24px 10px 18px;
-            min-width: 460px;
+            min-width: 0;
             background: linear-gradient(135deg,
                     rgba(8, 8, 8, 0.985),
                     rgba(14, 14, 14, 0.97) 40%,
@@ -117,87 +117,118 @@
 
         /* === Kick K icon === */
         .kick-icon {
-            width: 48px;
-            height: 48px;
+            width: 104px;
+            height: 104px;
             flex-shrink: 0;
+            position: relative;
+            order: 3;
+            margin-left: 4px;
+            overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
-            perspective: 700px;
+            perspective: 1200px;
             transform-style: preserve-3d;
             transform: rotateZ(-6deg);
-            animation: kick-orbit 3.2s linear infinite;
+            animation: kick-orbit 4.2s ease-in-out infinite;
         }
 
-        .kick-k {
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-size: 44px;
-            line-height: 0.9;
-            transform: scaleX(1.08);
-            display: inline-block;
+        .kick-k-model {
+            width: 104px;
+            height: 104px;
+            display: block;
             position: relative;
             transform-style: preserve-3d;
-            animation: kick-spin-3d 3.2s linear infinite;
-            color: var(--kick-k-color);
-            text-shadow:
-                0.5px 0.8px 0 rgba(0, 0, 0, 0.55),
-                1.1px 1.6px 0 rgba(0, 0, 0, 0.5),
-                1.8px 2.4px 0 rgba(0, 0, 0, 0.45),
-                2.6px 3.2px 0 rgba(0, 0, 0, 0.4),
-                3.4px 4px 0 rgba(0, 0, 0, 0.34),
-                0 2px 4px rgba(0, 0, 0, 0.75),
-                0 0 12px var(--kick-k-glow),
-                0 0 24px var(--kick-k-glow);
-            -webkit-text-stroke: 0.85px rgba(255, 255, 255, 0.42);
+            transform-origin: 50% 50%;
+            animation: none;
+            overflow: visible;
         }
 
-        .kick-k::before,
-        .kick-k::after {
-            content: 'K';
-            position: absolute;
-            inset: 0;
+        .kick-k-viewport {
+            width: calc(100% + 12px);
+            height: calc(100% + 12px);
+            margin: -6px;
+            display: block;
+            background: transparent;
             pointer-events: none;
+            filter: drop-shadow(0 0 10px var(--kick-k-glow)) drop-shadow(0 0 20px var(--kick-k-glow)) drop-shadow(0 0 34px var(--kick-k-glow));
+            overflow: visible;
         }
 
-        .kick-k::before {
-            color: rgba(0, 0, 0, 0.52);
-            transform: translate(2.6px, 2.4px);
-            filter: blur(0.35px);
-            z-index: -2;
+        .kick-k-viewport canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            background: transparent !important;
         }
 
-        .kick-k::after {
-            color: rgba(255, 255, 255, 0.3);
-            transform: translate(-1.2px, -1.1px);
-            z-index: -1;
+        .kick-k-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+
+        .k-logo-mesh {
+            transform: translateZ(4px);
+            transform-origin: 50% 50%;
+        }
+
+        .k-logo-mesh .k-body polygon {
+            fill: color-mix(in srgb, var(--kick-k-color) 68%, black);
+            stroke: color-mix(in srgb, var(--kick-k-color) 54%, black);
+            stroke-width: 0.55;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .k-logo-mesh .k-front polygon {
+            fill: var(--kick-k-color);
+            stroke: rgba(255, 255, 255, 0.42);
+            stroke-width: 0.9;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .k-logo-mesh .k-front {
+            filter: drop-shadow(0 0 8px var(--kick-k-glow)) drop-shadow(0 0 16px var(--kick-k-glow));
+        }
+
+        .k-logo-mesh .k-spec polygon {
+            fill: rgba(255, 255, 255, 0.28);
+            stroke: rgba(255, 255, 255, 0.12);
+            stroke-width: 0.45;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .k-logo-mesh .k-spec {
+            transform: translate(-0.9px, -0.7px);
+            opacity: 0.9;
         }
 
         @keyframes kick-orbit {
             0% {
-                transform: rotateZ(-6deg) rotateY(0deg);
+                transform: rotateZ(-6deg) translateY(0px);
             }
 
             50% {
-                transform: rotateZ(-6deg) rotateY(16deg);
+                transform: rotateZ(-6deg) translateY(-1px);
             }
 
             100% {
-                transform: rotateZ(-6deg) rotateY(0deg);
+                transform: rotateZ(-6deg) translateY(0px);
             }
         }
 
         @keyframes kick-spin-3d {
             0% {
-                transform: rotateY(0deg) rotateX(0deg) scaleX(1.08);
+                transform: rotateY(-16deg) rotateX(6deg) scaleX(1.08);
             }
 
             50% {
-                transform: rotateY(180deg) rotateX(8deg) scaleX(1.08);
+                transform: rotateY(180deg) rotateX(16deg) scaleX(1.08);
             }
 
             100% {
-                transform: rotateY(360deg) rotateX(0deg) scaleX(1.08);
+                transform: rotateY(344deg) rotateX(6deg) scaleX(1.08);
             }
         }
 
@@ -234,16 +265,25 @@
             color: var(--kick-k-color) !important;
             -webkit-text-fill-color: var(--kick-k-color) !important;
             -webkit-text-stroke: 0.7px rgba(255, 255, 255, 0.28);
-            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 10px var(--kick-k-glow));
+            text-shadow:
+                -1px -1px 0 rgba(255, 255, 255, 0.78),
+                -2px -2px 5px rgba(255, 255, 255, 0.24),
+                -2px -2px 7px color-mix(in srgb, var(--kick-k-glow) 66%, white 18%);
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 7px var(--kick-k-glow));
         }
 
         .kicker-text-group {
             display: flex;
             flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
             gap: 2px;
             position: relative;
             z-index: 20;
-            min-width: 280px;
+            min-width: 0;
+            width: max-content;
+            max-width: 100%;
+            margin-left: auto;
         }
 
         .ash-layer {
@@ -302,8 +342,12 @@
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-stroke: 1px rgba(255, 230, 0, 0.4);
+            text-shadow:
+                -1px -1px 0 rgba(255, 250, 210, 0.84),
+                -2px -2px 6px rgba(255, 230, 120, 0.30),
+                -2px -2px 9px rgba(255, 220, 90, 0.24);
             filter:
-                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 16px rgba(212, 175, 55, 0.72)) drop-shadow(0 0 24px rgba(255, 215, 0, 0.30));
         }
 
         .gold-applied.kicker-container {
@@ -320,8 +364,10 @@
 
     <div class="kicker-container" id="kicker-container">
         <!-- Kick K icon -->
-        <div class="kick-icon">
-            <span class="kick-k">K</span>
+        <div class="kick-icon" aria-hidden="true">
+            <span class="kick-k-model">
+                <div class="kick-k-viewport" id="kick-k-viewport" aria-hidden="true"></div>
+            </span>
         </div>
 
         <canvas class="ash-layer" id="ash-canvas"></canvas>
@@ -423,7 +469,7 @@
             p.y = ashH + Math.random() * 22;
             p.vx = 0.35 + Math.random() * 1.15;
             p.vy = 0.45 + Math.random() * 1.35;
-            p.size = 1 + Math.random() * 2.4;
+            p.size = 4 + Math.random() * 9.6;
             p.rot = Math.random() * Math.PI * 2;
             p.vrot = (Math.random() - 0.5) * 0.07;
             p.alpha = 0.2 + Math.random() * 0.5;
@@ -707,6 +753,138 @@
 
             loadSettings();
             setInterval(loadSettings, 300);
+        })();
+    </script>
+    <script src="../Scripts/vendor/three.min.js"></script>
+    <script src="../Scripts/vendor/GLTFLoader.js"></script>
+    <script>
+        (function initKickLogo3D() {
+            const host = document.getElementById('kick-k-viewport');
+            if (!host || !window.THREE || !THREE.GLTFLoader) return;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setClearColor(0x000000, 0);
+            if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
+            if ('toneMapping' in renderer) renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            if ('toneMappingExposure' in renderer) renderer.toneMappingExposure = 1.35;
+            host.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 100);
+            camera.position.set(1.34, 0.86, 3.18);
+            camera.lookAt(0, 0, 0);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const key = new THREE.DirectionalLight(0xffffff, 1.25);
+            key.position.set(2, 2, 2);
+            scene.add(key);
+            const rim = new THREE.DirectionalLight(0x88aaff, 0.7);
+            rim.position.set(-2, 1.2, -2);
+            scene.add(rim);
+
+            let model = null;
+            let spin = 0;
+            const syncedMaterials = [];
+
+            function readKickColor() {
+                const raw = getComputedStyle(document.documentElement).getPropertyValue('--kick-k-color').trim() || '#0aff0a';
+                try { return new THREE.Color(raw); } catch (_) { return new THREE.Color('#0aff0a'); }
+            }
+
+            function syncModelTheme(force = false) {
+                if (!syncedMaterials.length) return;
+                const c = readKickColor();
+                for (const m of syncedMaterials) {
+                    if (!m) continue;
+                    if (m.color) {
+                        if (force) m.color.copy(c);
+                        else m.color.lerp(c, 0.22);
+                    }
+                    if ('emissive' in m && m.emissive) {
+                        if (force) m.emissive.copy(c);
+                        else m.emissive.lerp(c, 0.25);
+                        m.emissiveIntensity = 0.75;
+                    }
+                    if ('metalness' in m) m.metalness = Math.max(m.metalness ?? 0.6, 0.82);
+                    if ('roughness' in m) m.roughness = Math.min(m.roughness ?? 0.35, 0.16);
+                    m.needsUpdate = false;
+                }
+            }
+
+            function fitModel(obj) {
+                const box = new THREE.Box3().setFromObject(obj);
+                const size = new THREE.Vector3();
+                const center = new THREE.Vector3();
+                box.getSize(size);
+                box.getCenter(center);
+
+                obj.position.sub(center);
+                const maxDim = Math.max(size.x, size.y, size.z || 0.001);
+                const scale = 1.16 / maxDim;
+                obj.scale.setScalar(scale);
+
+                const box2 = new THREE.Box3().setFromObject(obj);
+                const center2 = new THREE.Vector3();
+                box2.getCenter(center2);
+                obj.position.sub(center2);
+                obj.position.y += 0.02;
+            }
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('../Logo/k-metal-1.glb', (gltf) => {
+                model = gltf.scene || gltf.scenes?.[0];
+                if (!model) return;
+
+                fitModel(model);
+
+                model.traverse((n) => {
+                    if (!n.isMesh || !n.material) return;
+                    const mats = Array.isArray(n.material) ? n.material : [n.material];
+                    mats.forEach((m) => {
+                        if (!syncedMaterials.includes(m)) syncedMaterials.push(m);
+                        if ('emissive' in m && !m.emissive) m.emissive = new THREE.Color(0x000000);
+                        m.needsUpdate = true;
+                    });
+                });
+
+                syncModelTheme(true);
+                scene.add(model);
+            });
+
+            function resize() {
+                const r = host.getBoundingClientRect();
+                const w = Math.max(1, Math.round(r.width));
+                const h = Math.max(1, Math.round(r.height));
+                renderer.setSize(w, h, false);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+            }
+
+            let lastTs = 0;
+            function animate(ts) {
+                const dt = Math.min(0.05, ((ts - (lastTs || ts)) / 1000) || 0.016);
+                lastTs = ts;
+
+                if (model) {
+                    spin += dt * 1.15;
+                    model.rotation.y = 0.92 + spin;
+                    model.rotation.x = -0.26 + Math.sin(spin * 0.55) * 0.02;
+                    model.rotation.z = -0.08;
+                    syncModelTheme(false);
+                }
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            }
+
+            resize();
+            if (window.ResizeObserver) {
+                const ro = new ResizeObserver(resize);
+                ro.observe(host);
+            } else {
+                window.addEventListener('resize', resize);
+            }
+            requestAnimationFrame(animate);
         })();
     </script>
 </body>
