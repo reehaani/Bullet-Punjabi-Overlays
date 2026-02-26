@@ -68,6 +68,9 @@ DEFAULTS = {
     "GLOBAL_BRIGHTNESS": 1.0,
     "GLOBAL_COLOR_BRIGHTNESS": 1.0,
     "GLOBAL_COLOR_SATURATION": 1.0,
+    "GLOBAL_SECONDARY_HUE_OFFSET": 0,
+    "GLOBAL_SECONDARY_COLOR_BRIGHTNESS": 1.0,
+    "GLOBAL_SECONDARY_COLOR_SATURATION": 1.0,
     "STAR_HUE_OFFSET": 190,
     "STAR_COLOR_BRIGHTNESS": 1.0,
     "STAR_SECONDARY_HUE_OFFSET": 205,
@@ -122,6 +125,9 @@ class HueControllerApp(ctk.CTk):
         self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
         self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
         self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+        self.secondary_hue = DEFAULTS["GLOBAL_SECONDARY_HUE_OFFSET"]
+        self.secondary_color_brightness = DEFAULTS["GLOBAL_SECONDARY_COLOR_BRIGHTNESS"]
+        self.secondary_color_saturation = DEFAULTS["GLOBAL_SECONDARY_COLOR_SATURATION"]
         self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
         self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
         self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
@@ -213,6 +219,27 @@ class HueControllerApp(ctk.CTk):
         ctk.CTkLabel(self.theme_frame, text="COLOR SATURATION", font=("Inter", 9), text_color=COLOR_TEXT).pack()
         self.slider_sat = ctk.CTkSlider(self.theme_frame, from_=0.0, to=2.0, width=380, command=self.on_saturation_change)
         self.slider_sat.pack(pady=(5, 20))
+
+        # Secondary Gradient Hue
+        self.lbl_secondary_hue_val = ctk.CTkLabel(self.theme_frame, text="0 deg", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_secondary_hue_val.pack(pady=(8, 0))
+        ctk.CTkLabel(self.theme_frame, text="SECONDARY GRADIENT HUE", font=("Inter", 9), text_color=COLOR_TEXT).pack()
+        self.slider_secondary_hue = ctk.CTkSlider(self.theme_frame, from_=0, to=360, number_of_steps=360, width=380, command=self.on_secondary_hue_change)
+        self.slider_secondary_hue.pack(pady=(5, 10))
+
+        # Secondary Gradient Shade
+        self.lbl_secondary_shade_val = ctk.CTkLabel(self.theme_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_secondary_shade_val.pack(pady=(8, 0))
+        ctk.CTkLabel(self.theme_frame, text="SECONDARY GRADIENT SHADE", font=("Inter", 9), text_color=COLOR_TEXT).pack()
+        self.slider_secondary_shade = ctk.CTkSlider(self.theme_frame, from_=0.2, to=2.0, width=380, command=self.on_secondary_shade_change)
+        self.slider_secondary_shade.pack(pady=(5, 10))
+
+        # Secondary Gradient Saturation
+        self.lbl_secondary_sat_val = ctk.CTkLabel(self.theme_frame, text="100%", font=("Inter", 20, "bold"), text_color="white")
+        self.lbl_secondary_sat_val.pack(pady=(8, 0))
+        ctk.CTkLabel(self.theme_frame, text="SECONDARY GRADIENT SATURATION", font=("Inter", 9), text_color=COLOR_TEXT).pack()
+        self.slider_secondary_sat = ctk.CTkSlider(self.theme_frame, from_=0.0, to=2.0, width=380, command=self.on_secondary_saturation_change)
+        self.slider_secondary_sat.pack(pady=(5, 20))
 
         # === 4. Accent Controls Card (Left) ===
         self.accent_frame = ctk.CTkFrame(self.left_col, fg_color=COLOR_SURFACE, corner_radius=20)
@@ -554,6 +581,9 @@ class HueControllerApp(ctk.CTk):
                 self.current_brightness = float(re.search(r'GLOBAL_BRIGHTNESS\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOBAL_BRIGHTNESS\s*=\s*([\d\.]+)', content) else 1.0
                 self.current_color_brightness = float(re.search(r'GLOBAL_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOBAL_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content) else 1.0
                 self.current_color_saturation = float(re.search(r'GLOBAL_COLOR_SATURATION\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOBAL_COLOR_SATURATION\s*=\s*([\d\.]+)', content) else 1.0
+                self.secondary_hue = int(re.search(r'GLOBAL_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content).group(1)) if re.search(r'GLOBAL_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content) else self.current_hue
+                self.secondary_color_brightness = float(re.search(r'GLOBAL_SECONDARY_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOBAL_SECONDARY_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content) else self.current_color_brightness
+                self.secondary_color_saturation = float(re.search(r'GLOBAL_SECONDARY_COLOR_SATURATION\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'GLOBAL_SECONDARY_COLOR_SATURATION\s*=\s*([\d\.]+)', content) else self.current_color_saturation
                 self.star_hue = int(re.search(r'STAR_HUE_OFFSET\s*=\s*(\d+)', content).group(1)) if re.search(r'STAR_HUE_OFFSET\s*=\s*(\d+)', content) else 190
                 self.star_shade = float(re.search(r'STAR_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content).group(1)) if re.search(r'STAR_COLOR_BRIGHTNESS\s*=\s*([\d\.]+)', content) else 1.0
                 self.star_secondary_hue = int(re.search(r'STAR_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content).group(1)) if re.search(r'STAR_SECONDARY_HUE_OFFSET\s*=\s*(\d+)', content) else 205
@@ -603,6 +633,9 @@ class HueControllerApp(ctk.CTk):
                 self.slider_bright.set(self.current_brightness)
                 self.slider_shade.set(self.current_color_brightness)
                 self.slider_sat.set(self.current_color_saturation)
+                self.slider_secondary_hue.set(self.secondary_hue)
+                self.slider_secondary_shade.set(self.secondary_color_brightness)
+                self.slider_secondary_sat.set(self.secondary_color_saturation)
                 self.slider_star_hue.set(self.star_hue)
                 self.slider_star_shade.set(self.star_shade)
                 self.slider_star_hue_2.set(self.star_secondary_hue)
@@ -622,6 +655,9 @@ class HueControllerApp(ctk.CTk):
                 self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
                 self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
                 self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
+                self.lbl_secondary_hue_val.configure(text=f"{self.secondary_hue} deg")
+                self.lbl_secondary_shade_val.configure(text=f"{int(self.secondary_color_brightness*100)}%")
+                self.lbl_secondary_sat_val.configure(text=f"{int(self.secondary_color_saturation*100)}%")
                 self.lbl_star_hue.configure(text=f"{self.star_hue} deg")
                 self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
                 self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue} deg")
@@ -638,6 +674,9 @@ class HueControllerApp(ctk.CTk):
             self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
             self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
             self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+            self.secondary_hue = DEFAULTS["GLOBAL_SECONDARY_HUE_OFFSET"]
+            self.secondary_color_brightness = DEFAULTS["GLOBAL_SECONDARY_COLOR_BRIGHTNESS"]
+            self.secondary_color_saturation = DEFAULTS["GLOBAL_SECONDARY_COLOR_SATURATION"]
             self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
             self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
             self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
@@ -668,6 +707,21 @@ class HueControllerApp(ctk.CTk):
     def on_saturation_change(self, value):
         self.current_color_saturation = round(float(value), 2)
         self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
+        self.debounce_write()
+
+    def on_secondary_hue_change(self, value):
+        self.secondary_hue = int(float(value))
+        self.lbl_secondary_hue_val.configure(text=f"{self.secondary_hue} deg")
+        self.debounce_write()
+
+    def on_secondary_shade_change(self, value):
+        self.secondary_color_brightness = round(float(value), 2)
+        self.lbl_secondary_shade_val.configure(text=f"{int(self.secondary_color_brightness*100)}%")
+        self.debounce_write()
+
+    def on_secondary_saturation_change(self, value):
+        self.secondary_color_saturation = round(float(value), 2)
+        self.lbl_secondary_sat_val.configure(text=f"{int(self.secondary_color_saturation*100)}%")
         self.debounce_write()
 
     def on_star_hue_change(self, value):
@@ -738,6 +792,9 @@ class HueControllerApp(ctk.CTk):
             (self.slider_bright, self.on_brightness_change),
             (self.slider_shade, self.on_shade_change),
             (self.slider_sat, self.on_saturation_change),
+            (self.slider_secondary_hue, self.on_secondary_hue_change),
+            (self.slider_secondary_shade, self.on_secondary_shade_change),
+            (self.slider_secondary_sat, self.on_secondary_saturation_change),
             (self.slider_star_hue, self.on_star_hue_change),
             (self.slider_star_shade, self.on_star_shade_change),
             (self.slider_star_hue_2, self.on_star_hue_2_change),
@@ -881,6 +938,9 @@ class HueControllerApp(ctk.CTk):
                 "GLOBAL_BRIGHTNESS": f"{self.current_brightness:.2f}",
                 "GLOBAL_COLOR_BRIGHTNESS": f"{self.current_color_brightness:.2f}",
                 "GLOBAL_COLOR_SATURATION": f"{self.current_color_saturation:.2f}",
+                "GLOBAL_SECONDARY_HUE_OFFSET": str(self.secondary_hue),
+                "GLOBAL_SECONDARY_COLOR_BRIGHTNESS": f"{self.secondary_color_brightness:.2f}",
+                "GLOBAL_SECONDARY_COLOR_SATURATION": f"{self.secondary_color_saturation:.2f}",
                 "STAR_HUE_OFFSET": str(self.star_hue),
                 "STAR_COLOR_BRIGHTNESS": f"{self.star_shade:.2f}",
                 "STAR_SECONDARY_HUE_OFFSET": str(self.star_secondary_hue),
@@ -940,6 +1000,9 @@ class HueControllerApp(ctk.CTk):
             self.current_brightness = DEFAULTS["GLOBAL_BRIGHTNESS"]
             self.current_color_brightness = DEFAULTS["GLOBAL_COLOR_BRIGHTNESS"]
             self.current_color_saturation = DEFAULTS["GLOBAL_COLOR_SATURATION"]
+            self.secondary_hue = DEFAULTS["GLOBAL_SECONDARY_HUE_OFFSET"]
+            self.secondary_color_brightness = DEFAULTS["GLOBAL_SECONDARY_COLOR_BRIGHTNESS"]
+            self.secondary_color_saturation = DEFAULTS["GLOBAL_SECONDARY_COLOR_SATURATION"]
             self.star_hue = DEFAULTS["STAR_HUE_OFFSET"]
             self.star_shade = DEFAULTS["STAR_COLOR_BRIGHTNESS"]
             self.star_secondary_hue = DEFAULTS["STAR_SECONDARY_HUE_OFFSET"]
@@ -957,6 +1020,9 @@ class HueControllerApp(ctk.CTk):
             self.slider_bright.set(self.current_brightness)
             self.slider_shade.set(self.current_color_brightness)
             self.slider_sat.set(self.current_color_saturation)
+            self.slider_secondary_hue.set(self.secondary_hue)
+            self.slider_secondary_shade.set(self.secondary_color_brightness)
+            self.slider_secondary_sat.set(self.secondary_color_saturation)
             self.slider_star_hue.set(self.star_hue)
             self.slider_star_shade.set(self.star_shade)
             self.slider_star_hue_2.set(self.star_secondary_hue)
@@ -976,6 +1042,9 @@ class HueControllerApp(ctk.CTk):
             self.lbl_bright_val.configure(text=f"{int(self.current_brightness*100)}%")
             self.lbl_shade_val.configure(text=f"{int(self.current_color_brightness*100)}%")
             self.lbl_sat_val.configure(text=f"{int(self.current_color_saturation*100)}%")
+            self.lbl_secondary_hue_val.configure(text=f"{self.secondary_hue} deg")
+            self.lbl_secondary_shade_val.configure(text=f"{int(self.secondary_color_brightness*100)}%")
+            self.lbl_secondary_sat_val.configure(text=f"{int(self.secondary_color_saturation*100)}%")
             self.lbl_star_hue.configure(text=f"{self.star_hue} deg")
             self.lbl_star_shade.configure(text=f"{int(self.star_shade*100)}%")
             self.lbl_star_hue_2.configure(text=f"{self.star_secondary_hue} deg")
