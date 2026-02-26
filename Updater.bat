@@ -76,7 +76,16 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo $ErrorActionPreference = 'Stop'
 >> "%PS_SCRIPT%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 >> "%PS_SCRIPT%" echo $headers = @{ 'User-Agent' = 'BulletPunjabiInstaller' }
->> "%PS_SCRIPT%" echo $preserveFiles = @('Settings/settings.js')
+>> "%PS_SCRIPT%" echo $preserveFiles = @(
+>> "%PS_SCRIPT%" echo   'Settings/settings.js',
+>> "%PS_SCRIPT%" echo   'Data/data_chatters.js',
+>> "%PS_SCRIPT%" echo   'Data/data_followers.js',
+>> "%PS_SCRIPT%" echo   'Data/data_kicks.js',
+>> "%PS_SCRIPT%" echo   'Data/data_tips.js'
+>> "%PS_SCRIPT%" echo )
+>> "%PS_SCRIPT%" echo $excludeFiles = @(
+>> "%PS_SCRIPT%" echo   'Settings/install-sync-report.txt'
+>> "%PS_SCRIPT%" echo )
 >> "%PS_SCRIPT%" echo $preservedBytes = @{}
 >> "%PS_SCRIPT%" echo $reportPath = Join-Path $TargetDir 'Settings/install-sync-report.txt'
 >> "%PS_SCRIPT%" echo $stats = [ordered]@{ Planned = 0; Added = 0; Updated = 0; Unchanged = 0; Preserved = 0; LockedSkipped = 0; OptionalSkipped = 0; Verified = 0; VerifyMismatch = 0 }
@@ -111,6 +120,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo $optionalTopFiles = @('HueActionNew.exe','Run Color Controller.bat')
 >> "%PS_SCRIPT%" echo $files += $requiredTopFiles + $optionalTopFiles
 >> "%PS_SCRIPT%" echo $files = $files ^| Sort-Object -Unique
+>> "%PS_SCRIPT%" echo $files = $files ^| Where-Object { $excludeFiles -notcontains $_ }
 >> "%PS_SCRIPT%" echo if (-not $files -or $files.Count -eq 0) { throw "No runtime files matched." }
 >> "%PS_SCRIPT%" echo $stats.Planned = $files.Count
 >> "%PS_SCRIPT%" echo foreach ($path in $files) {
@@ -120,6 +130,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   $encodedPath = (($path -split '/') ^| ForEach-Object { [uri]::EscapeDataString($_) }) -join '/'
 >> "%PS_SCRIPT%" echo   $rawUrl = "https://raw.githubusercontent.com/$Owner/$Repo/$Branch/$encodedPath"
 >> "%PS_SCRIPT%" echo   $isOptional = ($optionalTopFiles -contains $path)
+>> "%PS_SCRIPT%" echo   $isUpdatableExe = ($path -ieq 'ColorControllerNew.exe' -or $path -ieq 'HueActionNew.exe')
 >> "%PS_SCRIPT%" echo   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('bp_runtime_' + [guid]::NewGuid().ToString('N') + '.tmp')
 >> "%PS_SCRIPT%" echo   try {
 >> "%PS_SCRIPT%" echo     Invoke-WebRequest -Headers $headers -Uri $rawUrl -OutFile $tmp
@@ -142,25 +153,50 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo     $stats.Unchanged++
 >> "%PS_SCRIPT%" echo     continue
 >> "%PS_SCRIPT%" echo   }
+>> "%PS_SCRIPT%" echo   if ($isUpdatableExe) {
+>> "%PS_SCRIPT%" echo     $procName = [System.IO.Path]::GetFileNameWithoutExtension($path)
+>> "%PS_SCRIPT%" echo     $procs = @(Get-Process -Name $procName -ErrorAction SilentlyContinue)
+>> "%PS_SCRIPT%" echo     if ($procs.Count -gt 0) {
+>> "%PS_SCRIPT%" echo       Write-Host ('Closing running process before update: ' + $procName)
+>> "%PS_SCRIPT%" echo       foreach ($p in $procs) { try { Stop-Process -Id $p.Id -Force -ErrorAction Stop } catch {} }
+>> "%PS_SCRIPT%" echo       Start-Sleep -Milliseconds 700
+>> "%PS_SCRIPT%" echo     }
+>> "%PS_SCRIPT%" echo   }
 >> "%PS_SCRIPT%" echo   try {
->> "%PS_SCRIPT%" echo     Move-Item -Path $tmp -Destination $dest -Force
->> "%PS_SCRIPT%" echo   } catch {
+>> "%PS_SCRIPT%" echo     [System.IO.File]::Copy($tmp, $dest, $true)
 >> "%PS_SCRIPT%" echo     Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
->> "%PS_SCRIPT%" echo     $isLockError = ($_.Exception -and $_.Exception.Message -match 'being used by another process')
->> "%PS_SCRIPT%" echo     $isUpdatableExe = ($path -ieq 'ColorControllerNew.exe' -or $path -ieq 'HueActionNew.exe')
+>> "%PS_SCRIPT%" echo   } catch {
+>> "%PS_SCRIPT%" echo     $copyError = $_
+>> "%PS_SCRIPT%" echo     $msg = if ($copyError.Exception) { $copyError.Exception.Message } else { '' }
+>> "%PS_SCRIPT%" echo     $isLockError = ($msg -match 'being used by another process' -or $msg -match 'access is denied' -or $msg -match 'The file exists')
 >> "%PS_SCRIPT%" echo     if ($isLockError -and $isUpdatableExe) {
+>> "%PS_SCRIPT%" echo       $procName = [System.IO.Path]::GetFileNameWithoutExtension($path)
+>> "%PS_SCRIPT%" echo       $procs = @(Get-Process -Name $procName -ErrorAction SilentlyContinue)
+>> "%PS_SCRIPT%" echo       if ($procs.Count -gt 0) {
+>> "%PS_SCRIPT%" echo         Write-Warning ('Retrying after closing process: ' + $procName)
+>> "%PS_SCRIPT%" echo         foreach ($p in $procs) { try { Stop-Process -Id $p.Id -Force -ErrorAction Stop } catch {} }
+>> "%PS_SCRIPT%" echo         Start-Sleep -Milliseconds 900
+>> "%PS_SCRIPT%" echo       }
+>> "%PS_SCRIPT%" echo       try {
+>> "%PS_SCRIPT%" echo         [System.IO.File]::Copy($tmp, $dest, $true)
+>> "%PS_SCRIPT%" echo         Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
+>> "%PS_SCRIPT%" echo       } catch {
+>> "%PS_SCRIPT%" echo         Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
 >> "%PS_SCRIPT%" echo       Write-Warning ("Skipped locked file: " ^+ $path ^+ " (close it and re-run to update this EXE).")
 >> "%PS_SCRIPT%" echo       $stats.LockedSkipped++
 >> "%PS_SCRIPT%" echo       $lockedSkippedFiles.Add($path) ^| Out-Null
 >> "%PS_SCRIPT%" echo       $skipVerify[$path] = $true
 >> "%PS_SCRIPT%" echo       continue
+>> "%PS_SCRIPT%" echo       }
 >> "%PS_SCRIPT%" echo     } elseif ($isOptional) {
+>> "%PS_SCRIPT%" echo       Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
 >> "%PS_SCRIPT%" echo       $stats.OptionalSkipped++
 >> "%PS_SCRIPT%" echo       $optionalSkippedFiles.Add($path) ^| Out-Null
 >> "%PS_SCRIPT%" echo       $skipVerify[$path] = $true
 >> "%PS_SCRIPT%" echo       continue
 >> "%PS_SCRIPT%" echo     } else {
->> "%PS_SCRIPT%" echo       throw
+>> "%PS_SCRIPT%" echo       Remove-Item -Path $tmp -Force -ErrorAction SilentlyContinue
+>> "%PS_SCRIPT%" echo       throw $copyError
 >> "%PS_SCRIPT%" echo     }
 >> "%PS_SCRIPT%" echo   }
 >> "%PS_SCRIPT%" echo   if ($existsBefore) { $stats.Updated++ } else { $stats.Added++ }

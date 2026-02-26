@@ -43,3 +43,6 @@ ColorControllerNew_next.spec
 
 # Local logs
 LOGS/
+
+# Local updater sync reports (generated)
+Settings/install-sync-report.txt
