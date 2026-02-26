@@ -117,8 +117,8 @@
 
         /* === Kick K icon === */
         .kick-icon {
-            width: 104px;
-            height: 104px;
+            width: 52px;
+            height: 52px;
             flex-shrink: 0;
             position: relative;
             overflow: visible;
@@ -132,8 +132,8 @@
         }
 
         .kick-k-model {
-            width: 104px;
-            height: 104px;
+            width: 52px;
+            height: 52px;
             display: block;
             position: relative;
             transform-style: preserve-3d;
@@ -143,9 +143,9 @@
         }
 
         .kick-k-viewport {
-            width: calc(100% + 12px);
-            height: calc(100% + 12px);
-            margin: -6px;
+            width: calc(100% + 24px);
+            height: calc(100% + 24px);
+            margin: -12px;
             display: block;
             background: transparent;
             pointer-events: none;
@@ -812,7 +812,7 @@
 
                 obj.position.sub(center);
                 const maxDim = Math.max(size.x, size.y, size.z || 0.001);
-                const scale = 1.16 / maxDim;
+                const scale = 1.54 / maxDim;
                 obj.scale.setScalar(scale);
 
                 // Recompute after scale and lift slightly so it sits centered visually.
@@ -862,7 +862,7 @@
                     spin += dt * 1.15;
                     model.rotation.y = 0.92 + spin;
                     model.rotation.x = -0.26 + Math.sin(spin * 0.55) * 0.02;
-                    model.rotation.z = -0.08;
+                    model.rotation.z = 0.17;
                     syncModelTheme(false);
                 }
                 renderer.render(scene, camera);
