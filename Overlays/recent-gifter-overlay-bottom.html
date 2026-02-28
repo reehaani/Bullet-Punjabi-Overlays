@@ -46,10 +46,7 @@
             border-radius: 50px 50px 0 0;
             overflow: visible;
             filter:
-                drop-shadow(0 3px 0 rgba(255, 255, 255, 0.05))
-                drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5))
-                drop-shadow(0 24px 42px rgba(0, 0, 0, 0.36))
-                drop-shadow(0 0 28px rgba(0, 0, 0, 0.2));
+                drop-shadow(0 3px 0 rgba(255, 255, 255, 0.05)) drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5)) drop-shadow(0 24px 42px rgba(0, 0, 0, 0.36)) drop-shadow(0 0 28px rgba(0, 0, 0, 0.2));
             transform: translateX(-50%) translateY(0);
             transform-origin: bottom center;
             opacity: 1;
@@ -224,9 +221,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: icon-sway 3.2s ease-in-out infinite;
-            will-change: transform, filter;
             position: relative;
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            isolation: isolate;
         }
 
         .kick-icon::before {
@@ -246,9 +244,64 @@
             animation: icon-glow-breathe 2.8s ease-in-out infinite;
         }
 
-        .kick-icon img {
-            position: relative;
+        .gift-icon-shell {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-style: preserve-3d;
+            transform-origin: 50% 50%;
+            transform-box: fill-box;
+            animation: gift-spin-3d 4.8s linear infinite;
+            will-change: transform;
             z-index: 1;
+        }
+
+        /* === 3D Extruded Gift Icon === */
+        .gift-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .gift-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .gift-front {
+            transform: translateZ(4px);
+            backface-visibility: hidden;
+        }
+
+        .gift-front img {
+            filter:
+                brightness(1.55) contrast(1.35) drop-shadow(0 0 12px rgba(255, 255, 255, 0.44));
+        }
+
+        .gift-back {
+            transform: rotateY(180deg) translateZ(4px);
+            backface-visibility: hidden;
+        }
+
+        .gift-back img {
+            filter:
+                brightness(1.55) contrast(1.35) drop-shadow(0 0 12px rgba(255, 255, 255, 0.44));
+        }
+
+        /* JS-generated depth layers */
+        .gift-depth-slice {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .gift-depth-slice img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .logo-3d {
@@ -298,8 +351,6 @@
             flex-direction: column;
             gap: 0px;
             min-width: 0;
-            animation: text-stack-drift 4.8s ease-in-out infinite;
-            will-change: transform;
         }
 
         .ash-layer {
@@ -343,12 +394,12 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             background: linear-gradient(108deg,
-                    color-mix(in srgb, var(--neon-green) 90%, white 10%) 0%,
-                    #ffffff 32%,
-                    color-mix(in srgb, var(--neon-green) 84%, white 16%) 50%,
-                    #ffffff 68%,
-                    color-mix(in srgb, var(--neon-green) 90%, white 10%) 100%);
-            background-size: 240% 100%;
+                    var(--neon-green) 0%,
+                    var(--neon-green) 25%,
+                    #ffffff 50%,
+                    var(--neon-green) 75%,
+                    var(--neon-green) 100%);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -360,9 +411,8 @@
             text-overflow: clip;
             max-width: none;
             padding-right: 12px;
-            transition: all 0.5s ease;
-            animation: name-drift 4.2s ease-in-out infinite, satin-sheen 3.8s linear infinite;
-            will-change: transform, filter;
+            transition: color 0.5s ease, filter 0.5s ease, -webkit-text-stroke 0.5s ease;
+            will-change: transform, filter, background-position;
         }
 
         /* === Text Glow === */
@@ -478,20 +528,13 @@
             }
         }
 
-        @keyframes icon-sway {
-            0% {
-                transform: rotateZ(-10deg) translateY(0px) scale(1);
-                filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.45));
+        @keyframes gift-spin-3d {
+            from {
+                transform: rotateY(0deg);
             }
 
-            50% {
-                transform: rotateZ(4deg) translateY(-2px) scale(1.06);
-                filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.72));
-            }
-
-            100% {
-                transform: rotateZ(-10deg) translateY(0px) scale(1);
-                filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.45));
+            to {
+                transform: rotateY(360deg);
             }
         }
 
@@ -621,7 +664,6 @@
                 display: none;
             }
         }
-
     </style>
 </head>
 
@@ -635,9 +677,19 @@
             <canvas class="ash-layer" id="ash-canvas"></canvas>
 
             <div class="content-layer">
-                <!-- Gift Icon (SVG) -->
+                <!-- Gift Icon (3D Extruded) -->
                 <div class="kick-icon">
-                    <img src="../Logo/gift-icon.svg" alt="Gift" style="width: 100%; height: 100%;">
+                    <div class="gift-icon-shell" id="gift-shell">
+                        <!-- Front face -->
+                        <div class="gift-face gift-front">
+                            <img src="../Logo/gift-icon.svg" alt="Gift">
+                        </div>
+                        <!-- Back face -->
+                        <div class="gift-face gift-back">
+                            <img src="../Logo/gift-icon.svg" alt="">
+                        </div>
+                        <!-- Edge depth layers generated by JS -->
+                    </div>
                 </div>
 
                 <div class="gifter-text-group">
@@ -647,6 +699,41 @@
             </div>
         </div>
     </div>
+
+    <!-- 3D Gift Icon Builder -->
+    <script>
+        (function build3DGiftIcon() {
+            const shell = document.getElementById('gift-shell');
+            if (!shell) return;
+
+            const HALF_DEPTH = 3.75;
+            const LAYER_COUNT = 30;
+
+            // Hollow SVG for transparent edges (thick white stroke, no fill)
+            const hollowSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 12 20 22 4 22 4 12'/%3E%3Crect x='2' y='7' width='20' height='5'/%3E%3Cline x1='12' y1='22' x2='12' y2='7'/%3E%3Cpath d='M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z'/%3E%3Cpath d='M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'/%3E%3C/svg%3E";
+
+            const backFace = shell.querySelector('.gift-back');
+
+            for (let i = 0; i < LAYER_COUNT; i++) {
+                const z = -HALF_DEPTH + (2 * HALF_DEPTH * i / (LAYER_COUNT - 1));
+                // Brightness gradient: darker at edges, brighter in middle
+                const t = Math.abs(z) / HALF_DEPTH; // 0 at center, 1 at edges
+                const bright = 0.45 + (1 - t) * 0.35; // 0.45 at edges, 0.8 at center
+
+                const div = document.createElement('div');
+                div.className = 'gift-depth-slice';
+                div.style.transform = 'translateZ(' + z.toFixed(2) + 'px)';
+
+                const img = document.createElement('img');
+                img.src = hollowSvg;
+                img.alt = '';
+                img.style.filter = 'brightness(' + bright.toFixed(2) + ') contrast(1.2)';
+                div.appendChild(img);
+
+                shell.insertBefore(div, backFace);
+            }
+        })();
+    </script>
 
     <script>
         const BASE_POLL_INTERVAL = 300;
@@ -938,7 +1025,7 @@
         });
 
         window.addEventListener('resize', () => {
-        if (isBannerVisible && lastShownName) updateAnchorWidth();
+            if (isBannerVisible && lastShownName) updateAnchorWidth();
         });
         requestAnimationFrame(updateAnchorWidth);
         setBannerVisibility(false);
@@ -955,6 +1042,35 @@
             const ashResizeObserver = new ResizeObserver(resizeAshCanvas);
             ashResizeObserver.observe(surfaceEl);
         }
+        // ==========================================
+        // SATIN SHEEN JS ANIMATION
+        // ==========================================
+        let sheenProgress = 0;
+        let sheenDirection = 1;
+        const SHEEN_SPEED = 0.0025; // Slower speed
+
+        function updateSatinSheen() {
+            const nameEl = document.getElementById('gifter-name');
+            if (nameEl) {
+                sheenProgress += SHEEN_SPEED * sheenDirection;
+
+                if (sheenProgress >= 1) {
+                    sheenProgress = 1;
+                    sheenDirection = -1;
+                } else if (sheenProgress <= 0) {
+                    sheenProgress = 0;
+                    sheenDirection = 1;
+                }
+
+                // Map 0-1 to 0%-100%
+                const posPct = (sheenProgress * 100).toFixed(1);
+                nameEl.style.backgroundPosition = `${posPct}% 50%`;
+            }
+            requestAnimationFrame(updateSatinSheen);
+        }
+
+        // Start the JS sheen loop
+        requestAnimationFrame(updateSatinSheen);
 
         pollAll();
     </script>
@@ -1056,6 +1172,3 @@
 </body>
 
 </html>
-
-
-

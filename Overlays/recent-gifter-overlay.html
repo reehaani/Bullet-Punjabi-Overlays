@@ -355,9 +355,9 @@
             text-transform: uppercase;
             background: linear-gradient(108deg,
                     var(--neon-green) 0%,
-                    var(--neon-green) 40%,
+                    var(--neon-green) 25%,
                     #ffffff 50%,
-                    var(--neon-green) 60%,
+                    var(--neon-green) 75%,
                     var(--neon-green) 100%);
             background-size: 300% 100%;
             -webkit-background-clip: text;
@@ -371,9 +371,8 @@
             text-overflow: clip;
             max-width: none;
             padding-right: 12px;
-            transition: all 0.5s ease;
-            animation: name-drift 4.2s ease-in-out infinite, satin-sheen 3.8s linear infinite;
-            will-change: transform, filter;
+            transition: color 0.5s ease, filter 0.5s ease, -webkit-text-stroke 0.5s ease;
+            will-change: transform, filter, background-position;
         }
 
         /* === Text Glow === */
@@ -1009,7 +1008,7 @@
         // ==========================================
         let sheenProgress = 0;
         let sheenDirection = 1;
-        const SHEEN_SPEED = 0.005; // Adjust for speed
+        const SHEEN_SPEED = 0.0025; // Slower speed (half of 0.005)
 
         function updateSatinSheen() {
             const nameEl = document.getElementById('gifter-name');

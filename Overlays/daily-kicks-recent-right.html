@@ -260,12 +260,12 @@
             white-space: nowrap;
             padding-right: 10px;
             background: linear-gradient(108deg,
-                    color-mix(in srgb, var(--kick-k-color) 90%, white 10%) 0%,
-                    #ffffff 34%,
-                    color-mix(in srgb, var(--kick-k-color) 84%, white 16%) 50%,
-                    #ffffff 66%,
-                    color-mix(in srgb, var(--kick-k-color) 90%, white 10%) 100%);
-            background-size: 240% 100%;
+                    var(--kick-k-color) 0%,
+                    var(--kick-k-color) 25%,
+                    #ffffff 50%,
+                    var(--kick-k-color) 75%,
+                    var(--kick-k-color) 100%);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent !important;
@@ -274,7 +274,8 @@
             text-shadow:
                 0 0 9px color-mix(in srgb, var(--kick-k-glow) 74%, white 26%);
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 7px var(--kick-k-glow));
-            animation: satin-sheen 3.8s linear infinite;
+            transition: color 0.5s ease, filter 0.5s ease, -webkit-text-stroke 0.5s ease;
+            will-change: transform, filter, background-position;
         }
 
         .kicker-text-group {
@@ -364,9 +365,17 @@
         }
 
         @keyframes satin-sheen {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
     </style>
 </head>
@@ -401,8 +410,8 @@
                         <feGaussianBlur stdDeviation="0.35" />
                     </filter>
                 </defs>
-                <line x1="12" y1="1.8" x2="88" y2="1.8" stroke="url(#rim-grad-recent)"
-                    stroke-width="1.5" vector-effect="non-scaling-stroke" fill="none" filter="url(#rim-blur-recent)"
+                <line x1="12" y1="1.8" x2="88" y2="1.8" stroke="url(#rim-grad-recent)" stroke-width="1.5"
+                    vector-effect="non-scaling-stroke" fill="none" filter="url(#rim-blur-recent)"
                     stroke-linecap="butt" />
             </svg>
         </div>
@@ -650,6 +659,34 @@
             injectScript('../Settings/settings.js', 'script-settings');
             injectScript('../Data/data_kicks.js', 'script-kicks');
         }
+
+        // ==========================================
+        // SATIN SHEEN JS ANIMATION
+        // ==========================================
+        let sheenProgress = 0;
+        let sheenDirection = 1;
+        const SHEEN_SPEED = 0.0025; // Slower speed
+
+        function updateSatinSheen() {
+            const nameEl = document.getElementById('kicker-name');
+            if (nameEl) {
+                sheenProgress += SHEEN_SPEED * sheenDirection;
+
+                if (sheenProgress >= 1) {
+                    sheenProgress = 1;
+                    sheenDirection = -1;
+                } else if (sheenProgress <= 0) {
+                    sheenProgress = 0;
+                    sheenDirection = 1;
+                }
+
+                const posPct = (sheenProgress * 100).toFixed(1);
+                nameEl.style.backgroundPosition = `${posPct}% 50%`;
+            }
+            requestAnimationFrame(updateSatinSheen);
+        }
+
+        requestAnimationFrame(updateSatinSheen);
 
         setInterval(pollAll, POLL_INTERVAL);
         pollAll();
@@ -901,5 +938,3 @@
 </body>
 
 </html>
-
-
