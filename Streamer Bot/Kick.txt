@@ -42,7 +42,7 @@ public class CPHInline
         count += addAmount;
         CPH.SetGlobalVar("dailyKicksCount", count, true);
         try {
-            string content = "window.updateKicks(\"" + count.ToString() + "\", \"Top: " + JsEscape(user) + "\", \"" + JsEscape(uniqueId) + "\");";
+            string content = "window.updateKicks(\"" + count.ToString() + "\", \"Top: " + JsEscape(user) + "\", \"" + JsEscape(uniqueId) + "\", \"" + addAmount.ToString() + "\");";
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
             File.WriteAllText(fullPath, content);
         } catch (Exception ex) {

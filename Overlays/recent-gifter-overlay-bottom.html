@@ -73,9 +73,10 @@
             overflow: hidden;
             display: flex;
             align-items: center;
-            transform: none;
-            transform-style: flat;
-            will-change: auto;
+            transform: perspective(1200px) rotateY(-7deg);
+            transform-style: preserve-3d;
+            will-change: transform;
+            animation: box-3d-drift 7s ease-in-out infinite;
         }
 
         .main-surface::before {
@@ -257,12 +258,16 @@
             position: relative;
             transform-style: preserve-3d;
             transform: rotateY(-10deg);
+            animation: gift-spin-3d 4.2s ease-in-out infinite;
+            will-change: transform;
         }
 
         .logo-face {
             position: absolute;
             width: 100%;
             height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         .logo-face img {
@@ -347,7 +352,7 @@
             background-clip: border-box;
             color: var(--neon-green);
             -webkit-text-fill-color: var(--neon-green);
-            -webkit-text-stroke: 0.8px rgba(255, 255, 255, 0.25);
+            -webkit-text-stroke: 1.2px rgba(0, 0, 0, 0.95);
             filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
             white-space: nowrap;
             overflow: visible;
@@ -357,6 +362,15 @@
             transition: all 0.5s ease;
             animation: name-drift 4.2s ease-in-out infinite;
             will-change: transform, filter;
+        }
+
+        .gifter-name.adaptive-deep-hue {
+            color: #f3f7ff;
+            -webkit-text-fill-color: #f3f7ff;
+            -webkit-text-stroke: 1.1px rgba(0, 0, 0, 0.95);
+            filter:
+                drop-shadow(0 2px 0 rgba(0, 0, 0, 0.75))
+                drop-shadow(0 0 8px rgba(180, 210, 255, 0.35));
         }
 
         /* === Text Glow === */
@@ -448,6 +462,18 @@
             }
         }
 
+        @keyframes box-3d-drift {
+            0% {
+                transform: perspective(1200px) rotateY(-7deg) rotateX(0.8deg);
+            }
+            50% {
+                transform: perspective(1200px) rotateY(-4deg) rotateX(-0.6deg);
+            }
+            100% {
+                transform: perspective(1200px) rotateY(-7deg) rotateX(0.8deg);
+            }
+        }
+
         @keyframes burst-pulse {
             0% {
                 filter: brightness(1.14) contrast(1.08);
@@ -486,6 +512,28 @@
             100% {
                 transform: rotateZ(-10deg) translateY(0px) scale(1);
                 filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.45));
+            }
+        }
+
+        @keyframes gift-spin-3d {
+            0% {
+                transform: rotateY(-16deg) rotateX(6deg) rotateZ(-2deg);
+            }
+
+            25% {
+                transform: rotateY(34deg) rotateX(4deg) rotateZ(1deg);
+            }
+
+            50% {
+                transform: rotateY(180deg) rotateX(-2deg) rotateZ(0deg);
+            }
+
+            75% {
+                transform: rotateY(326deg) rotateX(4deg) rotateZ(-1deg);
+            }
+
+            100% {
+                transform: rotateY(344deg) rotateX(6deg) rotateZ(-2deg);
             }
         }
 
@@ -616,27 +664,6 @@
             }
         }
 
-        /* Mustache Background */
-        .mustache-bg {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-            opacity: 0.25;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .mustache-bg img {
-            width: 380px;
-            height: auto;
-            filter: brightness(0) invert(1);
-            transform: translateY(-80px);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
-            mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
-        }
     </style>
 </head>
 
@@ -644,9 +671,6 @@
 
     <div class="gifter-anchor" id="gifter-anchor">
         <div class="main-surface" id="wave-container">
-            <div class="mustache-bg">
-                <img src="../Logo/Logo 2.png" alt="Mustache Background">
-            </div>
             <div class="poly-sheen"></div>
             <div class="rim-light"></div>
             <div class="micro-noise"></div>
@@ -655,7 +679,14 @@
             <div class="content-layer">
                 <!-- Gift Icon (SVG) -->
                 <div class="kick-icon">
-                    <img src="../Logo/gift-icon.svg" alt="Gift" style="width: 100%; height: 100%;">
+                    <div class="logo-3d" aria-hidden="true">
+                        <div class="logo-face logo-front">
+                            <img src="../Logo/gift-icon.svg" alt="Gift">
+                        </div>
+                        <div class="logo-face logo-back">
+                            <img src="../Logo/gift-icon.svg" alt="" aria-hidden="true">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="gifter-text-group">
@@ -1022,8 +1053,10 @@
 
                 // 1. Core Theme Colors
                 const themeHue = State.currentHue;
-                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
-                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
+                const MIN_THEME_SHADE = 1.08;
+                const MIN_THEME_SAT = 1.05;
+                const themeShade = Math.max(MIN_THEME_SHADE, window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0);
+                const themeSat = Math.max(MIN_THEME_SAT, window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0);
 
                 for (const key in BASE_COLORS) {
                     const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
@@ -1047,23 +1080,26 @@
                     if (nt !== State.targetHue) { State.targetHue = nt; if (!State.animationFrame) animate(); }
                     document.documentElement.style.filter = `brightness(${window.GLOBAL_BRIGHTNESS || 1.0})`;
 
-                    const glow = window.GLOW_KICK_RECT !== false; // Reuse rect glow for consistency in top area
                     const name = document.querySelector('.gifter-name');
-
-                    if (glow) {
-                        if (name) name.classList.add('text-glow');
-                    } else {
-                        if (name) name.classList.remove('text-glow');
-                    }
+                    if (name) name.classList.add('text-glow');
 
                     updateColors();
                     refreshAshColor();
+                    applyAdaptiveNameContrast(nt);
                 };
                 document.head.appendChild(s);
             }
 
+            function applyAdaptiveNameContrast(hueOffset) {
+                const name = document.querySelector('.gifter-name');
+                if (!name) return;
+                const h = ((Number(hueOffset) % 360) + 360) % 360;
+                const isDeepBluePurple = h >= 195 && h <= 305;
+                name.classList.toggle('adaptive-deep-hue', isDeepBluePurple);
+            }
+
             function applyFilters() {
-                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
+                const bright = Math.max(1.02, window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0);
                 document.documentElement.style.filter = `brightness(${bright})`;
             }
 
