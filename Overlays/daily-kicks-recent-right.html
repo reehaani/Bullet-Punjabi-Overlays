@@ -259,17 +259,22 @@
             text-transform: uppercase;
             white-space: nowrap;
             padding-right: 10px;
-            background: none;
-            -webkit-background-clip: border-box;
-            background-clip: border-box;
-            color: var(--kick-k-color) !important;
-            -webkit-text-fill-color: var(--kick-k-color) !important;
-            -webkit-text-stroke: 0.7px rgba(255, 255, 255, 0.28);
+            background: linear-gradient(108deg,
+                    color-mix(in srgb, var(--kick-k-color) 90%, white 10%) 0%,
+                    #ffffff 34%,
+                    color-mix(in srgb, var(--kick-k-color) 84%, white 16%) 50%,
+                    #ffffff 66%,
+                    color-mix(in srgb, var(--kick-k-color) 90%, white 10%) 100%);
+            background-size: 240% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+            -webkit-text-fill-color: transparent !important;
+            -webkit-text-stroke: 0;
             text-shadow:
-                -1px -1px 0 rgba(255, 255, 255, 0.78),
-                -2px -2px 5px rgba(255, 255, 255, 0.24),
-                -2px -2px 7px color-mix(in srgb, var(--kick-k-glow) 66%, white 18%);
+                0 0 9px color-mix(in srgb, var(--kick-k-glow) 74%, white 26%);
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 7px var(--kick-k-glow));
+            animation: satin-sheen 3.8s linear infinite;
         }
 
         .kicker-text-group {
@@ -315,7 +320,14 @@
         }
 
         .rim-light-layer {
-            display: none !important;
+            position: absolute;
+            inset: 0;
+            border-radius: 0 12px 12px 0;
+            pointer-events: none;
+            z-index: 16;
+            opacity: var(--rim-light-intensity, 1);
+            -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 86%, transparent 100%);
         }
 
         .rim-light-layer svg {
@@ -349,6 +361,12 @@
                 4px 0 18px rgba(212, 175, 55, 0.18),
                 inset 0 1px 0 rgba(255, 255, 255, 0.08),
                 inset 0 0 0 1px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes satin-sheen {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
@@ -397,7 +415,6 @@
         let isVisible = false;
         let TARGET_GOAL = 10000;
         let lastKickCount = 0;
-        const MIN_KICKS_FOR_NAME = 10;
 
         const container = document.getElementById('kicker-container');
         const nameEl = document.getElementById('kicker-name');
@@ -559,14 +576,14 @@
             .kicker-flash { animation: kicker-text-glow 0.8s ease-out; }
             @keyframes kicker-text-glow {
                 0% { filter: brightness(3) drop-shadow(0 0 20px #fff); transform: scale(1.1); }
-                100% { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.9)); transform: scale(1); }
+                100% { filter: brightness(1) drop-shadow(0 2px 3px rgba(0,0,0,0.9)); transform: scale(1); }
             }
         `;
         document.head.appendChild(style);
 
         // Called by data_kicks.js: window.updateKicks("126", "Top: subscriber_name", "uniqueId")
         window.updateKickerName = function (name, id) {
-            if (lastKickCount >= MIN_KICKS_FOR_NAME && hasValidName(name)) {
+            if (hasValidName(name)) {
                 showKicker(name, id || (name + Date.now()));
                 return;
             }
@@ -591,7 +608,7 @@
             lastKickCount = current;
             applyGoalState(current);
 
-            if (current < MIN_KICKS_FOR_NAME) {
+            if (current <= 0) {
                 nameEl.textContent = '';
                 setKickerVisibility(false);
             }
@@ -600,7 +617,7 @@
                 const parts = extra.split(':');
                 if (parts.length >= 2) {
                     const name = parts.slice(1).join(':').trim();
-                    if (hasValidName(name) && current >= MIN_KICKS_FOR_NAME) {
+                    if (hasValidName(name) && current > 0) {
                         showKicker(name, id || (name + val + extra + Date.now()));
                     } else {
                         nameEl.textContent = '';
@@ -685,10 +702,8 @@
 
                 // 1. Core Theme Colors
                 const themeHue = State.currentHue;
-                const MIN_THEME_SHADE = 1.08;
-                const MIN_THEME_SAT = 1.05;
-                const themeShade = Math.max(MIN_THEME_SHADE, window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0);
-                const themeSat = Math.max(MIN_THEME_SAT, window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0);
+                const themeShade = window.GLOBAL_COLOR_BRIGHTNESS !== undefined ? window.GLOBAL_COLOR_BRIGHTNESS : 1.0;
+                const themeSat = window.GLOBAL_COLOR_SATURATION !== undefined ? window.GLOBAL_COLOR_SATURATION : 1.0;
 
                 for (const key in BASE_COLORS) {
                     const oldShade = window.GLOBAL_COLOR_BRIGHTNESS;
@@ -728,15 +743,15 @@
             }
 
             function applyFilters() {
-                const bright = Math.max(1.02, window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0);
+                const bright = window.GLOBAL_BRIGHTNESS !== undefined ? window.GLOBAL_BRIGHTNESS : 1.0;
                 const gloss = window.GLOSSY_INTENSITY !== undefined ? window.GLOSSY_INTENSITY : 1.0;
                 const glossMapped = gloss >= 1
                     ? (1 + Math.pow(gloss - 1, 1.35) * 2.2)
                     : Math.max(0, 1 - Math.pow(1 - gloss, 0.75) * 1.15);
                 const rimValue = window.RIM_LIGHT_INTENSITY !== undefined ? window.RIM_LIGHT_INTENSITY : 1.0;
                 const rimIntensity = rimValue >= 1
-                    ? Math.min(3.2, 1.2 + Math.pow(rimValue - 1, 1.12) * 1.15)
-                    : Math.max(0.75, 1 - Math.pow(1 - rimValue, 0.85) * 0.45);
+                    ? Math.min(2.2, 1 + Math.pow(rimValue - 1, 1.15) * 0.9)
+                    : Math.max(0.25, 1 - Math.pow(1 - rimValue, 0.85) * 0.75);
                 const glow = window.GLOW_KICK_RECT !== false;
 
                 document.documentElement.style.filter = `brightness(${bright})`;
