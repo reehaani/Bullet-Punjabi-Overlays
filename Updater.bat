@@ -81,10 +81,19 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   'Data/data_chatters.js',
 >> "%PS_SCRIPT%" echo   'Data/data_followers.js',
 >> "%PS_SCRIPT%" echo   'Data/data_kicks.js',
->> "%PS_SCRIPT%" echo   'Data/data_tips.js'
+>> "%PS_SCRIPT%" echo   'Data/data_tips.js',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/overlay_settings.json'
 >> "%PS_SCRIPT%" echo )
 >> "%PS_SCRIPT%" echo $excludeFiles = @(
->> "%PS_SCRIPT%" echo   'Settings/install-sync-report.txt'
+>> "%PS_SCRIPT%" echo   'Settings/install-sync-report.txt',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/overlay_history.db',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/platform_runtime.json',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/runtime-debug.jsonl',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/youtube-message-debug.jsonl',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/youtube-paid-debug.jsonl',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/kick-viewer-debug.jsonl',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/train-active.txt',
+>> "%PS_SCRIPT%" echo   'ChatBox/data/train-status.json'
 >> "%PS_SCRIPT%" echo )
 >> "%PS_SCRIPT%" echo $preservedBytes = @{}
 >> "%PS_SCRIPT%" echo $reportPath = Join-Path $TargetDir 'Settings/install-sync-report.txt'
@@ -115,7 +124,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   return $null
 >> "%PS_SCRIPT%" echo }
 >> "%PS_SCRIPT%" echo $files = @()
->> "%PS_SCRIPT%" echo foreach ($root in @('Overlays','Data','Settings','Logo','Streamer Bot','Scripts')) { $files += Get-RepoFiles -Path $root }
+>> "%PS_SCRIPT%" echo foreach ($root in @('Overlays','Data','Settings','Logo','Streamer Bot','Scripts','ChatBox')) { $files += Get-RepoFiles -Path $root }
 >> "%PS_SCRIPT%" echo $requiredTopFiles = @('ColorControllerNew.exe')
 >> "%PS_SCRIPT%" echo $optionalTopFiles = @('HueActionNew.exe','Run Color Controller.bat')
 >> "%PS_SCRIPT%" echo $files += $requiredTopFiles + $optionalTopFiles
@@ -209,7 +218,7 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo   $stats.Preserved++
 >> "%PS_SCRIPT%" echo   $skipVerify[$rel] = $true
 >> "%PS_SCRIPT%" echo }
->> "%PS_SCRIPT%" echo $required = @('Overlays','Data','Settings','Logo','Streamer Bot','Scripts','ColorControllerNew.exe')
+>> "%PS_SCRIPT%" echo $required = @('Overlays','Data','Settings','Logo','Streamer Bot','Scripts','ChatBox','ColorControllerNew.exe')
 >> "%PS_SCRIPT%" echo foreach ($r in $required) {
 >> "%PS_SCRIPT%" echo   $full = Join-Path $TargetDir $r
 >> "%PS_SCRIPT%" echo   if (-not (Test-Path $full)) { throw "Missing required runtime item: $r" }
@@ -293,6 +302,7 @@ echo - Settings\
 echo - Logo\
 echo - Streamer Bot\
 echo - Scripts\
+echo - ChatBox\
 echo - ColorControllerNew.exe
 echo - HueActionNew.exe
 echo - Run Color Controller.bat
