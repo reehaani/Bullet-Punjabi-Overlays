@@ -1,0 +1,8 @@
+Stream / presentation overlay:
+http://127.0.0.1:8934/standalone.html?host=127.0.0.1&port=8080&staleAfterSec=180&maxMessages=0&platforms=twitch,kick,youtube,streamelements&ignoreUsers=StreamElements,Streamlabs&ignoreBangCommands=true&hideStatus=true&hideDeletedMessages=true&background=000000&backgroundOpacity=0
+
+Dock / personal monitoring overlay:
+http://127.0.0.1:8934/standalone.html?host=127.0.0.1&port=8080&staleAfterSec=180&maxMessages=0&platforms=twitch,kick,youtube,streamelements&fontSize=22&usernameFontSize=21&memberNameFontSize=23&supporterNameFontSize=24&timeFontSize=14&background=000000&backgroundOpacity=1
+
+Optional Twitch avatar params for HTML-only usage:
+&twitchClientId=YOUR_CLIENT_ID&twitchAccessToken=YOUR_ACCESS_TOKEN

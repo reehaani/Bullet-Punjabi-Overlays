@@ -1,0 +1,22 @@
+Stream Overlay (recommended):
+Use OBS Browser Source with this URL:
+http://127.0.0.1:8934/stream-overlay.html?host=127.0.0.1&port=8080&staleAfterSec=180&maxMessages=0&platforms=twitch,kick,youtube,streamelements
+
+Dock Overlay:
+Use this URL in your browser or OBS dock:
+http://127.0.0.1:8934/dock-overlay.html?host=127.0.0.1&port=8080&staleAfterSec=180&maxMessages=0&platforms=twitch,kick,youtube,streamelements&showModerationControls=true
+
+Optional standalone test overlay:
+http://127.0.0.1:8934/standalone.html?host=127.0.0.1&port=8080&staleAfterSec=180&maxMessages=0&platforms=twitch,kick,youtube,streamelements
+
+Notes:
+- These URLs always serve the current generated overlay files from this ChatBox folder.
+- The local overlay/history server must be running on 127.0.0.1:8934.
+- Stream overlay hides dock-only controls such as settings and moderation.
+- Dock overlay keeps status, settings, send-message composer, and moderation controls.
+- Dock moderation buttons expect these Streamer.bot action names:
+  - Overlay Mod - Delete Message
+  - Overlay Mod - Pin Message
+  - Overlay Mod - Timeout User
+  - Overlay Mod - Ban User
+  - Overlay Mod - Send Message

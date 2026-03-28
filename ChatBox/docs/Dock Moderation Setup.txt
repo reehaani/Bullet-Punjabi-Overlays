@@ -1,0 +1,44 @@
+Dock moderation uses Streamer.bot WebSocket request `DoAction`.
+
+Create these Streamer.bot actions:
+- Overlay Mod - Delete Message
+- Overlay Mod - Pin Message
+- Overlay Mod - Timeout User
+- Overlay Mod - Ban User
+- Overlay Mod - Send Message
+
+The dock overlay sends these args:
+- platform
+- username
+- userId
+- messageId
+- text
+- variant
+- timeoutSeconds
+- message
+- source
+
+Recommended behavior inside Streamer.bot:
+- Delete Message:
+  - branch by `platform`
+  - use `messageId` where the platform supports deleting a specific message
+- Pin Message:
+  - branch by `platform`
+  - pin `messageId` where the platform supports pinning a specific message
+- Timeout User:
+  - branch by `platform`
+  - timeout `username` for `timeoutSeconds`
+- Ban User:
+  - branch by `platform`
+  - ban `username`
+- Send Message:
+  - branch by `platform`
+  - use `text` or `message` as the outgoing chat text
+  - `source` will be `dock`
+
+Notes:
+- Delete is only enabled in the dock when the message has a `messageId`.
+- Pin is only enabled in the dock when the message has a `messageId`.
+- Timeout and Ban are available for Twitch, Kick, and YouTube chat rows.
+- The public stream overlay does not show these controls.
+- The dock composer sends to Twitch, Kick, or YouTube using the configured `sendMessageAction`.

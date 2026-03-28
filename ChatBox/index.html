@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streamer.bot Multichat Overlay</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="overlay-shell">
+    <section class="status-strip" id="status-strip" aria-label="Connection status">
+      <div class="status-items" id="status-items"></div>
+      <div class="status-toast-stack" id="status-toast-stack"></div>
+      <div class="performance-controls" id="performance-controls" aria-label="Performance controls">
+        <button class="performance-button settings-button" id="overlay-settings-button" type="button" aria-expanded="false" aria-label="Open settings">
+          <span class="settings-button-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8 3.5-1.8-.8c-.1-.4-.2-.8-.4-1.2l1-1.7-1.9-1.9-1.7 1c-.4-.2-.8-.3-1.2-.4L13.2 4h-2.4l-.8 1.8c-.4.1-.8.2-1.2.4l-1.7-1-1.9 1.9 1 1.7c-.2.4-.3.8-.4 1.2L4 12v2.4l1.8.8c.1.4.2.8.4 1.2l-1 1.7 1.9 1.9 1.7-1c.4.2.8.3 1.2.4l.8 1.8h2.4l.8-1.8c.4-.1.8-.2 1.2-.4l1.7 1 1.9-1.9-1-1.7c.2-.4.3-.8.4-1.2l1.8-.8V12Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="chat-stage">
+      <aside class="support-train-hud hidden" id="support-train-hud" aria-live="polite">
+        <div class="support-train-topline">
+          <span class="support-train-badge" id="support-train-badge">Support Train</span>
+          <span class="support-train-time" id="support-train-time">00:00</span>
+        </div>
+        <div class="support-train-title-row">
+          <span class="support-train-icon" id="support-train-icon" aria-hidden="true"></span>
+          <div class="support-train-copy">
+            <div class="support-train-title" id="support-train-title">Kick Train</div>
+            <div class="support-train-subtitle" id="support-train-subtitle">Waiting for the next wave</div>
+          </div>
+          <div class="support-train-level-wrap">
+            <span class="support-train-level-label">Level</span>
+            <span class="support-train-level" id="support-train-level">0</span>
+          </div>
+        </div>
+        <div class="support-train-bar">
+          <div class="support-train-bar-fill" id="support-train-bar-fill"></div>
+        </div>
+        <div class="support-train-meta">
+          <span class="support-train-points" id="support-train-points">0 pts</span>
+          <span class="support-train-latest" id="support-train-latest">No recent contribution yet</span>
+        </div>
+      </aside>
+      <div class="chat-feed" id="chat-feed" aria-live="polite"></div>
+    </section>
+
+    <button class="feed-pause-banner hidden" id="feed-pause-banner" type="button">
+      <span class="feed-pause-label">Latest feed paused</span>
+      <span class="feed-pause-count hidden" id="feed-pause-count"></span>
+    </button>
+
+    <form class="dock-composer hidden" id="dock-composer" aria-label="Send chat message">
+      <select class="dock-composer-platform" id="dock-composer-platform"></select>
+      <input class="dock-composer-input" id="dock-composer-input" type="text" maxlength="400" placeholder="Send a message from the dock">
+      <button class="dock-composer-button" id="dock-composer-button" type="submit">Send</button>
+    </form>
+
+    <div class="overlay-settings-backdrop hidden" id="overlay-settings-backdrop" aria-hidden="true">
+      <section class="overlay-settings-panel" role="dialog" aria-modal="true" aria-labelledby="overlay-settings-title">
+        <div class="overlay-settings-header">
+          <h2 class="overlay-settings-title" id="overlay-settings-title">Overlay Settings</h2>
+          <button class="overlay-settings-close" id="overlay-settings-close" type="button" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="overlay-settings-tabs" role="tablist" aria-label="Overlay settings sections">
+          <button class="overlay-settings-tab is-active" id="settings-tab-stream" type="button" role="tab" aria-selected="true" data-settings-tab="stream">Stream</button>
+          <button class="overlay-settings-tab" id="settings-tab-dock" type="button" role="tab" aria-selected="false" data-settings-tab="dock">Dock</button>
+          <button class="overlay-settings-tab" id="settings-tab-train" type="button" role="tab" aria-selected="false" data-settings-tab="train">Train</button>
+          <button class="overlay-settings-tab" id="settings-tab-testing" type="button" role="tab" aria-selected="false" data-settings-tab="testing">Testing</button>
+        </div>
+
+        <div class="overlay-settings-tabpanels">
+          <section class="overlay-settings-grid overlay-settings-panel-group" id="settings-panel-stream" data-settings-panel="stream" role="tabpanel">
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Lite FX</span>
+                <span class="overlay-setting-help">Reduce heavier visual effects on stream and standalone overlays.</span>
+              </span>
+              <input id="settings-stream-lite-effects" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Follow Alerts</span>
+                <span class="overlay-setting-help">Show follow and new subscriber alerts on stream.</span>
+              </span>
+              <input id="settings-stream-follow-alerts" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Bang Commands</span>
+                <span class="overlay-setting-help">Hide chat messages that start with <code>!</code> on stream.</span>
+              </span>
+              <input id="settings-stream-ignore-bang" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Hide Deleted</span>
+                <span class="overlay-setting-help">Remove deleted messages from the stream feed.</span>
+              </span>
+              <input id="settings-stream-hide-deleted" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Status Pills</span>
+                <span class="overlay-setting-help">Show connection/status pills on the stream overlay.</span>
+              </span>
+              <input id="settings-stream-show-status" type="checkbox">
+            </label>
+            <label class="overlay-setting-field" for="settings-ignore-users-stream">
+              <span class="overlay-setting-name">Ignore Users: Stream</span>
+              <span class="overlay-setting-help">Comma-separated usernames hidden on stream and standalone overlays.</span>
+              <input class="overlay-setting-input" id="settings-ignore-users-stream" type="text" placeholder="StreamElements, Streamlabs">
+            </label>
+          </section>
+
+          <section class="overlay-settings-grid overlay-settings-panel-group hidden" id="settings-panel-dock" data-settings-panel="dock" role="tabpanel">
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Lite FX</span>
+                <span class="overlay-setting-help">Reduce heavier visual effects only in the dock view.</span>
+              </span>
+              <input id="settings-dock-lite-effects" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Follow Alerts</span>
+                <span class="overlay-setting-help">Show or hide follow alerts inside the dock feed.</span>
+              </span>
+              <input id="settings-dock-follow-alerts" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Bang Commands</span>
+                <span class="overlay-setting-help">Hide command messages that start with <code>!</code> only in the dock.</span>
+              </span>
+              <input id="settings-dock-ignore-bang" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Hide Deleted</span>
+                <span class="overlay-setting-help">Remove deleted messages from the dock feed.</span>
+              </span>
+              <input id="settings-dock-hide-deleted" type="checkbox">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Status Pills</span>
+                <span class="overlay-setting-help">Show connection/status pills in the dock only.</span>
+              </span>
+              <input id="settings-dock-show-status" type="checkbox">
+            </label>
+            <label class="overlay-setting-field" for="settings-ignore-users-dock">
+              <span class="overlay-setting-name">Ignore Users: Dock</span>
+              <span class="overlay-setting-help">Comma-separated usernames hidden only on the dock overlay.</span>
+              <input class="overlay-setting-input" id="settings-ignore-users-dock" type="text" placeholder="Nightbot, TestUser">
+            </label>
+          </section>
+
+          <section class="overlay-settings-grid overlay-settings-panel-group hidden" id="settings-panel-train" data-settings-panel="train" role="tabpanel">
+            <label class="overlay-setting-field" for="settings-train-position">
+              <span class="overlay-setting-name">Train Position</span>
+              <span class="overlay-setting-help">Default position for the separate hype train overlay.</span>
+              <select class="overlay-setting-input overlay-setting-select" id="settings-train-position">
+                <option value="top-left">Top Left</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="bottom-center">Bottom Center</option>
+              </select>
+            </label>
+            <label class="overlay-setting-field" for="settings-train-width">
+              <span class="overlay-setting-name">Train Width</span>
+              <span class="overlay-setting-help">Preferred banner width in pixels for the dedicated train overlay.</span>
+              <input class="overlay-setting-input" id="settings-train-width" type="number" min="320" max="2400" step="10" placeholder="860">
+            </label>
+            <label class="overlay-setting-field" for="settings-train-scale">
+              <span class="overlay-setting-name">Train Scale</span>
+              <span class="overlay-setting-help">Scale the full train overlay up or down.</span>
+              <input class="overlay-setting-input" id="settings-train-scale" type="number" min="0.4" max="2.5" step="0.05" placeholder="1">
+            </label>
+            <label class="overlay-setting-row">
+              <span class="overlay-setting-copy">
+                <span class="overlay-setting-name">Compact Train</span>
+                <span class="overlay-setting-help">Use the tighter compact train card layout.</span>
+              </span>
+              <input id="settings-train-compact" type="checkbox">
+            </label>
+          </section>
+
+          <section class="overlay-settings-grid overlay-settings-panel-group hidden" id="settings-panel-testing" data-settings-panel="testing" role="tabpanel">
+            <div class="overlay-setting-field">
+              <span class="overlay-setting-name">Testing Tools</span>
+              <span class="overlay-setting-help">Use these grouped test buttons to fire only the alerts you want while tweaking the overlay.</span>
+            </div>
+
+            <section class="overlay-test-group">
+              <div class="overlay-test-group-header">
+                <div>
+                  <div class="overlay-setting-name">Twitch Tests</div>
+                  <div class="overlay-setting-help">Followers, raids, hype train, redeems, bits, subs, and gifts.</div>
+                </div>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-follow,twitch-raid,twitch-hype,twitch-redeem,twitch-bits,twitch-sub,twitch-gifts,twitch-giftrecipient,twitch-supporter" data-test-label="Twitch tests">All Twitch</button>
+              </div>
+              <div class="overlay-test-actions-grid">
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-follow" data-test-label="Twitch follow">Follow</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-raid" data-test-label="Twitch raid">Raid</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-hype" data-test-label="Twitch hype train">Hype</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-redeem" data-test-label="Twitch redeem">Redeem</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-bits" data-test-label="Twitch bits">Bits</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-sub" data-test-label="Twitch sub message">Sub Msg</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-supporter" data-test-label="Twitch supporter">Supporter</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-gifts" data-test-label="Twitch gifts">Gift Bomb</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="twitch-giftrecipient" data-test-label="Twitch gifted sub recipient">Recipient</button>
+              </div>
+            </section>
+
+            <section class="overlay-test-group">
+              <div class="overlay-test-group-header">
+                <div>
+                  <div class="overlay-setting-name">Kick Tests</div>
+                  <div class="overlay-setting-help">Followers, raids, gift-shop items, redeems, subs, and gift bombs.</div>
+                </div>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-follow,kick-raid,kick-gift,kick-redeem,kick-sub,kick-giftbomb,kick-giftrecipient,kick-supporter" data-test-label="Kick tests">All Kick</button>
+              </div>
+              <div class="overlay-test-actions-grid">
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-follow" data-test-label="Kick follow">Follow</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-raid" data-test-label="Kick raid">Raid</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-gift" data-test-label="Kick gift">Gift</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-redeem" data-test-label="Kick redeem">Redeem</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-sub" data-test-label="Kick sub message">Sub Msg</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-supporter" data-test-label="Kick supporter">Supporter</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-giftbomb" data-test-label="Kick gift bomb">Gift Bomb</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="kick-giftrecipient" data-test-label="Kick gifted sub recipient">Recipient</button>
+              </div>
+            </section>
+
+            <section class="overlay-test-group">
+              <div class="overlay-test-group-header">
+                <div>
+                  <div class="overlay-setting-name">YouTube Tests</div>
+                  <div class="overlay-setting-help">Subscribers, paid chat, stickers, memberships, gifts, and member chats.</div>
+                </div>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-sub,youtube-superchat,youtube-sticker,youtube-member,youtube-membergift,youtube-memberrecipient,youtube-memberchat" data-test-label="YouTube tests">All YouTube</button>
+              </div>
+              <div class="overlay-test-actions-grid">
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-sub" data-test-label="YouTube subscriber">Subscriber</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-superchat" data-test-label="YouTube super chat">Super Chat</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-sticker" data-test-label="YouTube super sticker">Sticker</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-member" data-test-label="YouTube new member">Member</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-membergift" data-test-label="YouTube gifted member">Gifted</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-memberrecipient" data-test-label="YouTube gifted member recipient">Recipient</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="youtube-memberchat" data-test-label="YouTube member chat">Member Chat</button>
+              </div>
+            </section>
+
+            <section class="overlay-test-group">
+              <div class="overlay-test-group-header">
+                <div>
+                  <div class="overlay-setting-name">Support Tests</div>
+                  <div class="overlay-setting-help">Tips, donations, and store redeems from connected support platforms.</div>
+                </div>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="support-tip,streamlabs-donation,support-store" data-test-label="Support tests">All Support</button>
+              </div>
+              <div class="overlay-test-actions-grid">
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="support-tip" data-test-label="Support tip">Tip</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="streamlabs-donation" data-test-label="Streamlabs donation">Donation</button>
+                <button class="overlay-settings-action subtle overlay-test-action" type="button" data-test-keys="support-store" data-test-label="Store redeem">Store</button>
+              </div>
+            </section>
+
+            <section class="overlay-test-group">
+              <div class="overlay-test-group-header">
+                <div>
+                  <div class="overlay-setting-name">Train Tools</div>
+                  <div class="overlay-setting-help">Drive the separate train overlay while you position and tweak it.</div>
+                </div>
+              </div>
+              <div class="overlay-test-actions-grid">
+                <button class="overlay-settings-action" id="settings-train-step" type="button">Train Step</button>
+                <button class="overlay-settings-action subtle" id="settings-train-reset" type="button">Reset Train</button>
+              </div>
+            </section>
+          </section>
+        </div>
+        <div class="overlay-settings-actions">
+          <button class="overlay-settings-action subtle" id="settings-clear-feed" type="button">Clear Feed</button>
+          <button class="overlay-settings-action" id="settings-save" type="button">Save</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="moderation-modal-backdrop hidden" id="moderation-modal-backdrop" aria-hidden="true">
+      <div class="moderation-modal" role="dialog" aria-modal="true" aria-labelledby="moderation-modal-title">
+        <div class="moderation-modal-header">
+          <h2 class="moderation-modal-title" id="moderation-modal-title">Confirm moderation</h2>
+          <button class="moderation-modal-close" id="moderation-modal-close" type="button" aria-label="Close moderation dialog">&times;</button>
+        </div>
+        <p class="moderation-modal-text" id="moderation-modal-text"></p>
+        <div class="moderation-modal-actions">
+          <button class="moderation-modal-button secondary" id="moderation-modal-cancel" type="button">Cancel</button>
+          <button class="moderation-modal-button danger" id="moderation-modal-confirm" type="button">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <template id="message-template">
+    <article class="message-card">
+      <div class="message-row">
+        <div class="message-avatar-wrap">
+          <img class="message-avatar hidden" alt="">
+          <div class="message-avatar-fallback"></div>
+        </div>
+        <div class="message-body">
+          <div class="message-topline">
+            <span class="message-icons"></span>
+            <span class="message-user"></span>
+            <span class="message-time"></span>
+            <span class="message-amount hidden"></span>
+          </div>
+          <p class="message-text"></p>
+        </div>
+      </div>
+      <div class="message-badges hidden"></div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
