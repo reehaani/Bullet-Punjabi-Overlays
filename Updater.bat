@@ -87,13 +87,10 @@ set "PS_SCRIPT=%TEMP_DIR%\install_runtime_selective.ps1"
 >> "%PS_SCRIPT%" echo $excludeFiles = @(
 >> "%PS_SCRIPT%" echo   'Settings/install-sync-report.txt',
 >> "%PS_SCRIPT%" echo   'ChatBox/data/overlay_history.db',
->> "%PS_SCRIPT%" echo   'ChatBox/data/platform_runtime.json',
 >> "%PS_SCRIPT%" echo   'ChatBox/data/runtime-debug.jsonl',
 >> "%PS_SCRIPT%" echo   'ChatBox/data/youtube-message-debug.jsonl',
 >> "%PS_SCRIPT%" echo   'ChatBox/data/youtube-paid-debug.jsonl',
->> "%PS_SCRIPT%" echo   'ChatBox/data/kick-viewer-debug.jsonl',
->> "%PS_SCRIPT%" echo   'ChatBox/data/train-active.txt',
->> "%PS_SCRIPT%" echo   'ChatBox/data/train-status.json'
+>> "%PS_SCRIPT%" echo   'ChatBox/data/kick-viewer-debug.jsonl'
 >> "%PS_SCRIPT%" echo )
 >> "%PS_SCRIPT%" echo $preservedBytes = @{}
 >> "%PS_SCRIPT%" echo $reportPath = Join-Path $TargetDir 'Settings/install-sync-report.txt'
